@@ -6,11 +6,10 @@ use primus_integer::{
     BigUint, BigUintIter, BigUintIterMut, Data, DataMut, RawData, UnsignedInteger, izip,
     multiply_many_values, multiply_many_values_except_inplace,
 };
-use primus_modulo::*;
+use primus_modulo::prelude::*;
 use primus_modulus::UintModulus;
 use primus_poly::{BigUintPolynomial, CrtPolynomial, Polynomial};
-use primus_reduce::FieldContext;
-use primus_reduce::ReduceAddAssign;
+use primus_reduce::{FieldContext, ReduceAddAssign};
 
 use crate::RNSError;
 
