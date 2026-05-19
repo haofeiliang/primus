@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
-use primus_reduce::prelude::*;
+use primus_reduce::{ReduceAddSlice, ReduceMulAddSlice};
 
 use super::ArrayBase;
 

@@ -1,7 +1,7 @@
 use primus_factor::{FactorMul, ShoupFactor};
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
 use primus_modulus::UintModulus;
-use primus_reduce::prelude::*;
+use primus_reduce::{ReduceAddAssign, ReduceMulAddSlice, ReduceMulSlice};
 
 use super::NttPolynomial;
 
@@ -14,7 +14,7 @@ where
     #[inline]
     pub fn mul_scalar<M>(mut self, scalar: T, modulus: M) -> Self
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
     {
         self.mul_scalar_assign(scalar, modulus);
         self
@@ -31,7 +31,7 @@ where
     #[inline]
     pub fn mul<M, A>(mut self, rhs: &NttPolynomial<A>, modulus: M) -> Self
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         self.mul_assign(rhs, modulus);
@@ -42,22 +42,19 @@ where
     #[inline]
     pub fn mul_scalar_assign<M>(&mut self, scalar: T, modulus: M)
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
     {
-        self.iter_mut()
-            .for_each(|v| modulus.reduce_mul_assign(v, scalar))
+        modulus.reduce_scalar_mul_slice_assign(self.as_mut(), scalar);
     }
 
     /// Performs `self += scalar * rhs` according to `modulus`.
     #[inline]
     pub fn add_mul_scalar_assign<M, A>(&mut self, rhs: &NttPolynomial<A>, scalar: T, modulus: M)
     where
-        M: Copy + ReduceMulAdd<T, Output = T>,
+        M: Copy + ReduceMulAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
-        self.iter_mut()
-            .zip(rhs.iter())
-            .for_each(|(r, &v)| *r = modulus.reduce_mul_add(v, scalar, *r));
+        modulus.reduce_add_scalar_mul_slice_assign(self.as_mut(), scalar, rhs.as_ref());
     }
 
     /// Performs `self *= scalar` according to `modulus`.
@@ -86,12 +83,10 @@ where
     #[inline]
     pub fn mul_assign<M, A>(&mut self, rhs: &NttPolynomial<A>, modulus: M)
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
         A: RawData<Elem = T> + Data,
     {
-        self.iter_mut()
-            .zip(rhs.iter())
-            .for_each(|(a, &b)| modulus.reduce_mul_assign(a, b));
+        modulus.reduce_mul_slice_assign(self.as_mut(), rhs.as_ref());
     }
 }
 
@@ -108,13 +103,10 @@ where
         result: &mut NttPolynomial<B>,
         modulus: M,
     ) where
-        M: Copy + ReduceMul<T, Output = T>,
+        M: Copy + ReduceMulSlice<T>,
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + DataMut,
     {
-        self.iter()
-            .zip(rhs.iter())
-            .zip(result.iter_mut())
-            .for_each(|((&a, &b), c)| *c = modulus.reduce_mul(a, b));
+        modulus.reduce_mul_slice_to(self.as_ref(), rhs.as_ref(), result.as_mut());
     }
 }

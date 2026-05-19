@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::{ReduceNeg, ReduceNegAssign};
+use primus_reduce::ReduceNegSlice;
 
 use crate::ArrayBase;
 
@@ -14,7 +14,7 @@ where
     #[inline]
     pub fn neg<M>(mut self, poly_length: usize, moduli: &[M]) -> Self
     where
-        M: Copy + ReduceNegAssign<T>,
+        M: Copy + ReduceNegSlice<T>,
     {
         self.neg_assign(poly_length, moduli);
         self
@@ -24,7 +24,7 @@ where
     #[inline]
     pub fn neg_assign<M>(&mut self, poly_length: usize, moduli: &[M])
     where
-        M: Copy + ReduceNegAssign<T>,
+        M: Copy + ReduceNegSlice<T>,
     {
         self.iter_each_modulus_mut(poly_length)
             .zip(moduli)
@@ -41,7 +41,7 @@ where
     #[inline]
     pub fn neg_inplace<M, A>(&self, result: &mut CrtPolynomial<A>, poly_length: usize, moduli: &[M])
     where
-        M: Copy + ReduceNeg<T, Output = T>,
+        M: Copy + ReduceNegSlice<T>,
         A: RawData<Elem = T> + DataMut,
     {
         izip!(

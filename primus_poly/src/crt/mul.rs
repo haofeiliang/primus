@@ -1,6 +1,6 @@
 use primus_factor::ShoupFactor;
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::prelude::*;
+use primus_reduce::prelude::{ReduceMulAddSlice, ReduceMulSlice, ReduceNegAssign};
 
 use crate::ArrayBase;
 
@@ -15,7 +15,7 @@ where
     #[inline]
     pub fn mul_scalar<M>(mut self, scalar: &[T], poly_length: usize, moduli: &[M]) -> Self
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
     {
         self.mul_scalar_assign(scalar, poly_length, moduli);
         self
@@ -25,7 +25,7 @@ where
     #[inline]
     pub fn mul_scalar_assign<M>(&mut self, scalar: &[T], poly_length: usize, moduli: &[M])
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
     {
         izip!(self.iter_each_modulus_mut(poly_length), scalar, moduli).for_each(
             |(poly, &scalar, &modulus)| ArrayBase(poly).mul_scalar_assign(scalar, modulus),
@@ -66,7 +66,7 @@ where
         poly_length: usize,
         moduli: &[M],
     ) where
-        M: Copy + ReduceMulAdd<T, Output = T>,
+        M: Copy + ReduceMulAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         izip!(
@@ -149,7 +149,7 @@ where
         poly_length: usize,
         moduli: &[M],
     ) where
-        M: Copy + ReduceMul<T, Output = T>,
+        M: Copy + ReduceMulSlice<T>,
         A: RawData<Elem = T> + DataMut,
     {
         izip!(

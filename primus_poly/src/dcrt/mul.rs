@@ -1,7 +1,7 @@
 use primus_factor::{FactorMul, ShoupFactor};
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
 use primus_modulus::UintModulus;
-use primus_reduce::{ReduceAddAssign, ReduceMul, ReduceMulAdd, ReduceMulAssign, ReduceSub};
+use primus_reduce::{ReduceAddAssign, ReduceMulAddSlice, ReduceMulSlice, ReduceSub};
 
 use crate::ArrayBase;
 
@@ -16,7 +16,7 @@ where
     #[inline]
     pub fn mul_scalar<M>(mut self, scalar: &[T], poly_length: usize, moduli: &[M]) -> Self
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
     {
         self.mul_scalar_assign(scalar, poly_length, moduli);
         self
@@ -26,7 +26,7 @@ where
     #[inline]
     pub fn mul_scalar_assign<M>(&mut self, scalar: &[T], poly_length: usize, moduli: &[M])
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
     {
         izip!(self.iter_each_modulus_mut(poly_length), scalar, moduli).for_each(
             |(poly, &scalar, &modulus)| ArrayBase(poly).mul_scalar_assign(scalar, modulus),
@@ -42,7 +42,7 @@ where
         poly_length: usize,
         moduli: &[M],
     ) where
-        M: Copy + ReduceMulAdd<T, Output = T>,
+        M: Copy + ReduceMulAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         izip!(
@@ -85,7 +85,7 @@ where
     #[inline]
     pub fn mul<M, A>(mut self, rhs: &DcrtPolynomial<A>, poly_length: usize, moduli: &[M]) -> Self
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         self.mul_assign(rhs, poly_length, moduli);
@@ -96,7 +96,7 @@ where
     #[inline]
     pub fn mul_assign<M, A>(&mut self, rhs: &DcrtPolynomial<A>, poly_length: usize, moduli: &[M])
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         izip!(
@@ -169,7 +169,7 @@ where
         poly_length: usize,
         moduli: &[M],
     ) where
-        M: Copy + ReduceMul<T, Output = T>,
+        M: Copy + ReduceMulSlice<T>,
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + DataMut,
     {

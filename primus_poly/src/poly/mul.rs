@@ -1,7 +1,10 @@
 use primus_factor::{FactorMul, ShoupFactor};
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
 use primus_modulus::UintModulus;
-use primus_reduce::prelude::*;
+use primus_reduce::{
+    ReduceAddAssign, ReduceMul, ReduceMulAdd, ReduceMulAddSlice, ReduceMulSlice, ReduceNegAssign,
+    ReduceSubAssign,
+};
 
 use super::Polynomial;
 
@@ -14,7 +17,7 @@ where
     #[inline]
     pub fn mul_scalar<M>(mut self, scalar: T, modulus: M) -> Self
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
     {
         self.mul_scalar_assign(scalar, modulus);
         self
@@ -31,22 +34,19 @@ where
     #[inline]
     pub fn mul_scalar_assign<M>(&mut self, scalar: T, modulus: M)
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
     {
-        self.iter_mut()
-            .for_each(|v| modulus.reduce_mul_assign(v, scalar))
+        modulus.reduce_scalar_mul_slice_assign(self.as_mut(), scalar);
     }
 
     /// Performs `self += scalar * rhs` according to `modulus`.
     #[inline]
     pub fn add_mul_scalar_assign<M, A>(&mut self, rhs: &Polynomial<A>, scalar: T, modulus: M)
     where
-        M: Copy + ReduceMulAdd<T, Output = T>,
+        M: Copy + ReduceMulAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
-        self.iter_mut()
-            .zip(rhs.iter())
-            .for_each(|(r, &v)| *r = modulus.reduce_mul_add(v, scalar, *r));
+        modulus.reduce_add_scalar_mul_slice_assign(self.as_mut(), scalar, rhs.as_ref());
     }
 
     /// Performs `self *= scalar` according to `modulus`.

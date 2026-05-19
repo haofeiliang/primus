@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
-use primus_reduce::{ReduceNeg, ReduceNegAssign};
+use primus_reduce::ReduceNegSlice;
 
 use super::ArrayBase;
 
@@ -12,7 +12,7 @@ where
     #[inline]
     pub fn neg<M>(mut self, modulus: M) -> Self
     where
-        M: Copy + ReduceNegAssign<T>,
+        M: Copy + ReduceNegSlice<T>,
     {
         self.neg_assign(modulus);
         self
@@ -22,9 +22,9 @@ where
     #[inline]
     pub fn neg_assign<M>(&mut self, modulus: M)
     where
-        M: Copy + ReduceNegAssign<T>,
+        M: Copy + ReduceNegSlice<T>,
     {
-        self.iter_mut().for_each(|a| modulus.reduce_neg_assign(a));
+        modulus.reduce_neg_slice_assign(self.as_mut());
     }
 }
 
@@ -37,12 +37,9 @@ where
     #[inline]
     pub fn neg_inplace<M, A>(&self, result: &mut ArrayBase<A>, modulus: M)
     where
-        M: Copy + ReduceNeg<T, Output = T>,
+        M: Copy + ReduceNegSlice<T>,
         A: RawData<Elem = T> + DataMut,
     {
-        debug_assert_eq!(self.len(), result.len());
-        self.iter()
-            .zip(result)
-            .for_each(|(&a, b)| *b = modulus.reduce_neg(a));
+        modulus.reduce_neg_slice_to(self.as_ref(), result.as_mut());
     }
 }

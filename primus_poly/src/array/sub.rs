@@ -1,5 +1,5 @@
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::{ReduceSub, ReduceSubAssign};
+use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_reduce::ReduceSubSlice;
 
 use super::ArrayBase;
 
@@ -12,7 +12,7 @@ where
     #[inline]
     pub fn sub_element_wise<M, A>(mut self, rhs: &ArrayBase<A>, modulus: M) -> Self
     where
-        M: Copy + ReduceSubAssign<T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         self.sub_element_wise_assign(rhs, modulus);
@@ -23,11 +23,10 @@ where
     #[inline]
     pub fn sub_element_wise_assign<M, A>(&mut self, rhs: &ArrayBase<A>, modulus: M)
     where
-        M: Copy + ReduceSubAssign<T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
     {
-        debug_assert_eq!(self.len(), rhs.len());
-        izip!(self, rhs).for_each(|(a, &b)| modulus.reduce_sub_assign(a, b));
+        modulus.reduce_sub_slice_assign(self.as_mut(), rhs.as_ref());
     }
 }
 
@@ -44,23 +43,21 @@ where
         result: &mut ArrayBase<B>,
         modulus: M,
     ) where
-        M: Copy + ReduceSub<T, Output = T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + DataMut,
     {
-        debug_assert_eq!(self.len(), rhs.len());
-        debug_assert_eq!(self.len(), result.len());
-        izip!(self, rhs, result).for_each(|(&a, &b, c)| *c = modulus.reduce_sub(a, b));
+        modulus.reduce_sub_slice_to(self.as_ref(), rhs.as_ref(), result.as_mut());
     }
 
     /// Performs `rhs = self - rhs` according to `modulus`.
     #[inline]
     pub fn sub_element_wise_to_right<M, A>(&self, rhs: &mut ArrayBase<A>, modulus: M)
     where
-        M: Copy + ReduceSub<T, Output = T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + DataMut,
     {
         debug_assert_eq!(self.len(), rhs.len());
-        izip!(self, rhs).for_each(|(&a, b)| *b = modulus.reduce_sub(a, *b));
+        modulus.reduce_sub_slice_rev_assign(self.as_ref(), rhs.as_mut());
     }
 }

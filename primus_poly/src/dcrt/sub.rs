@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::{ReduceSub, ReduceSubAssign};
+use primus_reduce::ReduceSubSlice;
 
 use crate::ArrayBase;
 
@@ -14,7 +14,7 @@ where
     #[inline]
     pub fn sub<M, A>(mut self, rhs: &DcrtPolynomial<A>, poly_length: usize, moduli: &[M]) -> Self
     where
-        M: Copy + ReduceSubAssign<T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         self.sub_assign(rhs, poly_length, moduli);
@@ -25,7 +25,7 @@ where
     #[inline]
     pub fn sub_assign<M, A>(&mut self, rhs: &DcrtPolynomial<A>, poly_length: usize, moduli: &[M])
     where
-        M: Copy + ReduceSubAssign<T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         izip!(
@@ -53,7 +53,7 @@ where
         poly_length: usize,
         moduli: &[M],
     ) where
-        M: Copy + ReduceSub<T, Output = T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + DataMut,
     {
@@ -72,7 +72,7 @@ where
     #[inline]
     pub fn sub_to_right<M, A>(&self, rhs: &mut DcrtPolynomial<A>, poly_length: usize, moduli: &[M])
     where
-        M: Copy + ReduceSub<T, Output = T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + DataMut,
     {
         izip!(

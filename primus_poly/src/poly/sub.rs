@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
-use primus_reduce::{ReduceSub, ReduceSubAssign};
+use primus_reduce::ReduceSubSlice;
 
 use super::Polynomial;
 
@@ -12,7 +12,7 @@ where
     #[inline]
     pub fn sub<M, A>(mut self, rhs: &Polynomial<A>, modulus: M) -> Self
     where
-        M: Copy + ReduceSubAssign<T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         self.sub_assign(rhs, modulus);
@@ -23,13 +23,10 @@ where
     #[inline]
     pub fn sub_assign<M, A>(&mut self, rhs: &Polynomial<A>, modulus: M)
     where
-        M: Copy + ReduceSubAssign<T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
     {
-        debug_assert_eq!(self.poly_length(), rhs.poly_length());
-        self.iter_mut()
-            .zip(rhs.iter())
-            .for_each(|(a, &b)| modulus.reduce_sub_assign(a, b));
+        modulus.reduce_sub_slice_assign(self.as_mut(), rhs.as_ref());
     }
 }
 
@@ -42,29 +39,20 @@ where
     #[inline]
     pub fn sub_to_right<M, A>(&self, rhs: &mut Polynomial<A>, modulus: M)
     where
-        M: Copy + ReduceSub<T, Output = T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + DataMut,
     {
-        debug_assert_eq!(self.poly_length(), rhs.poly_length());
-
-        self.iter()
-            .zip(rhs.iter_mut())
-            .for_each(|(&a, b)| *b = modulus.reduce_sub(a, *b))
+        modulus.reduce_sub_slice_rev_assign(self.as_ref(), rhs.as_mut());
     }
 
     /// Performs `result = self - rhs` according to `modulus`.
     #[inline]
     pub fn sub_inplace<M, A, B>(&self, rhs: &Polynomial<A>, result: &mut Polynomial<B>, modulus: M)
     where
-        M: Copy + ReduceSub<T, Output = T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + DataMut,
     {
-        debug_assert_eq!(self.poly_length(), rhs.poly_length());
-        debug_assert_eq!(self.poly_length(), result.poly_length());
-        self.iter()
-            .zip(rhs.iter())
-            .zip(result.iter_mut())
-            .for_each(|((&a, &b), c)| *c = modulus.reduce_sub(a, b))
+        modulus.reduce_sub_slice_to(self.as_ref(), rhs.as_ref(), result.as_mut());
     }
 }
