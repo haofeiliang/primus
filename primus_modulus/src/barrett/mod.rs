@@ -3,11 +3,11 @@ use core::fmt::Display;
 use crate::integer::{DivRemScalar, UnsignedInteger};
 
 mod ops;
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 mod simd;
 mod slice;
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 pub use simd::SimdBarrettModulus;
 
 /// Lower-level SIMD slice kernels with an explicit lane count, for callers
@@ -17,7 +17,7 @@ pub use simd::SimdBarrettModulus;
 /// time based on the target CPU's SIMD width
 /// (see [`primus_integer::lanes`]). Reach for this module only when
 /// you have measured a different `N` that performs better on your workload.
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 pub mod simd_kernel {
     pub use super::simd::{
         lazy_reduce_add_mul_slice_assign, lazy_reduce_mul_add_slice_to,

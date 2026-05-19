@@ -18,7 +18,6 @@ mod ops;
 mod slice;
 
 #[cfg(all(
-    feature = "nightly",
     feature = "simd",
     target_feature = "avx512f",
     target_feature = "avx512dq",

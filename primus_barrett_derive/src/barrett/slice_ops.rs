@@ -14,7 +14,7 @@ pub(crate) fn impl_reduce_slice_ops(
         // ReduceOnceSlice
         // -----------------------------------------------------------------
 
-        #[cfg(not(all(feature = "nightly", feature = "simd")))]
+        #[cfg(not(feature = "simd"))]
         impl ::primus_modulus::reduce::ReduceOnceSlice<#ty> for #name {
             #[inline]
             fn reduce_once_slice_assign(self, values: &mut [#ty]) {
@@ -29,7 +29,7 @@ pub(crate) fn impl_reduce_slice_ops(
             }
         }
 
-        #[cfg(all(feature = "nightly", feature = "simd"))]
+        #[cfg(feature = "simd")]
         impl ::primus_modulus::reduce::ReduceOnceSlice<#ty> for #name {
             #[inline]
             fn reduce_once_slice_assign(self, values: &mut [#ty]) {
@@ -64,7 +64,7 @@ pub(crate) fn impl_reduce_slice_ops(
         // ReduceNegSlice
         // -----------------------------------------------------------------
 
-        #[cfg(not(all(feature = "nightly", feature = "simd")))]
+        #[cfg(not(feature = "simd"))]
         impl ::primus_modulus::reduce::ReduceNegSlice<#ty> for #name {
             #[inline]
             fn reduce_neg_slice_assign(self, values: &mut [#ty]) {
@@ -79,7 +79,7 @@ pub(crate) fn impl_reduce_slice_ops(
             }
         }
 
-        #[cfg(all(feature = "nightly", feature = "simd"))]
+        #[cfg(feature = "simd")]
         impl ::primus_modulus::reduce::ReduceNegSlice<#ty> for #name {
             #[inline]
             fn reduce_neg_slice_assign(self, values: &mut [#ty]) {
@@ -114,7 +114,7 @@ pub(crate) fn impl_reduce_slice_ops(
         // ReduceAddSlice
         // -----------------------------------------------------------------
 
-        #[cfg(not(all(feature = "nightly", feature = "simd")))]
+        #[cfg(not(feature = "simd"))]
         impl ::primus_modulus::reduce::ReduceAddSlice<#ty> for #name {
             #[inline]
             fn reduce_add_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
@@ -131,7 +131,7 @@ pub(crate) fn impl_reduce_slice_ops(
             }
         }
 
-        #[cfg(all(feature = "nightly", feature = "simd"))]
+        #[cfg(feature = "simd")]
         impl ::primus_modulus::reduce::ReduceAddSlice<#ty> for #name {
             #[inline]
             fn reduce_add_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
@@ -168,7 +168,7 @@ pub(crate) fn impl_reduce_slice_ops(
         // ReduceSubSlice
         // -----------------------------------------------------------------
 
-        #[cfg(not(all(feature = "nightly", feature = "simd")))]
+        #[cfg(not(feature = "simd"))]
         impl ::primus_modulus::reduce::ReduceSubSlice<#ty> for #name {
             #[inline]
             fn reduce_sub_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
@@ -191,7 +191,7 @@ pub(crate) fn impl_reduce_slice_ops(
             }
         }
 
-        #[cfg(all(feature = "nightly", feature = "simd"))]
+        #[cfg(feature = "simd")]
         impl ::primus_modulus::reduce::ReduceSubSlice<#ty> for #name {
             #[inline]
             fn reduce_sub_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
@@ -242,7 +242,7 @@ pub(crate) fn impl_reduce_slice_ops(
         // ReduceMulSlice
         // -----------------------------------------------------------------
 
-        #[cfg(not(all(feature = "nightly", feature = "simd")))]
+        #[cfg(not(feature = "simd"))]
         impl ::primus_modulus::reduce::ReduceMulSlice<#ty> for #name {
             #[inline]
             fn reduce_mul_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
@@ -270,7 +270,7 @@ pub(crate) fn impl_reduce_slice_ops(
             }
         }
 
-        #[cfg(all(feature = "nightly", feature = "simd"))]
+        #[cfg(feature = "simd")]
         impl ::primus_modulus::reduce::ReduceMulSlice<#ty> for #name {
             #[inline]
             fn reduce_mul_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
@@ -334,7 +334,7 @@ pub(crate) fn impl_reduce_slice_ops(
         // ReduceMulAddSlice
         // -----------------------------------------------------------------
 
-        #[cfg(not(all(feature = "nightly", feature = "simd")))]
+        #[cfg(not(feature = "simd"))]
         impl ::primus_modulus::reduce::ReduceMulAddSlice<#ty> for #name {
             #[inline]
             fn reduce_add_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {
@@ -399,7 +399,7 @@ pub(crate) fn impl_reduce_slice_ops(
             }
         }
 
-        #[cfg(all(feature = "nightly", feature = "simd"))]
+        #[cfg(feature = "simd")]
         impl ::primus_modulus::reduce::ReduceMulAddSlice<#ty> for #name {
             #[inline]
             fn reduce_add_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {

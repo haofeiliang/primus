@@ -18,7 +18,6 @@ criterion = { workspace = true }
 
 [features]
 default = []
-nightly = []
 simd = ["rand/simd_support"]
 
 [[bench]]

@@ -2,7 +2,7 @@
 //!
 //! This module provides traits and blanket implementations that extend the
 //! scalar [`UnsignedInteger`](crate::UnsignedInteger) operations to SIMD
-//! vectors when the `nightly` and `simd` features are enabled.
+//! vectors when the `simd` features are enabled.
 //!
 //! [`SimdUnsignedInteger`] marks unsigned integer types that can serve as
 //! SIMD lane elements. [`SimdArray`] extends [`Simd`] vectors with the

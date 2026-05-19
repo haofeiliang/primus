@@ -54,4 +54,14 @@ name = "expand_coeff_components"
 harness = false
 
 [features]
-# nightly = ["primus_ntt/nightly", "primus_lattice/nightly"]
+default = []
+simd = [
+    "primus_integer/simd",
+    "primus_modulus/simd",
+    "primus_factor/simd",
+    "primus_poly/simd",
+    "primus_ntt/simd",
+    "primus_rns/simd",
+    "primus_decompose/simd",
+    "primus_lattice/simd",
+]

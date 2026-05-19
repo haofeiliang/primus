@@ -3,7 +3,7 @@
 //! The scalar helpers in this module loop over a slice using the existing
 //! scalar `Reduce*` impls on [`BarrettModulus`]. They are also used as
 //! the tail of the SIMD kernels in [`super::simd`] when the
-//! `nightly` + `simd` feature combo is enabled.
+//! `simd` feature combo is enabled.
 
 use primus_integer::UnsignedInteger;
 use primus_reduce::prelude::*;
@@ -690,10 +690,10 @@ macro_rules! impl_barrett_slice_scalar {
 impl_barrett_slice_scalar!(u128);
 
 // When SIMD is off, every primitive width falls back to scalar.
-#[cfg(not(all(feature = "nightly", feature = "simd")))]
+#[cfg(not(feature = "simd"))]
 impl_barrett_slice_scalar!(u8, u16, u32, u64, usize);
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 macro_rules! impl_barrett_slice_simd {
     ($t:ty, $lanes:expr) => {
         impl ReduceOnceSlice<$t> for BarrettModulus<$t> {
@@ -864,18 +864,18 @@ macro_rules! impl_barrett_slice_simd {
     };
 }
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 impl_barrett_slice_simd!(u8, primus_integer::lanes::VECTOR_BITS / 8);
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 impl_barrett_slice_simd!(u16, primus_integer::lanes::VECTOR_BITS / 16);
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 impl_barrett_slice_simd!(u32, primus_integer::lanes::VECTOR_BITS / 32);
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 impl_barrett_slice_simd!(u64, primus_integer::lanes::VECTOR_BITS / 64);
 
-#[cfg(all(feature = "nightly", feature = "simd", target_pointer_width = "64"))]
+#[cfg(all(feature = "simd", target_pointer_width = "64"))]
 impl_barrett_slice_simd!(usize, primus_integer::lanes::VECTOR_BITS / 64);
-#[cfg(all(feature = "nightly", feature = "simd", target_pointer_width = "32"))]
+#[cfg(all(feature = "simd", target_pointer_width = "32"))]
 impl_barrett_slice_simd!(usize, primus_integer::lanes::VECTOR_BITS / 32);
 
 #[cfg(test)]

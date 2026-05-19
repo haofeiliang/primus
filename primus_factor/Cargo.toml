@@ -12,7 +12,6 @@ criterion = { workspace = true }
 
 [features]
 default = []
-nightly = ["primus_integer/nightly"]
 simd = ["primus_integer/simd"]
 
 [[bench]]

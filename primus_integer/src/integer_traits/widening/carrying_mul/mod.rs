@@ -1,5 +1,5 @@
 mod primitive;
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 mod simd;
 
 /// Carrying mul operation trait.

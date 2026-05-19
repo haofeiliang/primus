@@ -77,7 +77,6 @@ impl ReduceSubSlice<u64> for Barrett50Modulus {
 // ---------------------------------------------------------------------------
 
 #[cfg(all(
-    feature = "nightly",
     feature = "simd",
     target_feature = "avx512f",
     target_feature = "avx512dq",
@@ -208,7 +207,6 @@ mod ifma_impls {
 }
 
 #[cfg(not(all(
-    feature = "nightly",
     feature = "simd",
     target_feature = "avx512f",
     target_feature = "avx512dq",

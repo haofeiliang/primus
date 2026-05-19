@@ -22,6 +22,12 @@ criterion = { workspace = true }
 [features]
 default = ["concrete-ntt"]
 concrete-ntt = ["dep:concrete-ntt"]
+simd = [
+    "primus_integer/simd",
+    "primus_modulus/simd",
+    "primus_factor/simd",
+    "primus_poly/simd",
+]
 
 [[bench]]
 name = "ntt"

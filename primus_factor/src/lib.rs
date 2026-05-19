@@ -1,4 +1,4 @@
-#![cfg_attr(all(feature = "nightly", feature = "simd"), feature(portable_simd))]
+#![cfg_attr(feature = "simd", feature(portable_simd))]
 
 mod multiply;
 mod shoup_factor;
@@ -15,7 +15,7 @@ pub trait FactorMul<T>: LazyFactorMul<T> {
 
 /// Slice-level multiplication by a precomputed factor.
 ///
-/// Implementations may use SIMD internally when the `nightly` and `simd`
+/// Implementations may use SIMD internally when the `simd`
 /// features are enabled. Callers keep the normal scalar slice layout and the
 /// remainder is handled by the scalar path.
 pub trait LazyFactorSliceOps<T> {
@@ -32,7 +32,7 @@ pub trait LazyFactorSliceOps<T> {
 
 /// Slice-level multiplication by a precomputed factor.
 ///
-/// Implementations may use SIMD internally when the `nightly` and `simd`
+/// Implementations may use SIMD internally when the `simd`
 /// features are enabled. Callers keep the normal scalar slice layout and the
 /// remainder is handled by the scalar path.
 pub trait FactorSliceOps<T> {
@@ -75,5 +75,5 @@ pub trait FactorSliceOps<T> {
 pub use multiply::MultiplyFactor;
 pub use shoup_factor::ShoupFactor;
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 pub use shoup_factor::{SimdShoupFactor, simd_kernel};

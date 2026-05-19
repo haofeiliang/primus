@@ -1,4 +1,4 @@
-#![cfg_attr(all(feature = "nightly", feature = "simd"), feature(portable_simd))]
+#![cfg_attr(feature = "simd", feature(portable_simd))]
 
 mod macros;
 
@@ -11,7 +11,7 @@ mod big_integer;
 
 mod data;
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 mod simd;
 
 mod size;
@@ -29,5 +29,5 @@ pub use big_integer::{
 
 pub use data::{Data, DataMut, DataOwned, RawData};
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 pub use simd::{SimdArray, SimdMaskArray, SimdUnsignedInteger, lanes};

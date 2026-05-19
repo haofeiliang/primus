@@ -2,10 +2,10 @@ use primus_integer::{DivRemScalar, UnsignedInteger};
 
 use crate::{FactorMul, FactorSliceOps, LazyFactorMul, LazyFactorSliceOps};
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 mod simd;
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 pub use simd::SimdShoupFactor;
 
 /// Lower-level SIMD slice kernels with an explicit lane count, for callers
@@ -15,7 +15,7 @@ pub use simd::SimdShoupFactor;
 /// compile time based on the target CPU's SIMD width
 /// (see [`primus_integer::lanes`]). Reach for this module only when
 /// you have measured a different `N` that performs better on your workload.
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 pub mod simd_kernel {
     pub use super::simd::{
         add_factor_mul_slice_assign, factor_mul_add_slice_to, factor_mul_slice_assign,
@@ -279,7 +279,7 @@ macro_rules! impl_shoup_factor_slice_ops_scalar {
     };
 }
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 macro_rules! impl_shoup_factor_slice_ops_simd {
     ($t:ty, $lanes:expr) => {
         impl LazyFactorSliceOps<$t> for ShoupFactor<$t> {
@@ -323,21 +323,21 @@ macro_rules! impl_shoup_factor_slice_ops_simd {
     };
 }
 
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 impl_shoup_factor_slice_ops_simd!(u8, primus_integer::lanes::VECTOR_BITS / 8);
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 impl_shoup_factor_slice_ops_simd!(u16, primus_integer::lanes::VECTOR_BITS / 16);
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 impl_shoup_factor_slice_ops_simd!(u32, primus_integer::lanes::VECTOR_BITS / 32);
-#[cfg(all(feature = "nightly", feature = "simd"))]
+#[cfg(feature = "simd")]
 impl_shoup_factor_slice_ops_simd!(u64, primus_integer::lanes::VECTOR_BITS / 64);
 
-#[cfg(all(feature = "nightly", feature = "simd", target_pointer_width = "64"))]
+#[cfg(all(feature = "simd", target_pointer_width = "64"))]
 impl_shoup_factor_slice_ops_simd!(usize, primus_integer::lanes::VECTOR_BITS / 64);
-#[cfg(all(feature = "nightly", feature = "simd", target_pointer_width = "32"))]
+#[cfg(all(feature = "simd", target_pointer_width = "32"))]
 impl_shoup_factor_slice_ops_simd!(usize, primus_integer::lanes::VECTOR_BITS / 32);
 
-#[cfg(not(all(feature = "nightly", feature = "simd")))]
+#[cfg(not(feature = "simd"))]
 impl_shoup_factor_slice_ops_scalar!(u8, u16, u32, u64, usize);
 
 impl_shoup_factor_slice_ops_scalar!(u128);
@@ -481,7 +481,7 @@ mod tests {
     }
 
     /// Verifies that the SIMD kernel works at a non-default lane count.
-    #[cfg(all(feature = "nightly", feature = "simd"))]
+    #[cfg(feature = "simd")]
     #[test]
     fn test_shoup_simd_kernel_custom_lanes() {
         let mut rng = rand::rng();

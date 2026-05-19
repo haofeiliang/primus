@@ -1,4 +1,4 @@
-#![cfg_attr(all(feature = "nightly", feature = "simd"), feature(portable_simd))]
+#![cfg_attr(feature = "simd", feature(portable_simd))]
 
 use std::hint::black_box;
 #[cfg(feature = "simd")]

@@ -31,10 +31,9 @@ harness = false
 [[bench]]
 name = "barrett_lane_width"
 harness = false
-required-features = ["nightly", "simd"]
+required-features = ["simd"]
 
 [features]
 default = ["derive"]
-nightly = ["primus_integer/nightly"]
 simd = ["primus_integer/simd"]
 derive = ["dep:primus_barrett_derive"]

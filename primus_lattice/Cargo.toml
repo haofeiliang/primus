@@ -21,4 +21,12 @@ paste = { workspace = true }
 itertools = { workspace = true }
 
 [features]
-# nightly = ["primus_ntt/nightly"]
+default = []
+simd = [
+    "primus_integer/simd",
+    "primus_factor/simd",
+    "primus_poly/simd",
+    "primus_ntt/simd",
+    "primus_rns/simd",
+    "primus_decompose/simd",
+]
