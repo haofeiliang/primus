@@ -684,14 +684,12 @@ pub fn multiply_many_values_except<T: UnsignedInteger>(values: &[T], except: usi
 ///
 /// - `values` is empty
 /// - `except >= values.len()`
-/// - `result.len() < values.len()`
 pub fn multiply_many_values_except_inplace<T: UnsignedInteger>(
     values: &[T],
     except: usize,
     result: &mut [T],
 ) {
     debug_assert!(!values.is_empty() && except < values.len());
-    debug_assert!(result.len() >= values.len());
     result.fill(T::ZERO);
     result[0] = T::ONE;
     let mut len = 1;
