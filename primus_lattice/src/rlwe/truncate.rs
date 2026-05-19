@@ -2,7 +2,7 @@ use primus_distr::DiscreteGaussian;
 use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial, Polynomial};
-use primus_reduce::{FieldContext, ReduceNegAssign};
+use primus_reduce::{FieldContext, ReduceNegSlice};
 use rand::distr::Uniform;
 
 use crate::lwe::{Lwe, MultiMsgLwe};
@@ -29,16 +29,14 @@ where
     #[inline]
     pub fn extract_lwe_locally<M>(self, poly_length: usize, modulus: M) -> Lwe<Vec<T>>
     where
-        M: Copy + ReduceNegAssign<T>,
+        M: Copy + ReduceNegSlice<T>,
     {
         let mut data = self.0;
 
         data.truncate(poly_length + 1);
 
         data[1..poly_length].reverse();
-        data[1..poly_length]
-            .iter_mut()
-            .for_each(|v| modulus.reduce_neg_assign(v));
+        modulus.reduce_neg_slice_assign(&mut data[1..poly_length]);
 
         Lwe::new(data)
     }
@@ -51,16 +49,14 @@ where
         modulus: M,
     ) -> MultiMsgLwe<Vec<T>>
     where
-        M: Copy + ReduceNegAssign<T>,
+        M: Copy + ReduceNegSlice<T>,
     {
         let mut data = self.0;
 
         data.truncate(poly_length + count);
 
         data[1..poly_length].reverse();
-        data[1..poly_length]
-            .iter_mut()
-            .for_each(|v| modulus.reduce_neg_assign(v));
+        modulus.reduce_neg_slice_assign(&mut data[1..poly_length]);
 
         MultiMsgLwe::new(data)
     }

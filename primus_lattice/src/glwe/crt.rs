@@ -82,9 +82,7 @@ where
         if r < poly_length {
             let rotate = |poly: &mut [T], modulus: M| {
                 poly.rotate_right(r);
-                poly[0..r]
-                    .iter_mut()
-                    .for_each(|v| modulus.reduce_neg_assign(v));
+                modulus.reduce_neg_slice_assign(&mut poly[0..r]);
             };
 
             self.iter_crt_poly_mut(crt_poly_len)
@@ -99,9 +97,7 @@ where
             let r = r - poly_length;
             let rotate = |poly: &mut [T], modulus: M| {
                 poly.rotate_right(r);
-                poly[r..]
-                    .iter_mut()
-                    .for_each(|v| modulus.reduce_neg_assign(v));
+                modulus.reduce_neg_slice_assign(&mut poly[r..]);
             };
 
             self.iter_crt_poly_mut(crt_poly_len)

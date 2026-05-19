@@ -206,7 +206,7 @@ where
     #[inline]
     pub fn add_component_wise<M, A>(mut self, rhs: &Lwe<A>, modulus: M) -> Self
     where
-        M: Copy + ReduceAddAssign<T>,
+        M: Copy + ReduceAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         self.add_component_wise_assign(rhs, modulus);
@@ -218,14 +218,10 @@ where
     #[inline]
     pub fn add_component_wise_assign<M, A>(&mut self, rhs: &Lwe<A>, modulus: M)
     where
-        M: Copy + ReduceAddAssign<T>,
+        M: Copy + ReduceAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
-        debug_assert_eq!(self.0.len(), rhs.0.len());
-        self.0
-            .iter_mut()
-            .zip(rhs.0.iter())
-            .for_each(|(x, &y)| x.add_modulo_assign(y, modulus));
+        modulus.reduce_add_slice_assign(self.0.as_mut_slice(), rhs.0.as_slice());
     }
 
     /// Performs component-wise modular subtraction of two [`Lwe<S, T>`].
@@ -237,7 +233,7 @@ where
     #[inline]
     pub fn sub_component_wise<M, A>(mut self, rhs: &Lwe<A>, modulus: M) -> Self
     where
-        M: Copy + ReduceSubAssign<T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         self.sub_component_wise_assign(rhs, modulus);
@@ -249,14 +245,10 @@ where
     #[inline]
     pub fn sub_component_wise_assign<M, A>(&mut self, rhs: &Lwe<A>, modulus: M)
     where
-        M: Copy + ReduceSubAssign<T>,
+        M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + Data,
     {
-        debug_assert_eq!(self.0.len(), rhs.0.len());
-        self.0
-            .iter_mut()
-            .zip(rhs.0.iter())
-            .for_each(|(x, &y)| x.sub_modulo_assign(y, modulus));
+        modulus.reduce_sub_slice_assign(self.0.as_mut_slice(), rhs.0.as_slice());
     }
 
     /// Performs an in-place modular scalar multiplication
@@ -264,11 +256,9 @@ where
     #[inline]
     pub fn mul_scalar_assign<M>(&mut self, scalar: T, modulus: M)
     where
-        M: Copy + ReduceMulAssign<T>,
+        M: Copy + ReduceMulSlice<T>,
     {
-        self.0
-            .iter_mut()
-            .for_each(|v| v.mul_modulo_assign(scalar, modulus));
+        modulus.reduce_scalar_mul_slice_assign(self.0.as_mut_slice(), scalar);
     }
 
     /// Performs an in-place modular scalar multiplication
@@ -277,22 +267,19 @@ where
     #[inline]
     pub fn add_rhs_mul_scalar_assign<M, A>(&mut self, rhs: &Lwe<A>, scalar: T, modulus: M)
     where
-        M: Copy + ReduceMulAdd<T, Output = T>,
+        M: Copy + ReduceMulAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
-        self.0
-            .iter_mut()
-            .zip(rhs.0.iter())
-            .for_each(|(v, &r)| *v = modulus.reduce_mul_add(r, scalar, *v));
+        modulus.reduce_add_scalar_mul_slice_assign(self.0.as_mut_slice(), scalar, rhs.0.as_slice());
     }
 
     /// Performs an negation on the `self` [`Lwe<S, T>`].
     #[inline]
     pub fn neg_assign<M>(&mut self, modulus: M)
     where
-        M: Copy + ReduceNegAssign<T>,
+        M: Copy + ReduceNegSlice<T>,
     {
-        self.0.iter_mut().for_each(|v| modulus.reduce_neg_assign(v));
+        modulus.reduce_neg_slice_assign(self.0.as_mut_slice());
     }
 }
 

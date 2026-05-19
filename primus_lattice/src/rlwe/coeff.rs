@@ -5,7 +5,7 @@ use primus_factor::ShoupFactor;
 use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial, Polynomial, PolynomialIter, PolynomialIterMut};
-use primus_reduce::{FieldContext, ReduceNeg, ReduceNegAssign};
+use primus_reduce::{FieldContext, ReduceNeg, ReduceNegAssign, ReduceNegSlice};
 
 use crate::lwe::{Lwe, MultiMsgLwe};
 
@@ -55,7 +55,7 @@ impl<T: UnsignedInteger> Rlwe<Vec<T>> {
     #[inline]
     pub fn extract_lwe_locally<M>(self, modulus: M) -> Lwe<Vec<T>>
     where
-        M: Copy + ReduceNegAssign<T>,
+        M: Copy + ReduceNegSlice<T>,
     {
         let mut data = self.0;
 
@@ -65,7 +65,7 @@ impl<T: UnsignedInteger> Rlwe<Vec<T>> {
         let chunk = &mut data[1..poly_len];
 
         chunk.reverse();
-        chunk.iter_mut().for_each(|v| modulus.reduce_neg_assign(v));
+        modulus.reduce_neg_slice_assign(chunk);
 
         Lwe::new(data)
     }
@@ -73,7 +73,7 @@ impl<T: UnsignedInteger> Rlwe<Vec<T>> {
     /// Sample extract a [`MultiMsgLwe<T>`] with several encrypted messages.
     pub fn extract_first_few_lwe_locally<M>(self, count: usize, modulus: M) -> MultiMsgLwe<Vec<T>>
     where
-        M: Copy + ReduceNegAssign<T>,
+        M: Copy + ReduceNegSlice<T>,
     {
         let mut data = self.0;
         let poly_len = data.len() / 2;
@@ -81,9 +81,7 @@ impl<T: UnsignedInteger> Rlwe<Vec<T>> {
         data.truncate(poly_len + count);
 
         data[1..poly_len].reverse();
-        data[1..poly_len]
-            .iter_mut()
-            .for_each(|v| modulus.reduce_neg_assign(v));
+        modulus.reduce_neg_slice_assign(&mut data[1..poly_len]);
 
         MultiMsgLwe::new(data)
     }
