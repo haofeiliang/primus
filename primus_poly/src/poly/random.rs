@@ -1,6 +1,6 @@
 use primus_distr::DiscreteGaussian;
 use primus_integer::{DataMut, DataOwned, RawData, UnsignedInteger};
-use primus_reduce::{Modulus, ops::ReduceAddAssign};
+use primus_reduce::{Modulus, ReduceAddAssign};
 use rand::distr::Distribution;
 
 use crate::poly::PolynomialOwned;

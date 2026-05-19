@@ -4,7 +4,7 @@ mod tests {
     use primus_decompose::big_integer::BigUintApproxSignedBasis;
     use primus_integer::{BigUint, BigUintIter, BigUintIterMut, izip, multiply_many_values};
     use primus_modulus::BarrettModulus;
-    use primus_reduce::ops::*;
+    use primus_reduce::prelude::*;
     use primus_rns::RNSBase;
     use rand::RngExt;
     use rand::distr::{Distribution, Uniform};

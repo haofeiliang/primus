@@ -9,7 +9,9 @@ mod ratio;
 mod basic;
 
 mod lazy_ops;
+mod lazy_slice_ops;
 mod ops;
+mod slice_ops;
 
 #[inline]
 pub(super) fn derive(input: &BarrettModulusInput) -> Result<TokenStream> {
@@ -41,11 +43,20 @@ fn impl_barrett(input: &BarrettModulusInput, modulus: Modulus) -> TokenStream {
 
     let reduce_ops = ops::impl_reduce_ops(name, &modulus, ty);
 
+    let reduce_slice_ops = slice_ops::impl_reduce_slice_ops(name, &modulus, ty, &ratio);
+
+    let lazy_reduce_slice_ops =
+        lazy_slice_ops::impl_lazy_reduce_slice_ops(name, &modulus, ty, &ratio);
+
     quote::quote! {
         #impl_basic
 
         #lazy_reduce_ops
 
         #reduce_ops
+
+        #reduce_slice_ops
+
+        #lazy_reduce_slice_ops
     }
 }

@@ -13,7 +13,7 @@ use primus_lattice::glwe::{CrtGlwe, DcrtGlwe};
 use primus_modulus::BarrettModulus;
 use primus_ntt::{CrtConcrete64Table, DcrtTable};
 use primus_poly::{CrtPolynomial, Polynomial};
-use primus_reduce::{Modulus, ops::ReduceInv};
+use primus_reduce::{Modulus, ReduceInv};
 
 fn bench_expand_coeff_components(c: &mut Criterion) {
     type V = u64;

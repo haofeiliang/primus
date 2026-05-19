@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
-use primus_reduce::ops::{ReduceAdd, ReduceAddAssign};
+use primus_reduce::{ReduceAdd, ReduceAddAssign};
 
 use super::Polynomial;
 

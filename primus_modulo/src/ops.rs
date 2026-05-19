@@ -1,5 +1,6 @@
 use primus_integer::UnsignedInteger;
-use primus_reduce::{ReduceError, ops::*};
+use primus_reduce::ReduceError;
+use primus_reduce::prelude::*;
 
 use crate::ModuloError;
 

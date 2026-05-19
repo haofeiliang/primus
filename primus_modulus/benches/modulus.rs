@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use primus_modulus::{BarrettModulus, MontgomeryModulus, PowOf2Modulus};
-use primus_reduce::ops::*;
+use primus_reduce::prelude::*;
 use rand::distr::{Distribution, Uniform};
 
 type ValueT = u64;

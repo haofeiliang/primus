@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::ops::{ReduceSub, ReduceSubAssign};
+use primus_reduce::{ReduceSub, ReduceSubAssign};
 
 use crate::ArrayBase;
 

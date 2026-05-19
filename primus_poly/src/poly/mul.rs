@@ -1,7 +1,7 @@
 use primus_factor::{FactorMul, ShoupFactor};
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
 use primus_modulus::UintModulus;
-use primus_reduce::ops::*;
+use primus_reduce::prelude::*;
 
 use super::Polynomial;
 

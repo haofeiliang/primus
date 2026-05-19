@@ -1,4 +1,4 @@
-use primus_reduce::lazy_ops::*;
+use primus_reduce::prelude::*;
 
 /// The lazy modulo operation.
 pub trait LazyModulo<M> {

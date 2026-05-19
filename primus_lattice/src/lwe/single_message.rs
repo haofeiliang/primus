@@ -2,8 +2,9 @@ use std::mem::MaybeUninit;
 
 use primus_distr::DiscreteGaussian;
 use primus_integer::{Data, DataMut, DataOwned, RawData, Size, UnsignedInteger};
-use primus_modulo::ops::*;
-use primus_reduce::{Modulus, ops::*};
+use primus_modulo::*;
+use primus_reduce::Modulus;
+use primus_reduce::prelude::*;
 use rand::distr::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 

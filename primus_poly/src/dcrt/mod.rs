@@ -1,6 +1,6 @@
 use num_traits::Zero;
 use primus_integer::{ByteCount, Data, DataMut, DataOwned, RawData, Size, UnsignedInteger, izip};
-use primus_reduce::ops::{ReduceAdd, ReduceMul, ReduceMulAdd, ReduceSub};
+use primus_reduce::{ReduceAdd, ReduceMul, ReduceMulAdd, ReduceSub};
 
 use crate::ArrayBase;
 

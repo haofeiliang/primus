@@ -1,6 +1,6 @@
 use primus_factor::ShoupFactor;
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::ops::*;
+use primus_reduce::prelude::*;
 
 use crate::ArrayBase;
 

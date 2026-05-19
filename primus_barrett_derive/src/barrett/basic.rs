@@ -12,7 +12,7 @@ pub(crate) fn basic(
     let [r0, r1] = ratio;
     quote! {
         impl #name {
-            /// Retures the modulus value.
+            /// Returns the modulus value.
             #vis const fn value() -> #ty {
                 #modulus
             }

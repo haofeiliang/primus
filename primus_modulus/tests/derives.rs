@@ -57,7 +57,7 @@ macro_rules! test_modulus {
 mod u8tests {
     use primus_modulus::Barrett;
     use primus_reduce::FieldContext;
-    use primus_reduce::ops::*;
+    use primus_reduce::prelude::*;
     use rand::{distr::Uniform, prelude::*};
 
     #[derive(Barrett)]
@@ -74,7 +74,7 @@ mod u8tests {
 mod u16tests {
     use primus_modulus::Barrett;
     use primus_reduce::FieldContext;
-    use primus_reduce::ops::*;
+    use primus_reduce::prelude::*;
     use rand::{distr::Uniform, prelude::*};
 
     #[derive(Barrett)]
@@ -91,7 +91,7 @@ mod u16tests {
 mod u32tests {
     use primus_modulus::Barrett;
     use primus_reduce::FieldContext;
-    use primus_reduce::ops::*;
+    use primus_reduce::prelude::*;
     use rand::{distr::Uniform, prelude::*};
 
     #[derive(Barrett)]
@@ -108,7 +108,7 @@ mod u32tests {
 mod u64tests {
     use primus_modulus::Barrett;
     use primus_reduce::FieldContext;
-    use primus_reduce::ops::*;
+    use primus_reduce::prelude::*;
     use rand::{distr::Uniform, prelude::*};
 
     #[derive(Barrett)]

@@ -2,7 +2,7 @@
 //! 三个 lane width 下的吞吐对比。
 //!
 //! plan.md Step 9 想问的问题：在 AVX-512 主机上，调用 simd_kernel 时把 lane
-//! width 从默认的 `default_lanes` (= 8 on AVX-512) 显式覆盖成 `16`，是否真能
+//! width 从默认的 `lanes` (= 8 on AVX-512) 显式覆盖成 `16`，是否真能
 //! 给 NTT 大尺寸场景多 +10~15%。这里 bench 4 个 mul-class 算子来回答。
 //!
 //! 用 ~2^62 NTT-friendly prime（与 `barrett_slice.rs` 一致），所以走的是
@@ -73,9 +73,39 @@ fn bench_mul_add_slice_to(c: &mut Criterion) {
         let b = rand_vec(n, MODULUS);
         let c_in = rand_vec(n, MODULUS);
         let mut out = vec![0u64; n];
-        bench_lane!(group, reduce_mul_add_slice_to, 4, n, m, &a, &b, &c_in, &mut out);
-        bench_lane!(group, reduce_mul_add_slice_to, 8, n, m, &a, &b, &c_in, &mut out);
-        bench_lane!(group, reduce_mul_add_slice_to, 16, n, m, &a, &b, &c_in, &mut out);
+        bench_lane!(
+            group,
+            reduce_mul_add_slice_to,
+            4,
+            n,
+            m,
+            &a,
+            &b,
+            &c_in,
+            &mut out
+        );
+        bench_lane!(
+            group,
+            reduce_mul_add_slice_to,
+            8,
+            n,
+            m,
+            &a,
+            &b,
+            &c_in,
+            &mut out
+        );
+        bench_lane!(
+            group,
+            reduce_mul_add_slice_to,
+            16,
+            n,
+            m,
+            &a,
+            &b,
+            &c_in,
+            &mut out
+        );
     }
     group.finish();
 }

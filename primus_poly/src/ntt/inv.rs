@@ -1,5 +1,5 @@
 use primus_integer::{DataMut, RawData, UnsignedInteger};
-use primus_reduce::ops::{ReduceInv, ReduceMul};
+use primus_reduce::{ReduceInv, ReduceMul};
 
 use super::NttPolynomial;
 

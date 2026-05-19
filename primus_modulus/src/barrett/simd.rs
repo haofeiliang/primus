@@ -6,7 +6,7 @@ use std::simd::{
 use primus_integer::{
     CarryingAdd, CarryingMul, SimdArray, SimdMaskArray, SimdUnsignedInteger, WideningMul,
 };
-use primus_reduce::{ReduceAdd, lazy_ops::*};
+use primus_reduce::prelude::*;
 
 use super::BarrettModulus;
 

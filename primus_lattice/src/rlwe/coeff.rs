@@ -5,10 +5,7 @@ use primus_factor::ShoupFactor;
 use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial, Polynomial, PolynomialIter, PolynomialIterMut};
-use primus_reduce::{
-    FieldContext,
-    ops::{ReduceNeg, ReduceNegAssign},
-};
+use primus_reduce::{FieldContext, ReduceNeg, ReduceNegAssign};
 
 use crate::lwe::{Lwe, MultiMsgLwe};
 

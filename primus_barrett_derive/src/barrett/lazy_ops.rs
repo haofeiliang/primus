@@ -10,7 +10,7 @@ pub(crate) fn impl_lazy_reduce_ops(
 ) -> TokenStream {
     let [r0, r1] = ratio;
     quote! {
-        impl ::primus_modulus::reduce::lazy_ops::LazyReduce<#ty> for #name {
+        impl ::primus_modulus::reduce::LazyReduce<#ty> for #name {
             type Output = #ty;
 
             /// Calculates `value (mod 2*modulus)`.
@@ -39,7 +39,7 @@ pub(crate) fn impl_lazy_reduce_ops(
             }
         }
 
-        impl ::primus_modulus::reduce::lazy_ops::LazyReduce<[#ty; 2]> for #name {
+        impl ::primus_modulus::reduce::LazyReduce<[#ty; 2]> for #name {
             type Output = #ty;
 
             /// Calculates `value (mod 2*modulus)`.
@@ -82,7 +82,7 @@ pub(crate) fn impl_lazy_reduce_ops(
             }
         }
 
-        impl ::primus_modulus::reduce::lazy_ops::LazyReduce<(#ty, #ty)> for #name {
+        impl ::primus_modulus::reduce::LazyReduce<(#ty, #ty)> for #name {
             type Output = #ty;
 
             /// Calculates `value (mod 2*modulus)`.
@@ -125,7 +125,7 @@ pub(crate) fn impl_lazy_reduce_ops(
             }
         }
 
-        impl ::primus_modulus::reduce::lazy_ops::LazyReduce<&[#ty]> for #name {
+        impl ::primus_modulus::reduce::LazyReduce<&[#ty]> for #name {
             type Output = #ty;
 
             /// Calculates `value (mod 2*modulus)` when value's length > 0.
@@ -147,50 +147,50 @@ pub(crate) fn impl_lazy_reduce_ops(
             }
         }
 
-        impl ::primus_modulus::reduce::lazy_ops::LazyReduceAssign<#ty> for #name {
+        impl ::primus_modulus::reduce::LazyReduceAssign<#ty> for #name {
             /// Calculates `value (mod 2*modulus)`.
             #[inline]
             fn lazy_reduce_assign(self, value: &mut #ty) {
-                use ::primus_modulus::reduce::lazy_ops::LazyReduce;
+                use ::primus_modulus::reduce::LazyReduce;
                 *value = self.lazy_reduce(*value);
             }
         }
 
-        impl ::primus_modulus::reduce::lazy_ops::LazyReduceMul<#ty> for #name {
+        impl ::primus_modulus::reduce::LazyReduceMul<#ty> for #name {
             type Output = #ty;
 
             #[inline]
             fn lazy_reduce_mul(self, a: #ty, b: #ty) -> Self::Output {
-                use ::primus_modulus::reduce::lazy_ops::LazyReduce;
+                use ::primus_modulus::reduce::LazyReduce;
                 use ::primus_modulus::integer::WideningMul;
                 self.lazy_reduce(WideningMul::widening_mul(a, b))
             }
         }
 
-        impl ::primus_modulus::reduce::lazy_ops::LazyReduceMulAssign<#ty> for #name {
+        impl ::primus_modulus::reduce::LazyReduceMulAssign<#ty> for #name {
             #[inline]
             fn lazy_reduce_mul_assign(self, a: &mut #ty, b: #ty) {
-                use ::primus_modulus::reduce::lazy_ops::LazyReduce;
+                use ::primus_modulus::reduce::LazyReduce;
                 use ::primus_modulus::integer::WideningMul;
                 *a = self.lazy_reduce(WideningMul::widening_mul(*a, b));
             }
         }
 
-        impl ::primus_modulus::reduce::lazy_ops::LazyReduceMulAdd<#ty> for #name {
+        impl ::primus_modulus::reduce::LazyReduceMulAdd<#ty> for #name {
             type Output = #ty;
 
             #[inline]
             fn lazy_reduce_mul_add(self, a: #ty, b: #ty, c: #ty) -> Self::Output {
-                use ::primus_modulus::reduce::lazy_ops::LazyReduce;
+                use ::primus_modulus::reduce::LazyReduce;
                 use ::primus_modulus::integer::CarryingMul;
                 self.lazy_reduce(CarryingMul::carrying_mul(a, b, c))
             }
         }
 
-        impl ::primus_modulus::reduce::lazy_ops::LazyReduceMulAddAssign<#ty> for #name {
+        impl ::primus_modulus::reduce::LazyReduceMulAddAssign<#ty> for #name {
             #[inline]
             fn lazy_reduce_mul_add_assign(self, a: &mut #ty, b: #ty, c: #ty) {
-                use ::primus_modulus::reduce::lazy_ops::LazyReduce;
+                use ::primus_modulus::reduce::LazyReduce;
                 use ::primus_modulus::integer::CarryingMul;
                 *a = self.lazy_reduce(CarryingMul::carrying_mul(*a, b, c));
             }

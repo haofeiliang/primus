@@ -1,5 +1,5 @@
 use primus_integer::UnsignedInteger;
-use primus_reduce::ops::*;
+use primus_reduce::prelude::*;
 
 use super::PowOf2Modulus;
 

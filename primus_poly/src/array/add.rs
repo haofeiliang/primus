@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::ops::*;
+use primus_reduce::prelude::*;
 
 use super::ArrayBase;
 
@@ -12,7 +12,7 @@ where
     #[inline]
     pub fn add_element_wise<M, A>(mut self, rhs: &ArrayBase<A>, modulus: M) -> Self
     where
-        M: Copy + ReduceAddAssign<T>,
+        M: Copy + ReduceAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         self.add_element_wise_assign(rhs, modulus);
@@ -23,11 +23,12 @@ where
     #[inline]
     pub fn add_element_wise_assign<M, A>(&mut self, rhs: &ArrayBase<A>, modulus: M)
     where
-        M: Copy + ReduceAddAssign<T>,
+        M: Copy + ReduceAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         debug_assert_eq!(self.len(), rhs.len());
-        izip!(self, rhs).for_each(|(a, &b)| modulus.reduce_add_assign(a, b));
+        modulus.reduce_add_slice_assign(self.as_mut(), rhs.as_ref());
+        // izip!(self, rhs).for_each(|(a, &b)| modulus.reduce_add_assign(a, b));
     }
 
     /// Performs `self += b * c` according to `modulus`.

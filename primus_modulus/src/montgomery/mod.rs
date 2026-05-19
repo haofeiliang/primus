@@ -232,7 +232,7 @@ impl<T: UnsignedInteger> primus_reduce::Modulus for MontgomeryModulus<T> {
 
 #[cfg(test)]
 mod tests {
-    use primus_reduce::ops::*;
+    use primus_reduce::prelude::*;
     use rand::distr::{Distribution, Uniform};
 
     use super::*;

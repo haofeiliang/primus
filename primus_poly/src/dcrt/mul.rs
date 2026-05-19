@@ -1,7 +1,7 @@
 use primus_factor::{FactorMul, ShoupFactor};
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
 use primus_modulus::UintModulus;
-use primus_reduce::ops::{ReduceAddAssign, ReduceMul, ReduceMulAdd, ReduceMulAssign, ReduceSub};
+use primus_reduce::{ReduceAddAssign, ReduceMul, ReduceMulAdd, ReduceMulAssign, ReduceSub};
 
 use crate::ArrayBase;
 

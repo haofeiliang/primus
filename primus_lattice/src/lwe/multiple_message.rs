@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, DataOwned, RawData, Size, UnsignedInteger};
-use primus_reduce::ops::*;
+use primus_reduce::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use super::Lwe;

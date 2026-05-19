@@ -1,6 +1,6 @@
 use num_traits::{ConstZero, Zero};
 use primus_integer::{ByteCount, Data, DataMut, DataOwned, RawData, Size, UnsignedInteger};
-use primus_reduce::ops::ReduceMulAdd;
+use primus_reduce::ReduceMulAdd;
 
 mod basic;
 mod random;

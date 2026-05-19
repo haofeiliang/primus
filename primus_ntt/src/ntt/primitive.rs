@@ -3,7 +3,8 @@ use primus_integer::{DataMut, RawData, UnsignedInteger};
 use primus_modulo::{AddModulo, ModuloOnce, ModuloOnceAssign};
 use primus_modulus::UintModulus;
 use primus_poly::{NttPolynomial, Polynomial};
-use primus_reduce::{FieldContext, ops::*};
+use primus_reduce::FieldContext;
+use primus_reduce::prelude::*;
 
 use crate::{NttError, reverse::ReverseLsbs, root::PrimitiveRoot};
 

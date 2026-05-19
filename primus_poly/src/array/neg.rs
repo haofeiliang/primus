@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
-use primus_reduce::ops::{ReduceNeg, ReduceNegAssign};
+use primus_reduce::{ReduceNeg, ReduceNegAssign};
 
 use super::ArrayBase;
 

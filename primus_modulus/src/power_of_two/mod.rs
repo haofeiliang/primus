@@ -78,7 +78,7 @@ impl<T: UnsignedInteger> primus_reduce::Modulus for PowOf2Modulus<T> {
 mod tests {
     use rand::{distr::Uniform, prelude::*, rng};
 
-    use primus_reduce::ops::*;
+    use primus_reduce::prelude::*;
 
     use super::*;
 

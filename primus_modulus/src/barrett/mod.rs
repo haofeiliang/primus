@@ -15,7 +15,7 @@ pub use simd::SimdBarrettModulus;
 ///
 /// The default slice trait impls in [`slice`] pick a lane count at compile
 /// time based on the target CPU's SIMD width
-/// (see [`primus_integer::default_lanes`]). Reach for this module only when
+/// (see [`primus_integer::lanes`]). Reach for this module only when
 /// you have measured a different `N` that performs better on your workload.
 #[cfg(all(feature = "nightly", feature = "simd"))]
 pub mod simd_kernel {
@@ -97,6 +97,14 @@ impl<T: UnsignedInteger> BarrettModulus<T> {
     #[inline]
     pub const fn ratio(&self) -> [T; 2] {
         self.ratio
+    }
+
+    /// Creates a [`BarrettModulus<T>`] from precomputed parts.
+    ///
+    /// The `ratio` must equal `floor(b² / value)` where `b = 2^T::BITS`.
+    #[inline]
+    pub const fn from_parts(value: T, ratio: [T; 2]) -> Self {
+        Self { value, ratio }
     }
 }
 

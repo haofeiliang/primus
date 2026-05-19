@@ -1,7 +1,8 @@
 use primus_factor::{FactorMul, LazyFactorMul};
 use primus_gcd::Xgcd;
 use primus_integer::UnsignedInteger;
-use primus_reduce::{ReduceError, lazy_ops::LazyReduceMul, ops::*};
+use primus_reduce::ReduceError;
+use primus_reduce::prelude::*;
 
 use super::UintModulus;
 

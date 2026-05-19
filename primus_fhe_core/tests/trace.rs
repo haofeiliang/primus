@@ -12,7 +12,7 @@ use primus_lattice::glwe::CrtGlwe;
 use primus_modulus::BarrettModulus;
 use primus_ntt::{DcrtTable, UintCrtNttTable};
 use primus_poly::{BigUintPolynomial, CrtPolynomial, DcrtPolynomial, Polynomial};
-use primus_reduce::ops::*;
+use primus_reduce::prelude::*;
 
 #[test]
 fn test_crt_glwe_trace() {

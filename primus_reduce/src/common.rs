@@ -2,7 +2,8 @@ use std::fmt::Debug;
 
 use primus_integer::UnsignedInteger;
 
-use super::*;
+use super::Modulus;
+use super::prelude::*;
 
 /// A marker trait indicating the modulus can perform ring operations
 /// (add, sub, neg, mul, square, exp, dot-product).
@@ -21,16 +22,21 @@ pub trait RingContext<T>:
     + ReduceAssign<T>
     + ReduceAdd<T, Output = T>
     + ReduceAddAssign<T>
+    + ReduceAddSlice<T>
     + ReduceSub<T, Output = T>
     + ReduceSubAssign<T>
+    + ReduceSubSlice<T>
     + ReduceDouble<T, Output = T>
     + ReduceDoubleAssign<T>
     + ReduceNeg<T, Output = T>
     + ReduceNegAssign<T>
+    + ReduceNegSlice<T>
     + ReduceMul<T, Output = T>
     + ReduceMulAssign<T>
+    + ReduceMulSlice<T>
     + ReduceMulAdd<T, Output = T>
     + ReduceMulAddAssign<T>
+    + ReduceMulAddSlice<T>
     + ReduceSquare<T, Output = T>
     + ReduceSquareAssign<T>
     + ReduceExp<T>
@@ -51,16 +57,21 @@ impl<T: UnsignedInteger, M> RingContext<T> for M where
         + ReduceAssign<T>
         + ReduceAdd<T, Output = T>
         + ReduceAddAssign<T>
+        + ReduceAddSlice<T>
         + ReduceSub<T, Output = T>
         + ReduceSubAssign<T>
+        + ReduceSubSlice<T>
         + ReduceDouble<T, Output = T>
         + ReduceDoubleAssign<T>
         + ReduceNeg<T, Output = T>
         + ReduceNegAssign<T>
+        + ReduceNegSlice<T>
         + ReduceMul<T, Output = T>
         + ReduceMulAssign<T>
+        + ReduceMulSlice<T>
         + ReduceMulAdd<T, Output = T>
         + ReduceMulAddAssign<T>
+        + ReduceMulAddSlice<T>
         + ReduceSquare<T, Output = T>
         + ReduceSquareAssign<T>
         + ReduceExp<T>
@@ -81,8 +92,10 @@ pub trait FieldContext<T>:
     + LazyReduceAssign<T>
     + LazyReduceMul<T, Output = T>
     + LazyReduceMulAssign<T>
+    + LazyReduceMulSlice<T>
     + LazyReduceMulAdd<T, Output = T>
     + LazyReduceMulAddAssign<T>
+    + LazyReduceMulAddSlice<T>
     + for<'a> LazyReduce<&'a [T], Output = T>
     + for<'a> Reduce<&'a [T], Output = T>
     + TryReduceInv<T, Output = T>
@@ -101,8 +114,10 @@ impl<T: UnsignedInteger, M> FieldContext<T> for M where
         + LazyReduceAssign<T>
         + LazyReduceMul<T, Output = T>
         + LazyReduceMulAssign<T>
+        + LazyReduceMulSlice<T>
         + LazyReduceMulAdd<T, Output = T>
         + LazyReduceMulAddAssign<T>
+        + LazyReduceMulAddSlice<T>
         + for<'a> LazyReduce<&'a [T], Output = T>
         + for<'a> Reduce<&'a [T], Output = T>
         + TryReduceInv<T, Output = T>

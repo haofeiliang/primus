@@ -3,7 +3,8 @@
 //! win lives in the SIMD slice kernels in [`super::simd_ifma`].
 
 use primus_integer::UnsignedInteger;
-use primus_reduce::{ReduceError, lazy_ops::*, ops::*};
+use primus_reduce::ReduceError;
+use primus_reduce::prelude::*;
 
 use super::Barrett50Modulus;
 

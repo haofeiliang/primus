@@ -6,7 +6,7 @@ use primus_modulus::PowOf2Modulus;
 use primus_ntt::DcrtTable;
 use primus_poly::CrtPolynomial;
 use primus_reduce::FieldContext;
-use primus_reduce::ops::ReduceMul;
+use primus_reduce::ReduceMul;
 use primus_rns::RNSBase;
 
 use crate::{

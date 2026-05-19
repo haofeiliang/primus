@@ -5,7 +5,7 @@ use primus_integer::{BigUint, BigUintIterMut, Data, DivRemScalar, multiply_many_
 use primus_modulo::{InvModulo, Modulo};
 use primus_modulus::BarrettModulus;
 use primus_poly::CrtPolynomial;
-use primus_reduce::ops::*;
+use primus_reduce::prelude::*;
 use primus_rns::{BaseConverter, RNSBase};
 use rand::distr::{Distribution, Uniform};
 

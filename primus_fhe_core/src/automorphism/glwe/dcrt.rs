@@ -25,7 +25,7 @@ use primus_lattice::glev::{DcrtGlevIter, DcrtGlevIterMut};
 use primus_modulus::PowOf2Modulus;
 use primus_ntt::{DcrtTable, ReverseLsbs};
 use primus_poly::DcrtPolynomial;
-use primus_reduce::{FieldContext, ops::ReduceMul};
+use primus_reduce::{FieldContext, ReduceMul};
 use primus_rns::RNSBase;
 
 use crate::{CrtGlevParameters, DcrtGlweCiphertext, DcrtGlweSecretKey};

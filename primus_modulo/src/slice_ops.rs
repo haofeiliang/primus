@@ -7,7 +7,7 @@
 //! See [`primus_reduce::slice_ops`] for the conventions on length checks
 //! and value-range invariants.
 
-use primus_reduce::slice_ops::*;
+use primus_reduce::prelude::*;
 
 /// Value-side mirror of [`ReduceOnceSlice`].
 pub trait OnceModuloSlice<M> {

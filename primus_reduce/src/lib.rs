@@ -20,10 +20,12 @@ use core::fmt::Debug;
 mod common;
 mod error;
 
-pub mod lazy_ops;
-pub mod lazy_slice_ops;
-pub mod ops;
-pub mod slice_ops;
+mod lazy_ops;
+mod lazy_slice_ops;
+mod ops;
+mod slice_ops;
+
+pub mod prelude;
 
 pub use common::{FieldContext, RingContext};
 pub use error::ReduceError;

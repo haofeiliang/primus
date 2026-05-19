@@ -8,7 +8,7 @@ use primus_lattice::{context::DcrtGlevContext, glwe::DcrtGlwe};
 use primus_modulus::BarrettModulus;
 use primus_ntt::{DcrtTable, UintCrtNttTable};
 use primus_poly::{CrtPolynomial, Polynomial};
-use primus_reduce::ops::ReduceNegAssign;
+use primus_reduce::ReduceNegAssign;
 use rand::RngExt;
 
 #[test]

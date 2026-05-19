@@ -4,7 +4,7 @@
 //! reduction (e.g. via [`crate::slice_ops::OnceModuloSlice`]) when a
 //! canonical representative is required.
 
-use primus_reduce::lazy_slice_ops::*;
+use primus_reduce::prelude::*;
 
 /// Value-side mirror of [`LazyReduceMulSlice`].
 pub trait LazyMulModuloSlice<M, B: ?Sized = Self> {

@@ -2,7 +2,7 @@ use primus_decompose::{big_integer::BigUintApproxSignedBasis, primitive::ApproxS
 use primus_distr::{DiscreteGaussian, SignedDiscreteGaussian};
 use primus_factor::ShoupFactor;
 use primus_integer::{BigUint, DivRemScalar, UnsignedInteger, multiply_many_values};
-use primus_modulo::ops::*;
+use primus_modulo::*;
 use primus_reduce::FieldContext;
 use primus_rns::{BaseConverter, RNSBase};
 use rand::distr::Uniform;

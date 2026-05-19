@@ -24,7 +24,7 @@ use primus_factor::{FactorMul, ShoupFactor};
 use primus_integer::{
     BigUint, Data, DataMut, DivRemScalar, RawData, UnsignedInteger, multiply_many_values,
 };
-use primus_modulo::ops::*;
+use primus_modulo::*;
 use primus_poly::{CrtPolynomial, DcrtPolynomial, Polynomial};
 use primus_reduce::FieldContext;
 use primus_rns::{BaseConverter, RNSBase};

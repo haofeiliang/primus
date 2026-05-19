@@ -2,7 +2,7 @@ use primus_distr::DiscreteGaussian;
 use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial, Polynomial};
-use primus_reduce::{FieldContext, ops::ReduceNegAssign};
+use primus_reduce::{FieldContext, ReduceNegAssign};
 use rand::distr::Uniform;
 
 use crate::lwe::{Lwe, MultiMsgLwe};

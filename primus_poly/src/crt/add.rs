@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::ops::{ReduceAdd, ReduceAddAssign};
+use primus_reduce::{ReduceAdd, ReduceAddSlice};
 
 use crate::ArrayBase;
 
@@ -14,7 +14,7 @@ where
     #[inline]
     pub fn add<M, A>(mut self, rhs: &CrtPolynomial<A>, poly_length: usize, moduli: &[M]) -> Self
     where
-        M: Copy + ReduceAddAssign<T>,
+        M: Copy + ReduceAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         self.add_assign(rhs, poly_length, moduli);
@@ -25,7 +25,7 @@ where
     #[inline]
     pub fn add_assign<M, A>(&mut self, rhs: &CrtPolynomial<A>, poly_length: usize, moduli: &[M])
     where
-        M: Copy + ReduceAddAssign<T>,
+        M: Copy + ReduceAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
         izip!(

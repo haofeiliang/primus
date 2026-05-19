@@ -3,7 +3,7 @@ mod tests {
     use itertools::Itertools;
     use primus_decompose::zama::ApproxSignedBasis;
     use primus_modulus::BarrettModulus;
-    use primus_reduce::ops::{ReduceMulAdd, ReduceSub};
+    use primus_reduce::{ReduceMulAdd, ReduceSub};
     use rand::{RngExt, distr::Uniform};
 
     type ValueT = u32;
