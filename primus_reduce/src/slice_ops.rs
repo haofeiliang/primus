@@ -160,6 +160,7 @@ pub trait ReduceMulSlice<T, B = T> {
 /// 2. `acc[i] -= a[i] * b[i]`              — fused multiply-subtract
 /// 3. `out[i]  = a[i] * b[i] + c[i]`       — three-input one-output
 /// 4. `out[i]  = scalar * b[i] + c[i]`     — scalar × slice plus addend
+/// 5. `acc[i] += scalar * b[i]`            — scalar FMAC accumulate
 pub trait ReduceMulAddSlice<T> {
     /// Calculates `acc[i] = (acc[i] + a[i] * b[i]) (mod modulus)`
     /// element-wise, where `self` is the modulus.
@@ -178,6 +179,15 @@ pub trait ReduceMulAddSlice<T> {
     /// - `acc.len() == a.len() == b.len()`
     /// - Each `acc[i] < modulus`, `a[i] < modulus`, `b[i] < modulus`
     fn reduce_sub_mul_slice_assign(self, acc: &mut [T], a: &[T], b: &[T]);
+
+    /// Calculates `acc[i] = (acc[i] + scalar * b[i]) (mod modulus)`
+    /// element-wise, where `self` is the modulus.
+    ///
+    /// # Correctness
+    ///
+    /// - `acc.len() == b.len()`
+    /// - `scalar < modulus`, each `acc[i] < modulus`, `b[i] < modulus`
+    fn reduce_add_scalar_mul_slice_assign(self, acc: &mut [T], scalar: T, b: &[T]);
 
     /// Writes `a[i] * b[i] + c[i] (mod modulus)` into `output[i]`,
     /// where `self` is the modulus.

@@ -604,6 +604,29 @@ pub unsafe fn reduce_scalar_mul_add_slice_to(
         &mut output[main_len..],
     );
 }
+#[target_feature(enable = "avx512f,avx512dq,avx512ifma")]
+pub unsafe fn reduce_add_scalar_mul_slice_assign(
+    modulus: Barrett50Modulus,
+    acc: &mut [u64],
+    scalar: u64,
+    b: &[u64],
+) {
+    debug_assert_eq!(acc.len(), b.len());
+    let (m, mu_lo52, mu_hi, neg_m, pow52_mask) = splat_params(&modulus);
+    let sv = _mm512_set1_epi64(scalar as i64);
+    let chunks = acc.len() / N;
+    let main_len = chunks * N;
+    for i in 0..chunks {
+        let off = i * N;
+        let accv = unsafe { load_u64x8(&acc[off..]) };
+        let bv = unsafe { load_u64x8(&b[off..]) };
+        let r = ifma_mul_add_canonical(sv, bv, accv, mu_lo52, mu_hi, neg_m, pow52_mask, m);
+        unsafe { store_u64x8(&mut acc[off..], r) };
+    }
+    modulus
+        .inner
+        .reduce_add_scalar_mul_slice_assign(&mut acc[main_len..], scalar, &b[main_len..]);
+}
 
 #[target_feature(enable = "avx512f,avx512dq,avx512ifma")]
 pub unsafe fn lazy_reduce_scalar_mul_add_slice_to(

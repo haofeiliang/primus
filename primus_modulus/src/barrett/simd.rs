@@ -382,26 +382,26 @@ pub fn reduce_sub_slice_to<T: SimdUnsignedInteger, const N: usize>(
         *oc = simd_reduce_sub(av, bv, m).to_array();
     }
     super::slice::scalar_reduce_sub_slice_to(modulus, a_rem, b_rem, o_rem);
+}
 
-    #[inline]
-    pub fn reduce_sub_slice_rev_assign<T: SimdUnsignedInteger, const N: usize>(
-        modulus: BarrettModulus<T>,
-        a: &[T],
-        b: &mut [T],
-    ) where
-        Simd<T, N>: SimdArray<T, N>,
-    {
-        debug_assert_eq!(a.len(), b.len());
-        let m = Simd::splat(modulus.value());
-        let (a_chunks, a_rem) = a.as_chunks::<N>();
-        let (b_chunks, b_rem) = b.as_chunks_mut::<N>();
-        for (ac, bc) in a_chunks.iter().zip(b_chunks) {
-            let av = Simd::from_array(*ac);
-            let bv = Simd::from_array(*bc);
-            *bc = simd_reduce_sub(av, bv, m).to_array();
-        }
-        super::slice::scalar_reduce_sub_slice_rev_assign(modulus, a_rem, b_rem);
+#[inline]
+pub fn reduce_sub_slice_rev_assign<T: SimdUnsignedInteger, const N: usize>(
+    modulus: BarrettModulus<T>,
+    a: &[T],
+    b: &mut [T],
+) where
+    Simd<T, N>: SimdArray<T, N>,
+{
+    debug_assert_eq!(a.len(), b.len());
+    let m = Simd::splat(modulus.value());
+    let (a_chunks, a_rem) = a.as_chunks::<N>();
+    let (b_chunks, b_rem) = b.as_chunks_mut::<N>();
+    for (ac, bc) in a_chunks.iter().zip(b_chunks) {
+        let av = Simd::from_array(*ac);
+        let bv = Simd::from_array(*bc);
+        *bc = simd_reduce_sub(av, bv, m).to_array();
     }
+    super::slice::scalar_reduce_sub_slice_rev_assign(modulus, a_rem, b_rem);
 }
 
 #[inline]
@@ -601,6 +601,30 @@ pub fn reduce_add_mul_slice_assign<T: SimdUnsignedInteger, const N: usize>(
         *accc = simd_reduce_once(lazy, m).to_array();
     }
     super::slice::scalar_reduce_add_mul_slice_assign(modulus, acc_rem, a_rem, b_rem);
+}
+
+#[inline]
+pub fn reduce_add_scalar_mul_slice_assign<T: SimdUnsignedInteger, const N: usize>(
+    modulus: BarrettModulus<T>,
+    acc: &mut [T],
+    scalar: T,
+    b: &[T],
+) where
+    Simd<T, N>: SimdArray<T, N>,
+{
+    debug_assert_eq!(acc.len(), b.len());
+    let sm = SimdBarrettModulus::<T, N>::from(modulus);
+    let m = Simd::splat(modulus.value());
+    let sv = Simd::splat(scalar);
+    let (acc_chunks, acc_rem) = acc.as_chunks_mut::<N>();
+    let (b_chunks, b_rem) = b.as_chunks::<N>();
+    for (accc, bc) in acc_chunks.iter_mut().zip(b_chunks) {
+        let accv = Simd::from_array(*accc);
+        let bv = Simd::from_array(*bc);
+        let lazy = sm.lazy_reduce_mul_add(sv, bv, accv);
+        *accc = simd_reduce_once(lazy, m).to_array();
+    }
+    super::slice::scalar_reduce_add_scalar_mul_slice_assign(modulus, acc_rem, scalar, b_rem);
 }
 
 #[inline]

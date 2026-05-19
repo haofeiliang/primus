@@ -389,6 +389,14 @@ pub(crate) fn impl_reduce_slice_ops(
                     *o = self.reduce_mul_add(scalar, b, c);
                 });
             }
+            #[inline]
+            fn reduce_add_scalar_mul_slice_assign(self, acc: &mut [#ty], scalar: #ty, b: &[#ty]) {
+                use ::primus_modulus::reduce::ReduceMulAdd;
+                debug_assert_eq!(acc.len(), b.len());
+                acc.iter_mut().zip(b).for_each(|(acc, &b)| {
+                    *acc = self.reduce_mul_add(scalar, b, *acc);
+                });
+            }
         }
 
         #[cfg(all(feature = "nightly", feature = "simd"))]
@@ -468,6 +476,26 @@ pub(crate) fn impl_reduce_slice_ops(
                     b,
                     c,
                     output,
+                )
+            }
+            #[inline]
+            fn reduce_add_scalar_mul_slice_assign(
+                self,
+                acc: &mut [#ty],
+                scalar: #ty,
+                b: &[#ty],
+            ) {
+                ::primus_modulus::barrett_simd_kernel::reduce_add_scalar_mul_slice_assign::<#ty, {
+                    ::primus_integer::lanes::VECTOR_BITS
+                        / (<#ty>::BITS as usize)
+                }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
+                        #modulus,
+                        [#r0, #r1],
+                    ),
+                    acc,
+                    scalar,
+                    b,
                 )
             }
         }

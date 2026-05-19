@@ -200,6 +200,14 @@ impl<T: UnsignedInteger> ReduceMulAddSlice<T> for PowOf2Modulus<T> {
             .zip(output)
             .for_each(|((&b, &c), o)| *o = self.reduce_mul_add(scalar, b, c));
     }
+
+    #[inline]
+    fn reduce_add_scalar_mul_slice_assign(self, acc: &mut [T], scalar: T, b: &[T]) {
+        debug_assert_eq!(acc.len(), b.len());
+        acc.iter_mut()
+            .zip(b)
+            .for_each(|(acc, &b)| *acc = self.reduce_mul_add(scalar, b, *acc));
+    }
 }
 
 impl<T: UnsignedInteger> LazyReduceMulAddSlice<T> for PowOf2Modulus<T> {

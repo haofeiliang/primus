@@ -151,6 +151,12 @@ mod ifma_impls {
                 super::super::simd_ifma::reduce_scalar_mul_add_slice_to(self, scalar, b, c, output)
             }
         }
+        #[inline]
+        fn reduce_add_scalar_mul_slice_assign(self, acc: &mut [u64], scalar: u64, b: &[u64]) {
+            unsafe {
+                super::super::simd_ifma::reduce_add_scalar_mul_slice_assign(self, acc, scalar, b)
+            }
+        }
     }
 
     impl LazyReduceMulAddSlice<u64> for Barrett50Modulus {
@@ -279,6 +285,11 @@ mod fallback_impls {
         ) {
             self.inner
                 .reduce_scalar_mul_add_slice_to(scalar, b, c, output)
+        }
+        #[inline]
+        fn reduce_add_scalar_mul_slice_assign(self, acc: &mut [u64], scalar: u64, b: &[u64]) {
+            self.inner
+                .reduce_add_scalar_mul_slice_assign(acc, scalar, b)
         }
     }
 
