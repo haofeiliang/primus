@@ -98,6 +98,18 @@ pub trait ReduceSubSlice<T, B = T> {
     /// - `a.len() == b.len() == output.len()`
     /// - Each `a[i] < modulus` and `b[i] < modulus`
     fn reduce_sub_slice_to(self, a: &[T], b: &[B], output: &mut [T]);
+
+    /// Calculates `b[i] = (a[i] - b[i]) (mod modulus)` element-wise,
+    /// where `self` is the modulus.
+    ///
+    /// This is the reverse direction of [`reduce_sub_slice_assign`](ReduceSubSlice::reduce_sub_slice_assign):
+    /// the second slice is mutated instead of the first.
+    ///
+    /// # Correctness
+    ///
+    /// - `a.len() == b.len()`
+    /// - Each `a[i] < modulus` and `b[i] < modulus`
+    fn reduce_sub_slice_rev_assign(self, a: &[T], b: &mut [T]);
 }
 
 /// Slice form of [`crate::ReduceMul`].

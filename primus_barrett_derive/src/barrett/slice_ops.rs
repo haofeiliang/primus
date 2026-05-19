@@ -183,6 +183,12 @@ pub(crate) fn impl_reduce_slice_ops(
                 debug_assert_eq!(a.len(), output.len());
                 a.iter().zip(b).zip(output).for_each(|((&a, &b), o)| *o = self.reduce_sub(a, b));
             }
+            #[inline]
+            fn reduce_sub_slice_rev_assign(self, a: &[#ty], b: &mut [#ty]) {
+                use ::primus_modulus::reduce::ReduceSub;
+                debug_assert_eq!(a.len(), b.len());
+                a.iter().zip(b.iter_mut()).for_each(|(&a, b)| *b = self.reduce_sub(a, *b));
+            }
         }
 
         #[cfg(all(feature = "nightly", feature = "simd"))]
@@ -214,6 +220,20 @@ pub(crate) fn impl_reduce_slice_ops(
                     a,
                     b,
                     output,
+                )
+            }
+            #[inline]
+            fn reduce_sub_slice_rev_assign(self, a: &[#ty], b: &mut [#ty]) {
+                ::primus_modulus::barrett_simd_kernel::reduce_sub_slice_rev_assign::<#ty, {
+                    ::primus_integer::lanes::VECTOR_BITS
+                        / (<#ty>::BITS as usize)
+                }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
+                        #modulus,
+                        [#r0, #r1],
+                    ),
+                    a,
+                    b,
                 )
             }
         }

@@ -82,6 +82,14 @@ impl<T: UnsignedInteger> ReduceSubSlice<T> for NativeModulus<T> {
             .zip(b)
             .for_each(|((out, &x), &y)| *out = self.reduce_sub(x, y));
     }
+
+    #[inline]
+    fn reduce_sub_slice_rev_assign(self, a: &[T], b: &mut [T]) {
+        debug_assert_eq!(a.len(), b.len());
+        a.iter()
+            .zip(b.iter_mut())
+            .for_each(|(&x, y)| *y = self.reduce_sub(x, *y));
+    }
 }
 
 impl<T: UnsignedInteger> ReduceMulSlice<T> for NativeModulus<T> {

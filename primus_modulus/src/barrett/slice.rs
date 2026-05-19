@@ -113,6 +113,18 @@ pub(super) fn scalar_reduce_sub_slice_to<T: UnsignedInteger>(
 }
 
 #[inline]
+pub(super) fn scalar_reduce_sub_slice_rev_assign<T: UnsignedInteger>(
+    modulus: BarrettModulus<T>,
+    a: &[T],
+    b: &mut [T],
+) {
+    debug_assert_eq!(a.len(), b.len());
+    a.iter()
+        .zip(b.iter_mut())
+        .for_each(|(&a, b)| *b = modulus.reduce_sub(a, *b));
+}
+
+#[inline]
 pub(super) fn scalar_reduce_mul_slice_assign<T: UnsignedInteger>(
     modulus: BarrettModulus<T>,
     a: &mut [T],
@@ -505,6 +517,10 @@ macro_rules! impl_barrett_slice_scalar {
                 fn reduce_sub_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
                     scalar_reduce_sub_slice_to(self, a, b, output)
                 }
+                #[inline]
+                fn reduce_sub_slice_rev_assign(self, a: &[$t], b: &mut [$t]) {
+                    scalar_reduce_sub_slice_rev_assign(self, a, b)
+                }
             }
 
             impl ReduceMulSlice<$t> for BarrettModulus<$t> {
@@ -699,6 +715,10 @@ macro_rules! impl_barrett_slice_simd {
             #[inline]
             fn reduce_sub_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
                 super::simd::reduce_sub_slice_to::<$t, { $lanes }>(self, a, b, output)
+            }
+            #[inline]
+            fn reduce_sub_slice_rev_assign(self, a: &[$t], b: &mut [$t]) {
+                super::simd::reduce_sub_slice_rev_assign::<$t, { $lanes }>(self, a, b)
             }
         }
 

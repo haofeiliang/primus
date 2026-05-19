@@ -62,6 +62,10 @@ impl ReduceSubSlice<u64> for Barrett50Modulus {
     fn reduce_sub_slice_to(self, a: &[u64], b: &[u64], output: &mut [u64]) {
         self.inner.reduce_sub_slice_to(a, b, output)
     }
+    #[inline]
+    fn reduce_sub_slice_rev_assign(self, a: &[u64], b: &mut [u64]) {
+        self.inner.reduce_sub_slice_rev_assign(a, b)
+    }
 }
 
 // ---------------------------------------------------------------------------

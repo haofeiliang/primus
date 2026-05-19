@@ -382,6 +382,26 @@ pub fn reduce_sub_slice_to<T: SimdUnsignedInteger, const N: usize>(
         *oc = simd_reduce_sub(av, bv, m).to_array();
     }
     super::slice::scalar_reduce_sub_slice_to(modulus, a_rem, b_rem, o_rem);
+
+    #[inline]
+    pub fn reduce_sub_slice_rev_assign<T: SimdUnsignedInteger, const N: usize>(
+        modulus: BarrettModulus<T>,
+        a: &[T],
+        b: &mut [T],
+    ) where
+        Simd<T, N>: SimdArray<T, N>,
+    {
+        debug_assert_eq!(a.len(), b.len());
+        let m = Simd::splat(modulus.value());
+        let (a_chunks, a_rem) = a.as_chunks::<N>();
+        let (b_chunks, b_rem) = b.as_chunks_mut::<N>();
+        for (ac, bc) in a_chunks.iter().zip(b_chunks) {
+            let av = Simd::from_array(*ac);
+            let bv = Simd::from_array(*bc);
+            *bc = simd_reduce_sub(av, bv, m).to_array();
+        }
+        super::slice::scalar_reduce_sub_slice_rev_assign(modulus, a_rem, b_rem);
+    }
 }
 
 #[inline]

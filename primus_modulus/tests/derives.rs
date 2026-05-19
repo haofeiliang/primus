@@ -156,6 +156,11 @@ macro_rules! test_modulus {
                     let mut to = vec![0; len];
                     Modulus.reduce_sub_slice_to(&a, &b, &mut to);
                     assert_eq!(to, expected, "reduce_sub_slice_to len={len}");
+
+                    // reduce_sub_slice_rev_assign: b = a - b
+                    let mut rev = b.clone();
+                    Modulus.reduce_sub_slice_rev_assign(&a, &mut rev);
+                    assert_eq!(rev, expected, "reduce_sub_slice_rev_assign len={len}");
                 }
 
                 // -------------------------------------------------------------
