@@ -6,12 +6,7 @@
 //! `nightly` + `simd` feature combo is enabled.
 
 use primus_integer::UnsignedInteger;
-use primus_reduce::{
-    LazyReduceMul, LazyReduceMulAdd, LazyReduceMulAddSlice, LazyReduceMulSlice, Reduce, ReduceAdd,
-    ReduceAddAssign, ReduceAddSlice, ReduceDotProduct, ReduceMul, ReduceMulAdd, ReduceMulAddSlice,
-    ReduceMulSlice, ReduceNeg, ReduceNegAssign, ReduceNegSlice, ReduceOnce, ReduceOnceAssign,
-    ReduceOnceSlice, ReduceSub, ReduceSubAssign, ReduceSubSlice,
-};
+use primus_reduce::prelude::*;
 
 use super::BarrettModulus;
 

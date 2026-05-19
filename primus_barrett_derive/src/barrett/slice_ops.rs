@@ -33,9 +33,9 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceOnceSlice<#ty> for #name {
             #[inline]
             fn reduce_once_slice_assign(self, values: &mut [#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_once_slice_assign::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_once_slice_assign::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -46,9 +46,9 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_once_slice_to(self, input: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_once_slice_to::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_once_slice_to::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -83,9 +83,9 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceNegSlice<#ty> for #name {
             #[inline]
             fn reduce_neg_slice_assign(self, values: &mut [#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_neg_slice_assign::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_neg_slice_assign::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -96,9 +96,9 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_neg_slice_to(self, input: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_neg_slice_to::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_neg_slice_to::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -135,9 +135,9 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceAddSlice<#ty> for #name {
             #[inline]
             fn reduce_add_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_add_slice_assign::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_add_slice_assign::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -149,9 +149,9 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_add_slice_to(self, a: &[#ty], b: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_add_slice_to::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_add_slice_to::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -189,9 +189,9 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceSubSlice<#ty> for #name {
             #[inline]
             fn reduce_sub_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_sub_slice_assign::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_sub_slice_assign::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -203,9 +203,9 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_sub_slice_to(self, a: &[#ty], b: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_sub_slice_to::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_sub_slice_to::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -243,9 +243,9 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceMulSlice<#ty> for #name {
             #[inline]
             fn reduce_mul_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_mul_slice_assign::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_mul_slice_assign::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -257,9 +257,9 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_mul_slice_to(self, a: &[#ty], b: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_mul_slice_to::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_mul_slice_to::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -337,9 +337,9 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceMulAddSlice<#ty> for #name {
             #[inline]
             fn reduce_add_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_add_mul_slice_assign::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_add_mul_slice_assign::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -353,9 +353,9 @@ pub(crate) fn impl_reduce_slice_ops(
 
             #[inline]
             fn reduce_sub_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {
-                ::primus_modulus::barrett::simd_kernel::reduce_sub_mul_slice_assign::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_sub_mul_slice_assign::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -375,9 +375,9 @@ pub(crate) fn impl_reduce_slice_ops(
                 c: &[#ty],
                 output: &mut [#ty],
             ) {
-                ::primus_modulus::barrett::simd_kernel::reduce_mul_add_slice_to::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_mul_add_slice_to::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,
@@ -398,9 +398,9 @@ pub(crate) fn impl_reduce_slice_ops(
                 c: &[#ty],
                 output: &mut [#ty],
             ) {
-                ::primus_modulus::barrett::simd_kernel::reduce_scalar_mul_add_slice_to::<#ty, {
+                ::primus_modulus::barrett_simd_kernel::reduce_scalar_mul_add_slice_to::<#ty, {
                     ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty as ::primus_integer::UnsignedInteger>::BITS as usize)
+                        / (<#ty>::BITS as usize)
                 }>(
                     ::primus_modulus::BarrettModulus::<#ty>::from_parts(
                         #modulus,

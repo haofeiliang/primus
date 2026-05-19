@@ -43,6 +43,19 @@ uint_carrying_mul_impl! { usize, u64 }
 uint_carrying_mul_impl! { usize, u128 }
 
 impl CarryingMul for u128 {
+    #[cfg(target_pointer_width = "64")]
+    #[inline]
+    fn carrying_mul(self, rhs: Self, carry: Self) -> (Self, Self) {
+        <u128>::carrying_mul(self, rhs, carry)
+    }
+
+    #[cfg(target_pointer_width = "64")]
+    #[inline]
+    fn carrying_mul_add(self, rhs: Self, carry: Self, add: Self) -> (Self, Self) {
+        <u128>::carrying_mul_add(self, rhs, carry, add)
+    }
+
+    #[cfg(target_pointer_width = "32")]
     #[inline]
     fn carrying_mul(self, rhs: Self, carry: Self) -> (Self, Self) {
         const HALF: u32 = 64;
@@ -72,6 +85,7 @@ impl CarryingMul for u128 {
         (low, high)
     }
 
+    #[cfg(target_pointer_width = "32")]
     #[inline]
     fn carrying_mul_add(self, rhs: Self, carry: Self, add: Self) -> (Self, Self) {
         const HALF: u32 = 64;

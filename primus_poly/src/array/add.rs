@@ -1,4 +1,4 @@
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
+use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
 use primus_reduce::prelude::*;
 
 use super::ArrayBase;
@@ -26,9 +26,7 @@ where
         M: Copy + ReduceAddSlice<T>,
         A: RawData<Elem = T> + Data,
     {
-        debug_assert_eq!(self.len(), rhs.len());
         modulus.reduce_add_slice_assign(self.as_mut(), rhs.as_ref());
-        // izip!(self, rhs).for_each(|(a, &b)| modulus.reduce_add_assign(a, b));
     }
 
     /// Performs `self += b * c` according to `modulus`.
@@ -39,12 +37,11 @@ where
         c: &ArrayBase<B>,
         modulus: M,
     ) where
-        M: Copy + ReduceMulAdd<T, Output = T>,
+        M: Copy + ReduceMulAddSlice<T>,
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + Data,
     {
-        debug_assert_eq!(self.len(), b.len());
-        izip!(self, b, c).for_each(|(a, &b, &c)| *a = modulus.reduce_mul_add(b, c, *a));
+        modulus.reduce_add_mul_slice_assign(self.as_mut(), b.as_ref(), c.as_ref());
     }
 }
 
@@ -61,12 +58,10 @@ where
         result: &mut ArrayBase<B>,
         modulus: M,
     ) where
-        M: Copy + ReduceAdd<T, Output = T>,
+        M: Copy + ReduceAddSlice<T>,
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + DataMut,
     {
-        debug_assert_eq!(self.len(), rhs.len());
-        debug_assert_eq!(self.len(), result.len());
-        izip!(self, rhs, result).for_each(|(&a, &b, c)| *c = modulus.reduce_add(a, b));
+        modulus.reduce_add_slice_to(self.as_ref(), rhs.as_ref(), result.as_mut());
     }
 }

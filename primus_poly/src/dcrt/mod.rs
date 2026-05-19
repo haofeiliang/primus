@@ -1,6 +1,6 @@
 use num_traits::Zero;
 use primus_integer::{ByteCount, Data, DataMut, DataOwned, RawData, Size, UnsignedInteger, izip};
-use primus_reduce::{ReduceAdd, ReduceMul, ReduceMulAdd, ReduceSub};
+use primus_reduce::{ReduceAdd, ReduceMul, ReduceMulAddSlice, ReduceSub};
 
 use crate::ArrayBase;
 
@@ -98,7 +98,7 @@ where
         poly_length: usize,
         moduli: &[M],
     ) where
-        M: Copy + ReduceMulAdd<T, Output = T>,
+        M: Copy + ReduceMulAddSlice<T>,
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + Data,
     {

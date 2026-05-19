@@ -1,5 +1,5 @@
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::{ReduceAdd, ReduceAddSlice};
+use primus_reduce::ReduceAddSlice;
 
 use crate::ArrayBase;
 
@@ -53,7 +53,7 @@ where
         poly_length: usize,
         moduli: &[M],
     ) where
-        M: Copy + ReduceAdd<T, Output = T>,
+        M: Copy + ReduceAddSlice<T>,
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + DataMut,
     {
