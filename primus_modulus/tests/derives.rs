@@ -177,6 +177,21 @@ macro_rules! test_modulus {
                     let mut to = vec![0; len];
                     Modulus.reduce_mul_slice_to(&a, &b, &mut to);
                     assert_eq!(to, expected, "reduce_mul_slice_to len={len}");
+
+                    // reduce_scalar_mul variant
+                    let expected_scalar: Vec<ValueT> = a
+                        .iter()
+                        .map(|&x| (x as WideT * scalar as WideT % modulus_value as WideT) as ValueT)
+                        .collect();
+                    let mut assign = a.clone();
+                    Modulus.reduce_scalar_mul_slice_assign(&mut assign, scalar);
+                    assert_eq!(
+                        assign, expected_scalar,
+                        "reduce_scalar_mul_slice_assign len={len}"
+                    );
+                    let mut to = vec![0; len];
+                    Modulus.reduce_scalar_mul_slice_to(&a, scalar, &mut to);
+                    assert_eq!(to, expected_scalar, "reduce_scalar_mul_slice_to len={len}");
                 }
 
                 // -------------------------------------------------------------
@@ -216,6 +231,40 @@ macro_rules! test_modulus {
                             lazy
                         };
                         assert_eq!(folded, v, "lazy_reduce_mul_slice_to len={len}");
+                    }
+
+                    // lazy_reduce_scalar_mul variant
+                    let expected_canonical_scalar: Vec<ValueT> = a
+                        .iter()
+                        .map(|&x| (x as WideT * scalar as WideT % modulus_value as WideT) as ValueT)
+                        .collect();
+                    let mut assign = a.clone();
+                    Modulus.lazy_reduce_scalar_mul_slice_assign(&mut assign, scalar);
+                    for (&v, &lazy) in expected_canonical_scalar.iter().zip(assign.iter()) {
+                        assert!(
+                            lazy < modulus_value.wrapping_mul(2),
+                            "lazy_reduce_scalar_mul_slice_assign: out of range"
+                        );
+                        let folded = if lazy >= modulus_value {
+                            lazy - modulus_value
+                        } else {
+                            lazy
+                        };
+                        assert_eq!(folded, v, "lazy_reduce_scalar_mul_slice_assign len={len}");
+                    }
+                    let mut to = vec![0; len];
+                    Modulus.lazy_reduce_scalar_mul_slice_to(&a, scalar, &mut to);
+                    for (&v, &lazy) in expected_canonical_scalar.iter().zip(to.iter()) {
+                        assert!(
+                            lazy < modulus_value.wrapping_mul(2),
+                            "lazy_reduce_scalar_mul_slice_to: out of range"
+                        );
+                        let folded = if lazy >= modulus_value {
+                            lazy - modulus_value
+                        } else {
+                            lazy
+                        };
+                        assert_eq!(folded, v, "lazy_reduce_scalar_mul_slice_to len={len}");
                     }
                 }
 

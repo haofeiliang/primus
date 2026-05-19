@@ -119,6 +119,24 @@ pub trait ReduceMulSlice<T, B = T> {
     /// - `a.len() == b.len() == output.len()`
     /// - Each `a[i] * b[i] < modulus²`
     fn reduce_mul_slice_to(self, a: &[T], b: &[B], output: &mut [T]);
+
+    /// Calculates `a[i] = (a[i] * scalar) (mod modulus)` element-wise,
+    /// where `self` is the modulus.
+    ///
+    /// # Correctness
+    ///
+    /// - `scalar < modulus`
+    /// - Each `a[i] < modulus`
+    fn reduce_scalar_mul_slice_assign(self, a: &mut [T], scalar: B);
+
+    /// Writes `a[i] * scalar (mod modulus)` into `output[i]` element-wise,
+    /// where `self` is the modulus.
+    ///
+    /// # Correctness
+    ///
+    /// - `a.len() == output.len()`
+    /// - `scalar < modulus`, each `a[i] < modulus`
+    fn reduce_scalar_mul_slice_to(self, a: &[T], scalar: B, output: &mut [T]);
 }
 
 /// Slice form of [`crate::ReduceMulAdd`].

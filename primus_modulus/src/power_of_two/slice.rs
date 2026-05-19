@@ -111,6 +111,42 @@ impl<T: UnsignedInteger> ReduceMulSlice<T> for PowOf2Modulus<T> {
             .zip(b)
             .for_each(|((out, &x), &y)| *out = self.reduce_mul(x, y));
     }
+
+    #[inline]
+    fn reduce_scalar_mul_slice_assign(self, a: &mut [T], scalar: T) {
+        a.iter_mut().for_each(|x| self.reduce_mul_assign(x, scalar));
+    }
+
+    #[inline]
+    fn reduce_scalar_mul_slice_to(self, a: &[T], scalar: T, output: &mut [T]) {
+        debug_assert_eq!(a.len(), output.len());
+        output
+            .iter_mut()
+            .zip(a)
+            .for_each(|(out, &x)| *out = self.reduce_mul(x, scalar));
+    }
+}
+
+impl<T: UnsignedInteger> LazyReduceMulSlice<T> for PowOf2Modulus<T> {
+    #[inline]
+    fn lazy_reduce_mul_slice_assign(self, a: &mut [T], b: &[T]) {
+        self.reduce_mul_slice_assign(a, b);
+    }
+
+    #[inline]
+    fn lazy_reduce_mul_slice_to(self, a: &[T], b: &[T], output: &mut [T]) {
+        self.reduce_mul_slice_to(a, b, output);
+    }
+
+    #[inline]
+    fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [T], scalar: T) {
+        self.reduce_scalar_mul_slice_assign(a, scalar);
+    }
+
+    #[inline]
+    fn lazy_reduce_scalar_mul_slice_to(self, a: &[T], scalar: T, output: &mut [T]) {
+        self.reduce_scalar_mul_slice_to(a, scalar, output);
+    }
 }
 
 impl<T: UnsignedInteger> ReduceMulAddSlice<T> for PowOf2Modulus<T> {
@@ -155,18 +191,6 @@ impl<T: UnsignedInteger> ReduceMulAddSlice<T> for PowOf2Modulus<T> {
             .zip(c)
             .zip(output)
             .for_each(|((&b, &c), o)| *o = self.reduce_mul_add(scalar, b, c));
-    }
-}
-
-impl<T: UnsignedInteger> LazyReduceMulSlice<T> for PowOf2Modulus<T> {
-    #[inline]
-    fn lazy_reduce_mul_slice_assign(self, a: &mut [T], b: &[T]) {
-        self.reduce_mul_slice_assign(a, b);
-    }
-
-    #[inline]
-    fn lazy_reduce_mul_slice_to(self, a: &[T], b: &[T], output: &mut [T]) {
-        self.reduce_mul_slice_to(a, b, output);
     }
 }
 

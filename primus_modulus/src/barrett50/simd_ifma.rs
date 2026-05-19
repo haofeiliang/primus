@@ -261,6 +261,98 @@ pub unsafe fn lazy_reduce_mul_slice_assign(modulus: Barrett50Modulus, a: &mut [u
         .lazy_reduce_mul_slice_assign(tail, &b[main_len..]);
 }
 
+// ---------------------------------------------------------------------------
+// scalar_mul variants
+// ---------------------------------------------------------------------------
+
+#[target_feature(enable = "avx512f,avx512dq,avx512ifma")]
+pub unsafe fn reduce_scalar_mul_slice_assign(
+    modulus: Barrett50Modulus,
+    a: &mut [u64],
+    scalar: u64,
+) {
+    let (m, mu_lo52, mu_hi, neg_m, pow52_mask) = splat_params(&modulus);
+    let sv = _mm512_set1_epi64(scalar as i64);
+    let chunks = a.len() / N;
+    let main_len = chunks * N;
+    for i in 0..chunks {
+        let off = i * N;
+        let av = unsafe { load_u64x8(&a[off..]) };
+        let r = ifma_mul_canonical(av, sv, mu_lo52, mu_hi, neg_m, pow52_mask, m);
+        unsafe { store_u64x8(&mut a[off..], r) };
+    }
+    modulus
+        .inner
+        .reduce_scalar_mul_slice_assign(&mut a[main_len..], scalar);
+}
+
+#[target_feature(enable = "avx512f,avx512dq,avx512ifma")]
+pub unsafe fn reduce_scalar_mul_slice_to(
+    modulus: Barrett50Modulus,
+    a: &[u64],
+    scalar: u64,
+    output: &mut [u64],
+) {
+    debug_assert_eq!(a.len(), output.len());
+    let (m, mu_lo52, mu_hi, neg_m, pow52_mask) = splat_params(&modulus);
+    let sv = _mm512_set1_epi64(scalar as i64);
+    let chunks = a.len() / N;
+    let main_len = chunks * N;
+    for i in 0..chunks {
+        let off = i * N;
+        let av = unsafe { load_u64x8(&a[off..]) };
+        let r = ifma_mul_canonical(av, sv, mu_lo52, mu_hi, neg_m, pow52_mask, m);
+        unsafe { store_u64x8(&mut output[off..], r) };
+    }
+    modulus
+        .inner
+        .reduce_scalar_mul_slice_to(&a[main_len..], scalar, &mut output[main_len..]);
+}
+
+#[target_feature(enable = "avx512f,avx512dq,avx512ifma")]
+pub unsafe fn lazy_reduce_scalar_mul_slice_assign(
+    modulus: Barrett50Modulus,
+    a: &mut [u64],
+    scalar: u64,
+) {
+    let (m, mu_lo52, mu_hi, neg_m, pow52_mask) = splat_params(&modulus);
+    let sv = _mm512_set1_epi64(scalar as i64);
+    let chunks = a.len() / N;
+    let main_len = chunks * N;
+    for i in 0..chunks {
+        let off = i * N;
+        let av = unsafe { load_u64x8(&a[off..]) };
+        let r = ifma_mul_lazy(av, sv, mu_lo52, mu_hi, neg_m, pow52_mask, m);
+        unsafe { store_u64x8(&mut a[off..], r) };
+    }
+    modulus
+        .inner
+        .lazy_reduce_scalar_mul_slice_assign(&mut a[main_len..], scalar);
+}
+
+#[target_feature(enable = "avx512f,avx512dq,avx512ifma")]
+pub unsafe fn lazy_reduce_scalar_mul_slice_to(
+    modulus: Barrett50Modulus,
+    a: &[u64],
+    scalar: u64,
+    output: &mut [u64],
+) {
+    debug_assert_eq!(a.len(), output.len());
+    let (m, mu_lo52, mu_hi, neg_m, pow52_mask) = splat_params(&modulus);
+    let sv = _mm512_set1_epi64(scalar as i64);
+    let chunks = a.len() / N;
+    let main_len = chunks * N;
+    for i in 0..chunks {
+        let off = i * N;
+        let av = unsafe { load_u64x8(&a[off..]) };
+        let r = ifma_mul_lazy(av, sv, mu_lo52, mu_hi, neg_m, pow52_mask, m);
+        unsafe { store_u64x8(&mut output[off..], r) };
+    }
+    modulus
+        .inner
+        .lazy_reduce_scalar_mul_slice_to(&a[main_len..], scalar, &mut output[main_len..]);
+}
+
 // ===========================================================================
 // reduce_mul_add_slice_{to,assign-style}
 // ===========================================================================

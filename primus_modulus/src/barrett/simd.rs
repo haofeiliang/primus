@@ -428,6 +428,45 @@ pub fn lazy_reduce_mul_slice_to<T: SimdUnsignedInteger, const N: usize>(
 }
 
 #[inline]
+pub fn lazy_reduce_scalar_mul_slice_assign<T: SimdUnsignedInteger, const N: usize>(
+    modulus: BarrettModulus<T>,
+    a: &mut [T],
+    scalar: T,
+) where
+    Simd<T, N>: SimdArray<T, N>,
+{
+    let sm = SimdBarrettModulus::<T, N>::from(modulus);
+    let sv = Simd::splat(scalar);
+    let (a_chunks, a_rem) = a.as_chunks_mut::<N>();
+    for ac in a_chunks {
+        let av = Simd::from_array(*ac);
+        *ac = sm.lazy_reduce_mul(av, sv).to_array();
+    }
+    super::slice::scalar_lazy_reduce_scalar_mul_slice_assign(modulus, a_rem, scalar);
+}
+
+#[inline]
+pub fn lazy_reduce_scalar_mul_slice_to<T: SimdUnsignedInteger, const N: usize>(
+    modulus: BarrettModulus<T>,
+    a: &[T],
+    scalar: T,
+    output: &mut [T],
+) where
+    Simd<T, N>: SimdArray<T, N>,
+{
+    debug_assert_eq!(a.len(), output.len());
+    let sm = SimdBarrettModulus::<T, N>::from(modulus);
+    let sv = Simd::splat(scalar);
+    let (a_chunks, a_rem) = a.as_chunks::<N>();
+    let (o_chunks, o_rem) = output.as_chunks_mut::<N>();
+    for (ac, oc) in a_chunks.iter().zip(o_chunks) {
+        let av = Simd::from_array(*ac);
+        *oc = sm.lazy_reduce_mul(av, sv).to_array();
+    }
+    super::slice::scalar_lazy_reduce_scalar_mul_slice_to(modulus, a_rem, scalar, o_rem);
+}
+
+#[inline]
 pub fn reduce_mul_slice_assign<T: SimdUnsignedInteger, const N: usize>(
     modulus: BarrettModulus<T>,
     a: &mut [T],
@@ -472,6 +511,49 @@ pub fn reduce_mul_slice_to<T: SimdUnsignedInteger, const N: usize>(
         *oc = simd_reduce_once(lazy, m).to_array();
     }
     super::slice::scalar_reduce_mul_slice_to(modulus, a_rem, b_rem, o_rem);
+}
+
+#[inline]
+pub fn reduce_scalar_mul_slice_assign<T: SimdUnsignedInteger, const N: usize>(
+    modulus: BarrettModulus<T>,
+    a: &mut [T],
+    scalar: T,
+) where
+    Simd<T, N>: SimdArray<T, N>,
+{
+    let sm = SimdBarrettModulus::<T, N>::from(modulus);
+    let m = Simd::splat(modulus.value());
+    let sv = Simd::splat(scalar);
+    let (a_chunks, a_rem) = a.as_chunks_mut::<N>();
+    for ac in a_chunks {
+        let av = Simd::from_array(*ac);
+        let lazy = sm.lazy_reduce_mul(av, sv);
+        *ac = simd_reduce_once(lazy, m).to_array();
+    }
+    super::slice::scalar_reduce_scalar_mul_slice_assign(modulus, a_rem, scalar);
+}
+
+#[inline]
+pub fn reduce_scalar_mul_slice_to<T: SimdUnsignedInteger, const N: usize>(
+    modulus: BarrettModulus<T>,
+    a: &[T],
+    scalar: T,
+    output: &mut [T],
+) where
+    Simd<T, N>: SimdArray<T, N>,
+{
+    debug_assert_eq!(a.len(), output.len());
+    let sm = SimdBarrettModulus::<T, N>::from(modulus);
+    let m = Simd::splat(modulus.value());
+    let sv = Simd::splat(scalar);
+    let (a_chunks, a_rem) = a.as_chunks::<N>();
+    let (o_chunks, o_rem) = output.as_chunks_mut::<N>();
+    for (ac, oc) in a_chunks.iter().zip(o_chunks) {
+        let av = Simd::from_array(*ac);
+        let lazy = sm.lazy_reduce_mul(av, sv);
+        *oc = simd_reduce_once(lazy, m).to_array();
+    }
+    super::slice::scalar_reduce_scalar_mul_slice_to(modulus, a_rem, scalar, o_rem);
 }
 
 #[inline]

@@ -29,6 +29,17 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
                 debug_assert_eq!(a.len(), output.len());
                 a.iter().zip(b).zip(output).for_each(|((&a, &b), o)| *o = self.lazy_reduce_mul(a, b));
             }
+            #[inline]
+            fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [#ty], scalar: #ty) {
+                use ::primus_modulus::reduce::LazyReduceMulAssign;
+                a.iter_mut().for_each(|a| self.lazy_reduce_mul_assign(a, scalar));
+            }
+            #[inline]
+            fn lazy_reduce_scalar_mul_slice_to(self, a: &[#ty], scalar: #ty, output: &mut [#ty]) {
+                use ::primus_modulus::reduce::LazyReduceMul;
+                debug_assert_eq!(a.len(), output.len());
+                a.iter().zip(output).for_each(|(&a, o)| *o = self.lazy_reduce_mul(a, scalar));
+            }
         }
 
         #[cfg(all(feature = "nightly", feature = "simd"))]
@@ -59,6 +70,35 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
                     ),
                     a,
                     b,
+                    output,
+                )
+            }
+            #[inline]
+            fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [#ty], scalar: #ty) {
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_scalar_mul_slice_assign::<#ty, {
+                    ::primus_integer::lanes::VECTOR_BITS / (<#ty>::BITS as usize)
+                }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
+                        #modulus,
+                        [#r0, #r1],
+                    ),
+                    a,
+                    scalar,
+                )
+            }
+            #[inline]
+            fn lazy_reduce_scalar_mul_slice_to(
+                self, a: &[#ty], scalar: #ty, output: &mut [#ty],
+            ) {
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_scalar_mul_slice_to::<#ty, {
+                    ::primus_integer::lanes::VECTOR_BITS / (<#ty>::BITS as usize)
+                }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
+                        #modulus,
+                        [#r0, #r1],
+                    ),
+                    a,
+                    scalar,
                     output,
                 )
             }

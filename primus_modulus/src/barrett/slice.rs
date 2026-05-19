@@ -140,6 +140,52 @@ pub(super) fn scalar_reduce_mul_slice_to<T: UnsignedInteger>(
 }
 
 #[inline]
+pub(super) fn scalar_reduce_scalar_mul_slice_assign<T: UnsignedInteger>(
+    modulus: BarrettModulus<T>,
+    a: &mut [T],
+    scalar: T,
+) {
+    a.iter_mut()
+        .for_each(|a| *a = modulus.reduce_mul(*a, scalar));
+}
+
+#[inline]
+pub(super) fn scalar_reduce_scalar_mul_slice_to<T: UnsignedInteger>(
+    modulus: BarrettModulus<T>,
+    a: &[T],
+    scalar: T,
+    output: &mut [T],
+) {
+    debug_assert_eq!(a.len(), output.len());
+    a.iter()
+        .zip(output)
+        .for_each(|(&a, o)| *o = modulus.reduce_mul(a, scalar));
+}
+
+#[inline]
+pub(super) fn scalar_lazy_reduce_scalar_mul_slice_assign<T: UnsignedInteger>(
+    modulus: BarrettModulus<T>,
+    a: &mut [T],
+    scalar: T,
+) {
+    a.iter_mut()
+        .for_each(|a| *a = modulus.lazy_reduce_mul(*a, scalar));
+}
+
+#[inline]
+pub(super) fn scalar_lazy_reduce_scalar_mul_slice_to<T: UnsignedInteger>(
+    modulus: BarrettModulus<T>,
+    a: &[T],
+    scalar: T,
+    output: &mut [T],
+) {
+    debug_assert_eq!(a.len(), output.len());
+    a.iter()
+        .zip(output)
+        .for_each(|(&a, o)| *o = modulus.lazy_reduce_mul(a, scalar));
+}
+
+#[inline]
 pub(super) fn scalar_lazy_reduce_mul_slice_assign<T: UnsignedInteger>(
     modulus: BarrettModulus<T>,
     a: &mut [T],
@@ -470,6 +516,14 @@ macro_rules! impl_barrett_slice_scalar {
                 fn reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
                     scalar_reduce_mul_slice_to(self, a, b, output)
                 }
+                #[inline]
+                fn reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) {
+                    scalar_reduce_scalar_mul_slice_assign(self, a, scalar)
+                }
+                #[inline]
+                fn reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) {
+                    scalar_reduce_scalar_mul_slice_to(self, a, scalar, output)
+                }
             }
 
             impl LazyReduceMulSlice<$t> for BarrettModulus<$t> {
@@ -480,6 +534,19 @@ macro_rules! impl_barrett_slice_scalar {
                 #[inline]
                 fn lazy_reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
                     scalar_lazy_reduce_mul_slice_to(self, a, b, output)
+                }
+                #[inline]
+                fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) {
+                    scalar_lazy_reduce_scalar_mul_slice_assign(self, a, scalar)
+                }
+                #[inline]
+                fn lazy_reduce_scalar_mul_slice_to(
+                    self,
+                    a: &[$t],
+                    scalar: $t,
+                    output: &mut [$t],
+                ) {
+                    scalar_lazy_reduce_scalar_mul_slice_to(self, a, scalar, output)
                 }
             }
 
@@ -644,6 +711,14 @@ macro_rules! impl_barrett_slice_simd {
             fn reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
                 super::simd::reduce_mul_slice_to::<$t, { $lanes }>(self, a, b, output)
             }
+            #[inline]
+            fn reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) {
+                super::simd::reduce_scalar_mul_slice_assign::<$t, { $lanes }>(self, a, scalar)
+            }
+            #[inline]
+            fn reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) {
+                super::simd::reduce_scalar_mul_slice_to::<$t, { $lanes }>(self, a, scalar, output)
+            }
         }
 
         impl LazyReduceMulSlice<$t> for BarrettModulus<$t> {
@@ -654,6 +729,16 @@ macro_rules! impl_barrett_slice_simd {
             #[inline]
             fn lazy_reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
                 super::simd::lazy_reduce_mul_slice_to::<$t, { $lanes }>(self, a, b, output)
+            }
+            #[inline]
+            fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) {
+                super::simd::lazy_reduce_scalar_mul_slice_assign::<$t, { $lanes }>(self, a, scalar)
+            }
+            #[inline]
+            fn lazy_reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) {
+                super::simd::lazy_reduce_scalar_mul_slice_to::<$t, { $lanes }>(
+                    self, a, scalar, output,
+                )
             }
         }
 

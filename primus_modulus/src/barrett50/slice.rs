@@ -91,6 +91,14 @@ mod ifma_impls {
         fn reduce_mul_slice_to(self, a: &[u64], b: &[u64], output: &mut [u64]) {
             unsafe { super::super::simd_ifma::reduce_mul_slice_to(self, a, b, output) }
         }
+        #[inline]
+        fn reduce_scalar_mul_slice_assign(self, a: &mut [u64], scalar: u64) {
+            unsafe { super::super::simd_ifma::reduce_scalar_mul_slice_assign(self, a, scalar) }
+        }
+        #[inline]
+        fn reduce_scalar_mul_slice_to(self, a: &[u64], scalar: u64, output: &mut [u64]) {
+            unsafe { super::super::simd_ifma::reduce_scalar_mul_slice_to(self, a, scalar, output) }
+        }
     }
 
     impl LazyReduceMulSlice<u64> for Barrett50Modulus {
@@ -101,6 +109,16 @@ mod ifma_impls {
         #[inline]
         fn lazy_reduce_mul_slice_to(self, a: &[u64], b: &[u64], output: &mut [u64]) {
             unsafe { super::super::simd_ifma::lazy_reduce_mul_slice_to(self, a, b, output) }
+        }
+        #[inline]
+        fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [u64], scalar: u64) {
+            unsafe { super::super::simd_ifma::lazy_reduce_scalar_mul_slice_assign(self, a, scalar) }
+        }
+        #[inline]
+        fn lazy_reduce_scalar_mul_slice_to(self, a: &[u64], scalar: u64, output: &mut [u64]) {
+            unsafe {
+                super::super::simd_ifma::lazy_reduce_scalar_mul_slice_to(self, a, scalar, output)
+            }
         }
     }
 
@@ -194,9 +212,20 @@ mod fallback_impls {
         fn reduce_mul_slice_assign(self, a: &mut [u64], b: &[u64]) {
             self.inner.reduce_mul_slice_assign(a, b)
         }
+
         #[inline]
         fn reduce_mul_slice_to(self, a: &[u64], b: &[u64], output: &mut [u64]) {
             self.inner.reduce_mul_slice_to(a, b, output)
+        }
+
+        #[inline]
+        fn reduce_scalar_mul_slice_assign(self, a: &mut [u64], scalar: u64) {
+            self.inner.reduce_scalar_mul_slice_assign(a, scalar)
+        }
+
+        #[inline]
+        fn reduce_scalar_mul_slice_to(self, a: &[u64], scalar: u64, output: &mut [u64]) {
+            self.inner.reduce_scalar_mul_slice_to(a, scalar, output);
         }
     }
 
@@ -205,9 +234,21 @@ mod fallback_impls {
         fn lazy_reduce_mul_slice_assign(self, a: &mut [u64], b: &[u64]) {
             self.inner.lazy_reduce_mul_slice_assign(a, b)
         }
+
         #[inline]
         fn lazy_reduce_mul_slice_to(self, a: &[u64], b: &[u64], output: &mut [u64]) {
             self.inner.lazy_reduce_mul_slice_to(a, b, output)
+        }
+
+        #[inline]
+        fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [u64], scalar: u64) {
+            self.inner.lazy_reduce_scalar_mul_slice_assign(a, scalar);
+        }
+
+        #[inline]
+        fn lazy_reduce_scalar_mul_slice_to(self, a: &[u64], scalar: u64, output: &mut [u64]) {
+            self.inner
+                .lazy_reduce_scalar_mul_slice_to(a, scalar, output);
         }
     }
 

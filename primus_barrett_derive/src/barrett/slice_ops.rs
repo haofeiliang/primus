@@ -237,6 +237,17 @@ pub(crate) fn impl_reduce_slice_ops(
                 debug_assert_eq!(a.len(), output.len());
                 a.iter().zip(b).zip(output).for_each(|((&a, &b), o)| *o = self.reduce_mul(a, b));
             }
+            #[inline]
+            fn reduce_scalar_mul_slice_assign(self, a: &mut [#ty], scalar: #ty) {
+                use ::primus_modulus::reduce::ReduceMulAssign;
+                a.iter_mut().for_each(|a| self.reduce_mul_assign(a, scalar));
+            }
+            #[inline]
+            fn reduce_scalar_mul_slice_to(self, a: &[#ty], scalar: #ty, output: &mut [#ty]) {
+                use ::primus_modulus::reduce::ReduceMul;
+                debug_assert_eq!(a.len(), output.len());
+                a.iter().zip(output).for_each(|(&a, o)| *o = self.reduce_mul(a, scalar));
+            }
         }
 
         #[cfg(all(feature = "nightly", feature = "simd"))]
@@ -267,6 +278,33 @@ pub(crate) fn impl_reduce_slice_ops(
                     ),
                     a,
                     b,
+                    output,
+                )
+            }
+            #[inline]
+            fn reduce_scalar_mul_slice_assign(self, a: &mut [#ty], scalar: #ty) {
+                ::primus_modulus::barrett_simd_kernel::reduce_scalar_mul_slice_assign::<#ty, {
+                    ::primus_integer::lanes::VECTOR_BITS / (<#ty>::BITS as usize)
+                }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
+                        #modulus,
+                        [#r0, #r1],
+                    ),
+                    a,
+                    scalar,
+                )
+            }
+            #[inline]
+            fn reduce_scalar_mul_slice_to(self, a: &[#ty], scalar: #ty, output: &mut [#ty]) {
+                ::primus_modulus::barrett_simd_kernel::reduce_scalar_mul_slice_to::<#ty, {
+                    ::primus_integer::lanes::VECTOR_BITS / (<#ty>::BITS as usize)
+                }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
+                        #modulus,
+                        [#r0, #r1],
+                    ),
+                    a,
+                    scalar,
                     output,
                 )
             }
