@@ -620,7 +620,13 @@ pub unsafe fn reduce_add_scalar_mul_slice_assign(
         let off = i * N;
         let accv = unsafe { load_u64x8(&acc[off..]) };
         let bv = unsafe { load_u64x8(&b[off..]) };
-        let r = ifma_mul_add_canonical(sv, bv, accv, mu_lo52, mu_hi, neg_m, pow52_mask, m);
+        let (x_lo, x_hi) = ifma_widening_mul(sv, bv);
+        let r = ifma_lazy_reduce_4m(x_lo, x_hi, mu_lo52, mu_hi, neg_m, pow52_mask);
+        let r = _mm512_add_epi64(r, accv);
+        let r = cond_sub_m(r, m);
+        let r = cond_sub_m(r, m);
+        let r = cond_sub_m(r, m);
+        let r = cond_sub_m(r, m);
         unsafe { store_u64x8(&mut acc[off..], r) };
     }
     modulus
