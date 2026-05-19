@@ -8,7 +8,7 @@ use primus_lattice::{context::DcrtGlevContext, glwe::DcrtGlwe};
 use primus_modulus::BarrettModulus;
 use primus_ntt::{DcrtTable, UintCrtNttTable};
 use primus_poly::{CrtPolynomial, Polynomial};
-use primus_reduce::ReduceNegAssign;
+use primus_reduce::ReduceNegSlice;
 use rand::RngExt;
 
 #[test]
@@ -95,9 +95,7 @@ fn test_external_product() {
 
         let mut input_rt = input.clone();
         input_rt.as_mut_slice().rotate_right(degree);
-        input_rt.as_mut_slice()[..degree].iter_mut().for_each(|c| {
-            mod_t.reduce_neg_assign(c);
-        });
+        mod_t.reduce_neg_slice_assign(&mut input_rt.as_mut_slice()[..degree]);
 
         let output = dcrt_sk.decrypt(&c2, &glwe_params, &table, &mut decrypt_context);
 
