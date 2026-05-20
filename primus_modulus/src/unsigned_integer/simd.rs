@@ -1,6 +1,6 @@
 use std::simd::{
     Simd,
-    cmp::{SimdOrd, SimdPartialEq, SimdPartialOrd},
+    cmp::{SimdOrd, SimdPartialEq},
 };
 
 use primus_integer::{SimdArray, SimdMaskArray, SimdUnsignedInteger};
