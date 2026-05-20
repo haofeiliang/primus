@@ -120,7 +120,10 @@ where
     #[inline]
     fn factor_mul_modulo(self, b: Simd<T, N>, modulus: Simd<T, N>) -> Simd<T, N> {
         let t = self.lazy_factor_mul_modulo(b, modulus);
-        t.simd_ge(modulus).select(t - modulus, t)
+        // `t ∈ [0, 2m)`. The `min(t, t-m)` trick: when `t < m`, `t-m` wraps
+        // to a huge value so unsigned min picks `t`; when `t >= m`, `t-m` is
+        // the canonical form. Lowers to a single `vpminuq` on AVX-512.
+        t.simd_min(t - modulus)
     }
 }
 
@@ -155,7 +158,7 @@ pub fn lazy_factor_mul_slice_to<T: SimdUnsignedInteger, const N: usize>(
 ) where
     Simd<T, N>: SimdArray<T, N>,
 {
-    assert_eq!(input.len(), output.len());
+    debug_assert_eq!(input.len(), output.len());
 
     let simd_factor = SimdShoupFactor::<T, N>::from(factor);
     let simd_modulus = Simd::splat(modulus);
@@ -203,7 +206,7 @@ pub fn factor_mul_slice_to<T: SimdUnsignedInteger, const N: usize>(
 ) where
     Simd<T, N>: SimdArray<T, N>,
 {
-    assert_eq!(input.len(), output.len());
+    debug_assert_eq!(input.len(), output.len());
 
     let simd_factor = SimdShoupFactor::<T, N>::from(factor);
     let simd_modulus = Simd::splat(modulus);
@@ -229,7 +232,7 @@ pub fn add_factor_mul_slice_assign<T: SimdUnsignedInteger, const N: usize>(
 ) where
     Simd<T, N>: SimdArray<T, N>,
 {
-    assert_eq!(acc.len(), rhs.len());
+    debug_assert_eq!(acc.len(), rhs.len());
 
     let simd_factor = SimdShoupFactor::<T, N>::from(factor);
     let simd_modulus = Simd::splat(modulus);
@@ -257,7 +260,7 @@ pub fn sub_factor_mul_slice_assign<T: SimdUnsignedInteger, const N: usize>(
 ) where
     Simd<T, N>: SimdArray<T, N>,
 {
-    assert_eq!(acc.len(), rhs.len());
+    debug_assert_eq!(acc.len(), rhs.len());
 
     let simd_factor = SimdShoupFactor::<T, N>::from(factor);
     let simd_modulus = Simd::splat(modulus);
@@ -267,12 +270,12 @@ pub fn sub_factor_mul_slice_assign<T: SimdUnsignedInteger, const N: usize>(
     for (acc, rhs) in acc_chunks.iter_mut().zip(rhs_chunks) {
         let acc_value = Simd::from_array(*acc);
         let product = simd_factor.factor_mul_modulo(Simd::from_array(*rhs), simd_modulus);
-        // Branchless `(acc - product) mod modulus`.
+        // `modulus < 2^{BITS-1}`: when `acc >= product`, `diff + m ∈ [m, 2m)` and
+        // does not wrap, so `min` picks `diff`. When `acc < product`, `diff` wraps
+        // to a huge value and `diff + m` wraps back to the canonical `(acc - product) mod m`,
+        // so `min` picks the wrapped-back result. Lowers to a single `vpminuq` on AVX-512.
         let diff = acc_value - product;
-        *acc = acc_value
-            .simd_lt(product)
-            .select(diff + simd_modulus, diff)
-            .to_array();
+        *acc = diff.simd_min(diff + simd_modulus).to_array();
     }
 
     super::scalar_sub_factor_mul_slice_assign(factor, acc_rem, rhs_rem, modulus);
@@ -288,8 +291,8 @@ pub fn factor_mul_add_slice_to<T: SimdUnsignedInteger, const N: usize>(
 ) where
     Simd<T, N>: SimdArray<T, N>,
 {
-    assert_eq!(b.len(), c.len());
-    assert_eq!(b.len(), output.len());
+    debug_assert_eq!(b.len(), c.len());
+    debug_assert_eq!(b.len(), output.len());
 
     let simd_factor = SimdShoupFactor::<T, N>::from(factor);
     let simd_modulus = Simd::splat(modulus);

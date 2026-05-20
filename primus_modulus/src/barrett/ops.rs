@@ -226,11 +226,7 @@ impl<T: UnsignedInteger> ReduceAdd<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_add(self, a: T, b: T) -> Self::Output {
         let sum = a + b;
-        if sum >= self.value {
-            sum - self.value
-        } else {
-            sum
-        }
+        sum.min(sum.wrapping_sub(self.value))
     }
 }
 
@@ -238,11 +234,7 @@ impl<T: UnsignedInteger> ReduceAddAssign<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_add_assign(self, a: &mut T, b: T) {
         let sum = *a + b;
-        *a = if sum >= self.value {
-            sum - self.value
-        } else {
-            sum
-        };
+        *a = sum.min(sum.wrapping_sub(self.value));
     }
 }
 
@@ -251,24 +243,15 @@ impl<T: UnsignedInteger> ReduceDouble<T> for BarrettModulus<T> {
 
     #[inline(always)]
     fn reduce_double(self, value: T) -> Self::Output {
-        let sum = value << 1u32;
-        if sum >= self.value {
-            sum - self.value
-        } else {
-            sum
-        }
+        let d = value << 1u32;
+        d.min(d.wrapping_sub(self.value))
     }
 }
 
 impl<T: UnsignedInteger> ReduceDoubleAssign<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_double_assign(self, value: &mut T) {
-        let sum = *value << 1u32;
-        *value = if sum >= self.value {
-            sum - self.value
-        } else {
-            sum
-        };
+        *value = self.reduce_double(*value);
     }
 }
 
@@ -277,18 +260,16 @@ impl<T: UnsignedInteger> ReduceSub<T> for BarrettModulus<T> {
 
     #[inline(always)]
     fn reduce_sub(self, a: T, b: T) -> Self::Output {
-        if a >= b { a - b } else { a + self.value - b }
+        let diff = a.wrapping_sub(b);
+        diff.min(diff.wrapping_add(self.value))
     }
 }
 
 impl<T: UnsignedInteger> ReduceSubAssign<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_sub_assign(self, a: &mut T, b: T) {
-        if *a >= b {
-            *a -= b
-        } else {
-            *a += self.value - b
-        };
+        let diff = a.wrapping_sub(b);
+        *a = diff.min(diff.wrapping_add(self.value));
     }
 }
 

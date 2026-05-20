@@ -120,35 +120,43 @@ impl<T: UnsignedInteger> FactorMul<T> for ShoupFactor<T> {
     #[inline]
     fn factor_mul_modulo(self, b: T, modulus: T) -> T {
         let t = self.lazy_factor_mul_modulo(b, modulus);
-        if t >= modulus { t - modulus } else { t }
+        // `t ∈ [0, 2m)`. When `t < m`, `t.wrapping_sub(m)` wraps to a huge
+        // value so `min` picks `t`; when `t >= m`, picks `t - m`.
+        // LLVM lowers this to branchless `cmp` + `cmov` on x86_64.
+        t.min(t.wrapping_sub(modulus))
     }
 }
 
 #[inline]
 fn reduce_add<T: UnsignedInteger>(a: T, b: T, modulus: T) -> T {
     let sum = a + b;
-    if sum >= modulus { sum - modulus } else { sum }
+    // `a, b ∈ [0, m)` ⇒ `sum ∈ [0, 2m)`. Same `min` trick as `factor_mul_modulo`.
+    sum.min(sum.wrapping_sub(modulus))
 }
 
 #[inline]
-pub(super) fn scalar_lazy_factor_mul_slice_assign<T: UnsignedInteger>(
+pub(super) fn scalar_lazy_factor_mul_slice_assign<T>(
     factor: ShoupFactor<T>,
     values: &mut [T],
     modulus: T,
-) {
+) where
+    T: UnsignedInteger,
+{
     values
         .iter_mut()
         .for_each(|value| *value = factor.lazy_factor_mul_modulo(*value, modulus));
 }
 
 #[inline]
-pub(super) fn scalar_lazy_factor_mul_slice_to<T: UnsignedInteger>(
+pub(super) fn scalar_lazy_factor_mul_slice_to<T>(
     factor: ShoupFactor<T>,
     input: &[T],
     output: &mut [T],
     modulus: T,
-) {
-    assert_eq!(input.len(), output.len());
+) where
+    T: UnsignedInteger,
+{
+    debug_assert_eq!(input.len(), output.len());
     input
         .iter()
         .zip(output)
@@ -156,24 +164,28 @@ pub(super) fn scalar_lazy_factor_mul_slice_to<T: UnsignedInteger>(
 }
 
 #[inline]
-pub(super) fn scalar_factor_mul_slice_assign<T: UnsignedInteger>(
+pub(super) fn scalar_factor_mul_slice_assign<T>(
     factor: ShoupFactor<T>,
     values: &mut [T],
     modulus: T,
-) {
+) where
+    T: UnsignedInteger,
+{
     values
         .iter_mut()
         .for_each(|value| *value = factor.factor_mul_modulo(*value, modulus));
 }
 
 #[inline]
-pub(super) fn scalar_factor_mul_slice_to<T: UnsignedInteger>(
+pub(super) fn scalar_factor_mul_slice_to<T>(
     factor: ShoupFactor<T>,
     input: &[T],
     output: &mut [T],
     modulus: T,
-) {
-    assert_eq!(input.len(), output.len());
+) where
+    T: UnsignedInteger,
+{
+    debug_assert_eq!(input.len(), output.len());
     input
         .iter()
         .zip(output)
@@ -181,26 +193,30 @@ pub(super) fn scalar_factor_mul_slice_to<T: UnsignedInteger>(
 }
 
 #[inline]
-pub(super) fn scalar_add_factor_mul_slice_assign<T: UnsignedInteger>(
+pub(super) fn scalar_add_factor_mul_slice_assign<T>(
     factor: ShoupFactor<T>,
     acc: &mut [T],
     rhs: &[T],
     modulus: T,
-) {
-    assert_eq!(acc.len(), rhs.len());
+) where
+    T: UnsignedInteger,
+{
+    debug_assert_eq!(acc.len(), rhs.len());
     acc.iter_mut().zip(rhs).for_each(|(acc, &rhs)| {
         *acc = reduce_add(*acc, factor.factor_mul_modulo(rhs, modulus), modulus);
     });
 }
 
 #[inline]
-pub(super) fn scalar_sub_factor_mul_slice_assign<T: UnsignedInteger>(
+pub(super) fn scalar_sub_factor_mul_slice_assign<T>(
     factor: ShoupFactor<T>,
     acc: &mut [T],
     rhs: &[T],
     modulus: T,
-) {
-    assert_eq!(acc.len(), rhs.len());
+) where
+    T: UnsignedInteger,
+{
+    debug_assert_eq!(acc.len(), rhs.len());
     acc.iter_mut().zip(rhs).for_each(|(acc, &rhs)| {
         let prod = factor.factor_mul_modulo(rhs, modulus);
         // `*acc - prod (mod modulus)`. Both are in `[0, modulus)`.
@@ -213,109 +229,99 @@ pub(super) fn scalar_sub_factor_mul_slice_assign<T: UnsignedInteger>(
 }
 
 #[inline]
-pub(super) fn scalar_factor_mul_add_slice_to<T: UnsignedInteger>(
+pub(super) fn scalar_factor_mul_add_slice_to<T>(
     factor: ShoupFactor<T>,
     b: &[T],
     c: &[T],
     output: &mut [T],
     modulus: T,
-) {
-    assert_eq!(b.len(), c.len());
-    assert_eq!(b.len(), output.len());
+) where
+    T: UnsignedInteger,
+{
+    debug_assert_eq!(b.len(), c.len());
+    debug_assert_eq!(b.len(), output.len());
     b.iter().zip(c).zip(output).for_each(|((&b, &c), o)| {
         let prod = factor.factor_mul_modulo(b, modulus);
         *o = reduce_add(prod, c, modulus);
     });
 }
 
-macro_rules! impl_shoup_factor_slice_ops_scalar {
-    ($($t:ty),* $(,)?) => {
-        $(
-            impl LazyFactorSliceOps<$t> for ShoupFactor<$t> {
-                #[inline]
-                fn lazy_factor_mul_slice_assign(self, values: &mut [$t], modulus: $t) {
-                    scalar_lazy_factor_mul_slice_assign(self, values, modulus);
-                }
-
-                #[inline]
-                fn lazy_factor_mul_slice_to(self, input: &[$t], output: &mut [$t], modulus: $t) {
-                    scalar_lazy_factor_mul_slice_to(self, input, output, modulus);
-                }
+// Blanket impl: scalar path for all unsigned integer types.
+// When `simd` is enabled and `min_specialization` is available (nightly),
+// the blanket is marked `default` so that concrete SIMD impls (below) can
+// override it at monomorphisation time. Without simd, it is the only impl.
+macro_rules! impl_blanket_factor_slice_ops {
+    ($($default_kw:ident)?) => {
+        impl<T: UnsignedInteger> LazyFactorSliceOps<T> for ShoupFactor<T> {
+            $($default_kw)? fn lazy_factor_mul_slice_assign(self, values: &mut [T], modulus: T) {
+                scalar_lazy_factor_mul_slice_assign(self, values, modulus);
             }
 
-            impl FactorSliceOps<$t> for ShoupFactor<$t> {
-                #[inline]
-                fn factor_mul_slice_assign(self, values: &mut [$t], modulus: $t) {
-                    scalar_factor_mul_slice_assign(self, values, modulus);
-                }
-
-                #[inline]
-                fn factor_mul_slice_to(self, input: &[$t], output: &mut [$t], modulus: $t) {
-                    scalar_factor_mul_slice_to(self, input, output, modulus);
-                }
-
-                #[inline]
-                fn add_factor_mul_slice_assign(self, acc: &mut [$t], rhs: &[$t], modulus: $t) {
-                    scalar_add_factor_mul_slice_assign(self, acc, rhs, modulus);
-                }
-
-                #[inline]
-                fn sub_factor_mul_slice_assign(self, acc: &mut [$t], rhs: &[$t], modulus: $t) {
-                    scalar_sub_factor_mul_slice_assign(self, acc, rhs, modulus);
-                }
-
-                #[inline]
-                fn factor_mul_add_slice_to(
-                    self,
-                    b: &[$t],
-                    c: &[$t],
-                    output: &mut [$t],
-                    modulus: $t,
-                ) {
-                    scalar_factor_mul_add_slice_to(self, b, c, output, modulus);
-                }
+            $($default_kw)? fn lazy_factor_mul_slice_to(self, input: &[T], output: &mut [T], modulus: T) {
+                scalar_lazy_factor_mul_slice_to(self, input, output, modulus);
             }
-        )*
+        }
+
+        impl<T: UnsignedInteger> FactorSliceOps<T> for ShoupFactor<T> {
+            $($default_kw)? fn factor_mul_slice_assign(self, values: &mut [T], modulus: T) {
+                scalar_factor_mul_slice_assign(self, values, modulus);
+            }
+
+            $($default_kw)? fn factor_mul_slice_to(self, input: &[T], output: &mut [T], modulus: T) {
+                scalar_factor_mul_slice_to(self, input, output, modulus);
+            }
+
+            $($default_kw)? fn add_factor_mul_slice_assign(self, acc: &mut [T], rhs: &[T], modulus: T) {
+                scalar_add_factor_mul_slice_assign(self, acc, rhs, modulus);
+            }
+
+            $($default_kw)? fn sub_factor_mul_slice_assign(self, acc: &mut [T], rhs: &[T], modulus: T) {
+                scalar_sub_factor_mul_slice_assign(self, acc, rhs, modulus);
+            }
+
+            $($default_kw)? fn factor_mul_add_slice_to(self, b: &[T], c: &[T], output: &mut [T], modulus: T) {
+                scalar_factor_mul_add_slice_to(self, b, c, output, modulus);
+            }
+        }
     };
 }
+
+#[cfg(not(feature = "simd"))]
+impl_blanket_factor_slice_ops!();
+
+#[cfg(feature = "simd")]
+impl_blanket_factor_slice_ops!(default);
+
+// ===========================================================================
+// SIMD-specialized impls — override the blanket scalar path when the `simd`
+// feature is enabled and the type supports `SimdUnsignedInteger`.
+// ===========================================================================
 
 #[cfg(feature = "simd")]
 macro_rules! impl_shoup_factor_slice_ops_simd {
     ($t:ty, $lanes:expr) => {
         impl LazyFactorSliceOps<$t> for ShoupFactor<$t> {
-            #[inline]
             fn lazy_factor_mul_slice_assign(self, values: &mut [$t], modulus: $t) {
                 simd::lazy_factor_mul_slice_assign::<$t, { $lanes }>(self, values, modulus);
             }
-
-            #[inline]
             fn lazy_factor_mul_slice_to(self, input: &[$t], output: &mut [$t], modulus: $t) {
                 simd::lazy_factor_mul_slice_to::<$t, { $lanes }>(self, input, output, modulus);
             }
         }
 
         impl FactorSliceOps<$t> for ShoupFactor<$t> {
-            #[inline]
             fn factor_mul_slice_assign(self, values: &mut [$t], modulus: $t) {
                 simd::factor_mul_slice_assign::<$t, { $lanes }>(self, values, modulus);
             }
-
-            #[inline]
             fn factor_mul_slice_to(self, input: &[$t], output: &mut [$t], modulus: $t) {
                 simd::factor_mul_slice_to::<$t, { $lanes }>(self, input, output, modulus);
             }
-
-            #[inline]
             fn add_factor_mul_slice_assign(self, acc: &mut [$t], rhs: &[$t], modulus: $t) {
                 simd::add_factor_mul_slice_assign::<$t, { $lanes }>(self, acc, rhs, modulus);
             }
-
-            #[inline]
             fn sub_factor_mul_slice_assign(self, acc: &mut [$t], rhs: &[$t], modulus: $t) {
                 simd::sub_factor_mul_slice_assign::<$t, { $lanes }>(self, acc, rhs, modulus);
             }
-
-            #[inline]
             fn factor_mul_add_slice_to(self, b: &[$t], c: &[$t], output: &mut [$t], modulus: $t) {
                 simd::factor_mul_add_slice_to::<$t, { $lanes }>(self, b, c, output, modulus);
             }
@@ -331,16 +337,10 @@ impl_shoup_factor_slice_ops_simd!(u16, primus_integer::lanes::VECTOR_BITS / 16);
 impl_shoup_factor_slice_ops_simd!(u32, primus_integer::lanes::VECTOR_BITS / 32);
 #[cfg(feature = "simd")]
 impl_shoup_factor_slice_ops_simd!(u64, primus_integer::lanes::VECTOR_BITS / 64);
-
 #[cfg(all(feature = "simd", target_pointer_width = "64"))]
 impl_shoup_factor_slice_ops_simd!(usize, primus_integer::lanes::VECTOR_BITS / 64);
 #[cfg(all(feature = "simd", target_pointer_width = "32"))]
 impl_shoup_factor_slice_ops_simd!(usize, primus_integer::lanes::VECTOR_BITS / 32);
-
-#[cfg(not(feature = "simd"))]
-impl_shoup_factor_slice_ops_scalar!(u8, u16, u32, u64, usize);
-
-impl_shoup_factor_slice_ops_scalar!(u128);
 
 #[cfg(test)]
 mod tests {

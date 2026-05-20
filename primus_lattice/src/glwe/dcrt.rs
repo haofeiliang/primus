@@ -1,5 +1,5 @@
 use primus_decompose::big_integer::BigUintApproxSignedBasis;
-use primus_factor::ShoupFactor;
+use primus_factor::{FactorSliceOps, ShoupFactor};
 use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger, izip};
 use primus_ntt::DcrtTable;
 use primus_poly::{
@@ -85,13 +85,15 @@ where
 
     /// Performs `self *= scalar` according to `moduli`.
     #[inline]
-    pub fn mul_factor_assign(
+    pub fn mul_factor_assign<F>(
         &mut self,
-        scalar: &[ShoupFactor<T>],
+        scalar: &[F],
         poly_length: usize,
         dcrt_poly_len: usize,
         moduli: &[T],
-    ) {
+    ) where
+        F: Copy + FactorSliceOps<T>,
+    {
         self.iter_dcrt_poly_mut(dcrt_poly_len)
             .for_each(|mut dcrt_poly| {
                 dcrt_poly.mul_factor_assign(scalar, poly_length, moduli);
@@ -343,14 +345,15 @@ where
         (DcrtPolynomialIter::new(a, b.len()), DcrtPolynomial(b))
     }
 
-    pub fn mul_factor_inplace<A>(
+    pub fn mul_factor_inplace<F, A>(
         &self,
-        scalar: &[ShoupFactor<T>],
+        scalar: &[F],
         result: &mut DcrtGlwe<A>,
         poly_length: usize,
         dcrt_poly_len: usize,
         moduli: &[T],
     ) where
+        F: Copy + FactorSliceOps<T>,
         A: RawData<Elem = T> + DataMut,
     {
         self.iter_dcrt_poly(dcrt_poly_len)

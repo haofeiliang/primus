@@ -209,11 +209,13 @@ fn simd_reduce_sub<T: SimdUnsignedInteger, const N: usize>(
 where
     Simd<T, N>: SimdArray<T, N>,
 {
-    // Branchless: compute the wrapping difference first, then add `m` back
-    // only on lanes where the original `a < b` borrowed. On AVX-512 this
-    // tends to lower to `vpsubq` + `vpcmpltuq` + `vpaddq{k}` (masked add).
+    // `a, b ∈ [0, m)`. When `a >= b`, `diff = a - b < m` and `diff + m < 2m`
+    // does not wrap (provided `m < 2^{BITS-1}`), so `min` picks `diff`.
+    // When `a < b`, `diff` wraps to a huge value and `diff + m` wraps back to
+    // the canonical `(a - b) mod m`, so `min` picks the wrapped-back result.
+    // Lowers to a single `vpminuq` on AVX-512.
     let diff = a - b;
-    a.simd_lt(b).select(diff + m, diff)
+    diff.simd_min(diff + m)
 }
 
 #[inline]

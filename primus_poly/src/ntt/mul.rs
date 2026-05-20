@@ -1,7 +1,6 @@
-use primus_factor::{FactorMul, ShoupFactor};
+use primus_factor::FactorSliceOps;
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
-use primus_modulus::UintModulus;
-use primus_reduce::{ReduceAddAssign, ReduceMulAddSlice, ReduceMulSlice};
+use primus_reduce::{ReduceMulAddSlice, ReduceMulSlice};
 
 use super::NttPolynomial;
 
@@ -22,8 +21,11 @@ where
 
     /// Performs `self * scalar` according to `modulus`.
     #[inline]
-    pub fn mul_factor(mut self, scalar: ShoupFactor<T>, modulus: T) -> Self {
-        self.mul_factor_assign(scalar, modulus);
+    pub fn mul_factor<F>(mut self, factor: F, modulus: T) -> Self
+    where
+        F: FactorSliceOps<T>,
+    {
+        self.mul_factor_assign(factor, modulus);
         self
     }
 
@@ -59,24 +61,21 @@ where
 
     /// Performs `self *= scalar` according to `modulus`.
     #[inline]
-    pub fn mul_factor_assign(&mut self, scalar: ShoupFactor<T>, modulus: T) {
-        self.iter_mut()
-            .for_each(|v| *v = scalar.factor_mul_modulo(*v, modulus))
+    pub fn mul_factor_assign<F>(&mut self, factor: F, modulus: T)
+    where
+        F: FactorSliceOps<T>,
+    {
+        factor.factor_mul_slice_assign(self.as_mut(), modulus)
     }
 
     /// Performs `self += scalar * rhs` according to `modulus`.
     #[inline]
-    pub fn add_mul_factor_assign<A>(
-        &mut self,
-        rhs: &NttPolynomial<A>,
-        scalar: ShoupFactor<T>,
-        modulus: T,
-    ) where
+    pub fn add_mul_factor_assign<F, A>(&mut self, rhs: &NttPolynomial<A>, factor: F, modulus: T)
+    where
+        F: FactorSliceOps<T>,
         A: RawData<Elem = T> + Data,
     {
-        self.iter_mut().zip(rhs.iter()).for_each(|(r, &v)| {
-            UintModulus(modulus).reduce_add_assign(r, scalar.factor_mul_modulo(v, modulus))
-        })
+        factor.add_factor_mul_slice_assign(self.as_mut(), rhs.as_ref(), modulus);
     }
 
     /// Performs `self *= rhs` according to `modulus`.

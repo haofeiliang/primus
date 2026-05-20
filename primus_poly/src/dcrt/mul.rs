@@ -1,4 +1,4 @@
-use primus_factor::{FactorMul, ShoupFactor};
+use primus_factor::{FactorMul, FactorSliceOps, ShoupFactor};
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
 use primus_modulus::UintModulus;
 use primus_reduce::{ReduceAddAssign, ReduceMulAddSlice, ReduceMulSlice, ReduceSub};
@@ -58,27 +58,22 @@ where
 
     /// Performs `self * scalar` according to `moduli`.
     #[inline]
-    pub fn mul_factor(
-        mut self,
-        scalar: &[ShoupFactor<T>],
-        poly_length: usize,
-        moduli: &[T],
-    ) -> Self {
-        self.mul_factor_assign(scalar, poly_length, moduli);
+    pub fn mul_factor<F>(mut self, factor: &[F], poly_length: usize, moduli: &[T]) -> Self
+    where
+        F: Copy + FactorSliceOps<T>,
+    {
+        self.mul_factor_assign(factor, poly_length, moduli);
         self
     }
 
     /// Performs `self *= scalar` according to `moduli`.
     #[inline]
-    pub fn mul_factor_assign(
-        &mut self,
-        scalar: &[ShoupFactor<T>],
-        poly_length: usize,
-        moduli: &[T],
-    ) {
-        izip!(self.iter_each_modulus_mut(poly_length), scalar, moduli).for_each(
-            |(poly, &scalar, &modulus)| ArrayBase(poly).mul_factor_assign(scalar, modulus),
-        )
+    pub fn mul_factor_assign<F>(&mut self, factor: &[F], poly_length: usize, moduli: &[T])
+    where
+        F: Copy + FactorSliceOps<T>,
+    {
+        izip!(self.iter_each_modulus_mut(poly_length), factor, moduli)
+            .for_each(|(poly, &f, &modulus)| ArrayBase(poly).mul_factor_assign(f, modulus))
     }
 
     /// Performs `self * rhs` according to `moduli`.
@@ -186,23 +181,24 @@ where
 
     /// Performs `result = self * scalar` according to `moduli`.
     #[inline]
-    pub fn mul_factor_inplace<A>(
+    pub fn mul_factor_inplace<F, A>(
         &self,
-        scalar: &[ShoupFactor<T>],
+        factor: &[F],
         result: &mut DcrtPolynomial<A>,
         poly_length: usize,
         moduli: &[T],
     ) where
+        F: Copy + FactorSliceOps<T>,
         A: RawData<Elem = T> + DataMut,
     {
         izip!(
             self.iter_each_modulus(poly_length),
             result.iter_each_modulus_mut(poly_length),
-            scalar,
+            factor,
             moduli
         )
-        .for_each(|(in_poly, out_poly, &scalar, &modulus)| {
-            ArrayBase(in_poly).mul_factor_inplace(scalar, &mut ArrayBase(out_poly), modulus)
+        .for_each(|(in_poly, out_poly, &f, &modulus)| {
+            ArrayBase(in_poly).mul_factor_inplace(f, &mut ArrayBase(out_poly), modulus)
         })
     }
 }

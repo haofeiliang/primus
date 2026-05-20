@@ -39,7 +39,7 @@ where
     Simd<T, N>: SimdArray<T, N>,
 {
     let diff = a - b;
-    a.simd_lt(b).select(diff + m, diff)
+    diff.simd_min(diff + m)
 }
 
 #[inline]
@@ -210,11 +210,8 @@ pub fn reduce_sub_slice_assign<T: SimdUnsignedInteger, const N: usize>(
         *ac = simd_reduce_sub(av, bv, m).to_array();
     }
     for (a, &b) in a_rem.iter_mut().zip(b_rem) {
-        if b > *a {
-            *a = a.wrapping_sub(b).wrapping_add(modulus);
-        } else {
-            *a -= b;
-        }
+        let diff = a.wrapping_sub(b);
+        *a = diff.min(diff.wrapping_add(modulus));
     }
 }
 
@@ -239,11 +236,8 @@ pub fn reduce_sub_slice_to<T: SimdUnsignedInteger, const N: usize>(
         *oc = simd_reduce_sub(av, bv, m).to_array();
     }
     for ((&a_val, &b_val), o) in a_rem.iter().zip(b_rem).zip(o_rem) {
-        *o = if b_val > a_val {
-            a_val.wrapping_sub(b_val).wrapping_add(modulus)
-        } else {
-            a_val - b_val
-        };
+        let diff = a_val.wrapping_sub(b_val);
+        *o = diff.min(diff.wrapping_add(modulus));
     }
 }
 
@@ -265,10 +259,7 @@ pub fn reduce_sub_slice_rev_assign<T: SimdUnsignedInteger, const N: usize>(
         *bc = simd_reduce_sub(av, bv, m).to_array();
     }
     for (&a_val, b) in a_rem.iter().zip(b_rem) {
-        if a_val < *b {
-            *b = a_val.wrapping_sub(*b).wrapping_add(modulus);
-        } else {
-            *b = a_val - *b;
-        }
+        let diff = a_val.wrapping_sub(*b);
+        *b = diff.min(diff.wrapping_add(modulus));
     }
 }

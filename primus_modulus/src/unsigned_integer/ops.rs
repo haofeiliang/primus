@@ -11,20 +11,14 @@ impl<T: UnsignedInteger> ReduceOnce<T> for UintModulus<T> {
 
     #[inline(always)]
     fn reduce_once(self, value: T) -> Self::Output {
-        if value >= self.0 {
-            value - self.0
-        } else {
-            value
-        }
+        value.min(value.wrapping_sub(self.0))
     }
 }
 
 impl<T: UnsignedInteger> ReduceOnceAssign<T> for UintModulus<T> {
     #[inline(always)]
     fn reduce_once_assign(self, value: &mut T) {
-        if *value >= self.0 {
-            *value -= self.0;
-        }
+        *value = (*value).min(value.wrapping_sub(self.0));
     }
 }
 
@@ -33,24 +27,16 @@ impl<T: UnsignedInteger> ReduceAdd<T> for UintModulus<T> {
 
     #[inline(always)]
     fn reduce_add(self, a: T, b: T) -> Self::Output {
-        let diff = self.0 - b;
-        if diff > a {
-            a + b
-        } else {
-            a.wrapping_sub(diff)
-        }
+        let sum = a + b;
+        sum.min(sum.wrapping_sub(self.0))
     }
 }
 
 impl<T: UnsignedInteger> ReduceAddAssign<T> for UintModulus<T> {
     #[inline(always)]
     fn reduce_add_assign(self, a: &mut T, b: T) {
-        let diff = self.0 - b;
-        if diff > *a {
-            *a += b;
-        } else {
-            *a = a.wrapping_sub(diff)
-        }
+        let sum = *a + b;
+        *a = sum.min(sum.wrapping_sub(self.0));
     }
 }
 
@@ -60,11 +46,7 @@ impl<T: UnsignedInteger> ReduceDouble<T> for UintModulus<T> {
     #[inline(always)]
     fn reduce_double(self, value: T) -> Self::Output {
         let d = value.wrapping_shl(1);
-        if d < value || d >= self.0 {
-            d.wrapping_sub(self.0)
-        } else {
-            d
-        }
+        d.min(d.wrapping_sub(self.0))
     }
 }
 
@@ -80,22 +62,16 @@ impl<T: UnsignedInteger> ReduceSub<T> for UintModulus<T> {
 
     #[inline(always)]
     fn reduce_sub(self, a: T, b: T) -> Self::Output {
-        if b > a {
-            a.wrapping_sub(b).wrapping_add(self.0)
-        } else {
-            a - b
-        }
+        let diff = a.wrapping_sub(b);
+        diff.min(diff.wrapping_add(self.0))
     }
 }
 
 impl<T: UnsignedInteger> ReduceSubAssign<T> for UintModulus<T> {
     #[inline(always)]
     fn reduce_sub_assign(self, a: &mut T, b: T) {
-        if b > *a {
-            *a = a.wrapping_sub(b).wrapping_add(self.0);
-        } else {
-            *a -= b;
-        }
+        let diff = a.wrapping_sub(b);
+        *a = diff.min(diff.wrapping_add(self.0));
     }
 }
 
@@ -254,11 +230,8 @@ macro_rules! impl_uint_slice_scalar {
                 #[inline]
                 fn reduce_sub_slice_rev_assign(self, a: &[$t], b: &mut [$t]) {
                     a.iter().zip(b).for_each(|(&a_val, b)| {
-                        if a_val < *b {
-                            *b = a_val.wrapping_sub(*b).wrapping_add(self.0);
-                        } else {
-                            *b = a_val - *b;
-                        }
+                        let diff = a_val.wrapping_sub(*b);
+                        *b = diff.min(diff.wrapping_add(self.0));
                     });
                 }
             }

@@ -13,8 +13,19 @@ pub struct UintModulus<T>(pub T);
 
 impl<T: UnsignedInteger> UintModulus<T> {
     /// Creates a new [`UintModulus<T>`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if `value >= 2^{T::BITS - 1}`. The SIMD `reduce_sub` kernel
+    /// relies on `modulus < 2^{BITS-1}` to avoid overflow in the wrapping
+    /// subtraction path. All FHE parameter sets satisfy this bound.
     #[inline(always)]
     pub fn new(value: T) -> Self {
+        let limit = T::ONE << (T::BITS - 1);
+        assert!(
+            value < limit,
+            "UintModulus value must be < 2^(T::BITS - 1), got {value:?}"
+        );
         Self(value)
     }
 }

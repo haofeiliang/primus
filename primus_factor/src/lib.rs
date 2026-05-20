@@ -1,79 +1,25 @@
 #![cfg_attr(feature = "simd", feature(portable_simd))]
+#![cfg_attr(feature = "simd", feature(min_specialization))]
+
+mod ops;
 
 mod multiply;
 mod shoup_factor;
 
-pub trait LazyFactorMul<T> {
-    /// Calculates `self * b (mod modulus)`.
-    fn lazy_factor_mul_modulo(self, b: T, modulus: T) -> T;
-}
-
-pub trait FactorMul<T>: LazyFactorMul<T> {
-    /// Calculates `self * b (mod modulus)`.
-    fn factor_mul_modulo(self, b: T, modulus: T) -> T;
-}
-
-/// Slice-level multiplication by a precomputed factor.
-///
-/// Implementations may use SIMD internally when the `simd`
-/// features are enabled. Callers keep the normal scalar slice layout and the
-/// remainder is handled by the scalar path.
-pub trait LazyFactorSliceOps<T> {
-    /// Calculates `factor * value (mod 2*modulus)` for each element in-place.
-    fn lazy_factor_mul_slice_assign(self, values: &mut [T], modulus: T);
-
-    /// Calculates `factor * input (mod 2*modulus)` into `output`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `input.len() != output.len()`.
-    fn lazy_factor_mul_slice_to(self, input: &[T], output: &mut [T], modulus: T);
-}
-
-/// Slice-level multiplication by a precomputed factor.
-///
-/// Implementations may use SIMD internally when the `simd`
-/// features are enabled. Callers keep the normal scalar slice layout and the
-/// remainder is handled by the scalar path.
-pub trait FactorSliceOps<T> {
-    /// Calculates `factor * value (mod modulus)` for each element in-place.
-    fn factor_mul_slice_assign(self, values: &mut [T], modulus: T);
-
-    /// Calculates `factor * input (mod modulus)` into `output`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `input.len() != output.len()`.
-    fn factor_mul_slice_to(self, input: &[T], output: &mut [T], modulus: T);
-
-    /// Calculates `acc += factor * rhs (mod modulus)` element-wise.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `acc.len() != rhs.len()`.
-    fn add_factor_mul_slice_assign(self, acc: &mut [T], rhs: &[T], modulus: T);
-
-    /// Calculates `acc -= factor * rhs (mod modulus)` element-wise.
-    ///
-    /// Useful for NTT inverse butterflies where `factor` is a fixed twiddle.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `acc.len() != rhs.len()`.
-    fn sub_factor_mul_slice_assign(self, acc: &mut [T], rhs: &[T], modulus: T);
-
-    /// Calculates `output[i] = factor * b[i] + c[i] (mod modulus)`.
-    ///
-    /// Useful for NTT forward butterflies where `factor` is a fixed twiddle.
-    ///
-    /// # Panics
-    ///
-    /// Panics if any of `b`, `c`, `output` lengths differ.
-    fn factor_mul_add_slice_to(self, b: &[T], c: &[T], output: &mut [T], modulus: T);
-}
+pub use ops::*;
 
 pub use multiply::MultiplyFactor;
 pub use shoup_factor::ShoupFactor;
 
 #[cfg(feature = "simd")]
 pub use shoup_factor::{SimdShoupFactor, simd_kernel};
+
+pub trait Factor<T>:
+    Copy + LazyFactorMul<T> + FactorMul<T> + LazyFactorSliceOps<T> + FactorSliceOps<T>
+{
+}
+
+impl<T, F> Factor<T> for F where
+    F: Copy + LazyFactorMul<T> + FactorMul<T> + LazyFactorSliceOps<T> + FactorSliceOps<T>
+{
+}

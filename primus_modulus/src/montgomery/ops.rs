@@ -54,7 +54,12 @@ impl<T: UnsignedInteger> LazyReduceMulAdd<T> for MontgomeryModulus<T> {
         let (sum_hi, carry) = hi.overflowing_add(c);
         let result = self.montgomery_reduce([lo, sum_hi]);
         if carry {
-            UintModulus(self.value).reduce_add(result, self.r)
+            let diff = self.value - self.r;
+            if diff > result {
+                result + self.r
+            } else {
+                result.wrapping_sub(diff)
+            }
         } else {
             result
         }

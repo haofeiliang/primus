@@ -1,5 +1,5 @@
 use primus_decompose::big_integer::BigUintApproxSignedBasis;
-use primus_factor::ShoupFactor;
+use primus_factor::FactorSliceOps;
 use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger, izip};
 use primus_ntt::DcrtTable;
 use primus_poly::{
@@ -152,14 +152,15 @@ where
             });
     }
 
-    pub fn mul_factor_inplace<A>(
+    pub fn mul_factor_inplace<F, A>(
         &self,
-        scalar: &[ShoupFactor<T>],
+        scalar: &[F],
         result: &mut CrtGlwe<A>,
         poly_length: usize,
         crt_poly_len: usize,
         moduli: &[T],
     ) where
+        F: Copy + FactorSliceOps<T>,
         A: RawData<Elem = T> + DataMut,
     {
         self.iter_crt_poly(crt_poly_len)

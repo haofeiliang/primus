@@ -1,7 +1,7 @@
 use std::mem::MaybeUninit;
 
 use primus_distr::DiscreteGaussian;
-use primus_factor::ShoupFactor;
+use primus_factor::FactorSliceOps;
 use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial, Polynomial, PolynomialIter, PolynomialIterMut};
@@ -140,8 +140,11 @@ where
     }
 
     #[inline]
-    pub fn mul_factor_assign(&mut self, scalar: ShoupFactor<T>, modulus: T) {
-        ArrayBase(self.as_mut()).mul_factor_assign(scalar, modulus);
+    pub fn mul_factor_assign<F>(&mut self, factor: F, modulus: T)
+    where
+        F: FactorSliceOps<T>,
+    {
+        ArrayBase(self.as_mut()).mul_factor_assign(factor, modulus);
     }
 }
 

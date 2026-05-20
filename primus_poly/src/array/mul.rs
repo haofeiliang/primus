@@ -1,9 +1,6 @@
-use primus_factor::{FactorMul, ShoupFactor};
+use primus_factor::FactorSliceOps;
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_modulus::UintModulus;
-use primus_reduce::{
-    ReduceAdd, ReduceAddAssign, ReduceMul, ReduceMulAddSlice, ReduceMulSlice, ReduceSub,
-};
+use primus_reduce::{ReduceAdd, ReduceMul, ReduceMulAddSlice, ReduceMulSlice, ReduceSub};
 
 use super::ArrayBase;
 
@@ -33,25 +30,22 @@ where
 
     /// Performs `self *= scalar` according to `modulus`.
     #[inline]
-    pub fn mul_factor_assign(&mut self, scalar: ShoupFactor<T>, modulus: T) {
-        self.iter_mut()
-            .for_each(|a| *a = scalar.factor_mul_modulo(*a, modulus))
+    pub fn mul_factor_assign<F>(&mut self, factor: F, modulus: T)
+    where
+        F: FactorSliceOps<T>,
+    {
+        factor.factor_mul_slice_assign(self.as_mut(), modulus)
     }
 
     /// Performs `self += scalar * rhs` according to `modulus`.
     #[inline]
-    pub fn add_mul_factor_assign<A>(
-        &mut self,
-        rhs: &ArrayBase<A>,
-        scalar: ShoupFactor<T>,
-        modulus: T,
-    ) where
+    pub fn add_mul_factor_assign<F, A>(&mut self, rhs: &ArrayBase<A>, factor: F, modulus: T)
+    where
+        F: FactorSliceOps<T>,
         A: RawData<Elem = T> + Data,
     {
         debug_assert_eq!(self.len(), rhs.len());
-        self.iter_mut().zip(rhs).for_each(|(a, &b)| {
-            UintModulus(modulus).reduce_add_assign(a, scalar.factor_mul_modulo(b, modulus))
-        });
+        factor.add_factor_mul_slice_assign(self.as_mut(), rhs.as_ref(), modulus);
     }
 
     #[inline]
@@ -120,17 +114,12 @@ where
 
     /// Performs `result = scalar * self` according to `modulus`.
     #[inline]
-    pub fn mul_factor_inplace<A>(
-        &self,
-        scalar: ShoupFactor<T>,
-        result: &mut ArrayBase<A>,
-        modulus: T,
-    ) where
+    pub fn mul_factor_inplace<F, A>(&self, factor: F, result: &mut ArrayBase<A>, modulus: T)
+    where
+        F: FactorSliceOps<T>,
         A: RawData<Elem = T> + DataMut,
     {
         debug_assert_eq!(self.len(), result.len());
-        self.iter()
-            .zip(result.iter_mut())
-            .for_each(|(&a, b)| *b = scalar.factor_mul_modulo(a, modulus));
+        factor.factor_mul_slice_to(self.as_ref(), result.as_mut(), modulus);
     }
 }
