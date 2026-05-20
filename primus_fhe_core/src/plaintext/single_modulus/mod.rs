@@ -1,4 +1,4 @@
-use primus_factor::{FactorMul, ShoupFactor};
+use primus_factor::{FactorMul, FactorSliceOps, ShoupFactor};
 use primus_integer::UnsignedInteger;
 
 mod helpers;
@@ -406,9 +406,7 @@ impl<T: UnsignedInteger> PlaintextCodec<T> {
                 | Self::ScaledNarrow {
                     delta_factor, q, ..
                 } => {
-                    for (acc, &message) in accumulator.iter_mut().zip(messages) {
-                        Self::reduce_add_mod(acc, delta_factor.factor_mul_modulo(message, q), q);
-                    }
+                    delta_factor.add_factor_mul_slice_assign(accumulator, messages, q);
                 }
                 Self::NativeScaled { delta, .. } => {
                     for (acc, &message) in accumulator.iter_mut().zip(messages) {

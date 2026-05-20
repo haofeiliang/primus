@@ -57,7 +57,6 @@ where
         M: Copy + ReduceSubSlice<T>,
         A: RawData<Elem = T> + DataMut,
     {
-        debug_assert_eq!(self.len(), rhs.len());
         modulus.reduce_sub_slice_rev_assign(self.as_ref(), rhs.as_mut());
     }
 }

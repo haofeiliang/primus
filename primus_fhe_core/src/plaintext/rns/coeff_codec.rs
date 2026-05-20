@@ -20,7 +20,7 @@
 //!     ▼
 //!   recovered m: `Polynomial<T>`
 
-use primus_factor::{FactorMul, ShoupFactor};
+use primus_factor::{FactorSliceOps, ShoupFactor};
 use primus_integer::{
     BigUint, Data, DataMut, DivRemScalar, RawData, UnsignedInteger, multiply_many_values,
 };
@@ -289,7 +289,8 @@ where
                 if temp >= gamma {
                     temp -= gamma;
                 }
-                *m = inv_gamma_mod_t.factor_mul_modulo(temp, t);
+                *m = temp;
             });
+        inv_gamma_mod_t.factor_mul_slice_assign(msg, t);
     }
 }

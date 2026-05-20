@@ -1,4 +1,4 @@
-use primus_factor::FactorMul;
+use primus_factor::FactorSliceOps;
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
 use primus_lattice::glev::DcrtGlev;
 use primus_ntt::{DcrtTable, NttTable};
@@ -830,8 +830,9 @@ impl<T: UnsignedInteger> DcrtGlweSecretKey<T> {
             if temp >= gamma {
                 temp -= gamma;
             }
-            *res = inv_gamma_mod_t.factor_mul_modulo(temp, t);
+            *res = temp;
         });
+        inv_gamma_mod_t.factor_mul_slice_assign(msg.as_mut(), t);
     }
 }
 

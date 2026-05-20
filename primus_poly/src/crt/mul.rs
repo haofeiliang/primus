@@ -1,6 +1,6 @@
 use primus_factor::FactorSliceOps;
 use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
-use primus_reduce::prelude::{ReduceMulAddSlice, ReduceMulSlice, ReduceNegAssign};
+use primus_reduce::{ReduceMulAddSlice, ReduceMulSlice, ReduceNegAssign};
 
 use crate::ArrayBase;
 

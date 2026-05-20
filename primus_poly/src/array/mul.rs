@@ -44,7 +44,6 @@ where
         F: FactorSliceOps<T>,
         A: RawData<Elem = T> + Data,
     {
-        debug_assert_eq!(self.len(), rhs.len());
         factor.add_factor_mul_slice_assign(self.as_mut(), rhs.as_ref(), modulus);
     }
 
@@ -119,7 +118,6 @@ where
         F: FactorSliceOps<T>,
         A: RawData<Elem = T> + DataMut,
     {
-        debug_assert_eq!(self.len(), result.len());
         factor.factor_mul_slice_to(self.as_ref(), result.as_mut(), modulus);
     }
 }
