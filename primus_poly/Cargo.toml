@@ -19,3 +19,10 @@ paste = { workspace = true }
 [features]
 default = []
 simd = ["primus_integer/simd", "primus_modulus/simd", "primus_factor/simd"]
+
+[dev-dependencies]
+criterion = { workspace = true }
+
+[[bench]]
+name = "butterfly"
+harness = false

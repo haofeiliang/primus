@@ -1,3 +1,6 @@
+#![cfg_attr(feature = "simd", feature(portable_simd))]
+#![cfg_attr(feature = "simd", feature(min_specialization))]
+
 #[macro_use]
 mod macros;
 

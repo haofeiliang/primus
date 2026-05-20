@@ -63,6 +63,24 @@ where
         Self { value, quotient }
     }
 
+    /// Constructs a [`SimdShoupFactor<T, N>`] from an array of per-element
+    /// [`ShoupFactor<T>`] factors. Each lane gets its own factor, enabling
+    /// operations where the multiplier differs across elements (e.g. NTT
+    /// butterfly twiddle factors).
+    #[inline]
+    pub fn from_array(factors: [ShoupFactor<T>; N]) -> Self {
+        let mut values = [T::ZERO; N];
+        let mut quotients = [T::ZERO; N];
+        for i in 0..N {
+            values[i] = factors[i].value();
+            quotients[i] = factors[i].quotient();
+        }
+        Self {
+            value: Simd::from_array(values),
+            quotient: Simd::from_array(quotients),
+        }
+    }
+
     /// Resets the `modulus` of [`SimdShoupFactor<T, N>`].
     #[inline]
     pub fn set_modulus(&mut self, modulus: T) {

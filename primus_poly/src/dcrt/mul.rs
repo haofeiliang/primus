@@ -3,9 +3,120 @@ use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
 use primus_modulus::UintModulus;
 use primus_reduce::{ReduceAddAssign, ReduceMulAddSlice, ReduceMulSlice, ReduceSub};
 
+#[cfg(feature = "simd")]
+use primus_factor::SimdShoupFactor;
+#[cfg(feature = "simd")]
+use std::simd::{Simd, cmp::SimdOrd};
+
 use crate::ArrayBase;
 
 use super::DcrtPolynomial;
+
+// ===========================================================================
+// Butterfly dispatch trait — scalar / SIMD (min_specialization).
+// ===========================================================================
+
+trait ButterflyDispatch: UnsignedInteger {
+    fn butterfly_inner(
+        lhs: &mut [Self],
+        rhs: &[Self],
+        w: &[ShoupFactor<Self>],
+        result: &mut [Self],
+        modulus: Self,
+    );
+}
+
+macro_rules! impl_butterfly_blanket {
+    ($($default_kw:ident)?) => {
+        impl<T: UnsignedInteger> ButterflyDispatch for T {
+            $($default_kw)? fn butterfly_inner(
+                lhs: &mut [Self],
+                rhs: &[Self],
+                w: &[ShoupFactor<Self>],
+                result: &mut [Self],
+                modulus: Self,
+            ) {
+                izip!(lhs, rhs, w, result).for_each(|(a, &s, &w, b)| {
+                    let a_orig = *a;
+                    UintModulus(modulus).reduce_add_assign(a, s);
+                    let diff = UintModulus(modulus).reduce_sub(a_orig, s);
+                    *b = w.factor_mul_modulo(diff, modulus);
+                });
+            }
+        }
+    };
+}
+
+#[cfg(not(feature = "simd"))]
+impl_butterfly_blanket!();
+
+#[cfg(feature = "simd")]
+impl_butterfly_blanket!(default);
+
+#[cfg(feature = "simd")]
+macro_rules! impl_butterfly_simd {
+    ($t:ty, $lanes:expr) => {
+        impl ButterflyDispatch for $t {
+            fn butterfly_inner(
+                lhs: &mut [Self],
+                rhs: &[Self],
+                w: &[ShoupFactor<Self>],
+                result: &mut [Self],
+                modulus: Self,
+            ) {
+                let m = Simd::splat(modulus);
+                let (lhs_chunks, lhs_rem) = lhs.as_chunks_mut::<{ $lanes }>();
+                let (rhs_chunks, rhs_rem) = rhs.as_chunks::<{ $lanes }>();
+                let (w_chunks, w_rem) = w.as_chunks::<{ $lanes }>();
+                let (res_chunks, res_rem) = result.as_chunks_mut::<{ $lanes }>();
+
+                for (((l, r), w_arr), res) in lhs_chunks
+                    .iter_mut()
+                    .zip(rhs_chunks)
+                    .zip(w_chunks)
+                    .zip(res_chunks)
+                {
+                    let a = Simd::from_array(*l);
+                    let s = Simd::from_array(*r);
+                    let w_simd = SimdShoupFactor::<$t, { $lanes }>::from_array(*w_arr);
+
+                    // diff = a - s (mod m)
+                    let diff = a - s;
+                    let diff = diff.simd_min(diff + m);
+
+                    // a_new = a + s (mod m) — reuses original a from load
+                    let sum = a + s;
+                    *l = sum.simd_min(sum - m).to_array();
+
+                    // b = w * diff (mod m)
+                    *res = w_simd.factor_mul_modulo(diff, m).to_array();
+                }
+
+                // scalar remainder
+                let m_ctx = UintModulus(modulus);
+                for (((a, &s), &w), b) in lhs_rem.iter_mut().zip(rhs_rem).zip(w_rem).zip(res_rem) {
+                    let a_orig = *a;
+                    m_ctx.reduce_add_assign(a, s);
+                    let diff = m_ctx.reduce_sub(a_orig, s);
+                    *b = w.factor_mul_modulo(diff, modulus);
+                }
+            }
+        }
+    };
+}
+
+#[cfg(feature = "simd")]
+impl_butterfly_simd!(u8, primus_integer::lanes::VECTOR_BITS / 8);
+#[cfg(feature = "simd")]
+impl_butterfly_simd!(u16, primus_integer::lanes::VECTOR_BITS / 16);
+#[cfg(feature = "simd")]
+impl_butterfly_simd!(u32, primus_integer::lanes::VECTOR_BITS / 32);
+#[cfg(feature = "simd")]
+impl_butterfly_simd!(u64, primus_integer::lanes::VECTOR_BITS / 64);
+#[cfg(all(feature = "simd", target_pointer_width = "64"))]
+impl_butterfly_simd!(usize, primus_integer::lanes::VECTOR_BITS / 64);
+#[cfg(all(feature = "simd", target_pointer_width = "32"))]
+impl_butterfly_simd!(usize, primus_integer::lanes::VECTOR_BITS / 32);
 
 impl<S, T> DcrtPolynomial<S>
 where
@@ -139,13 +250,7 @@ where
             moduli
         )
         .for_each(|(lhs, rhs, w, result, &modulus)| {
-            let modulus_ctx = UintModulus(modulus);
-            izip!(lhs, rhs, w, result).for_each(|(a, &s, &w, b)| {
-                let a_orig = *a;
-                modulus_ctx.reduce_add_assign(a, s);
-                let diff = modulus_ctx.reduce_sub(a_orig, s);
-                *b = w.factor_mul_modulo(diff, modulus);
-            });
+            T::butterfly_inner(lhs, rhs, w, result, modulus);
         })
     }
 }
