@@ -185,3 +185,156 @@ where
         b.factor_mul_modulo(a, self.0)
     }
 }
+
+// ===========================================================================
+// Slice-level trait impls for UintModulus.
+//
+// When the `simd` feature is enabled, slice ops dispatch to SIMD kernels
+// in `super::simd`. Without SIMD, they fall back to per-element scalar
+// operations (which already exist on `UintModulus` via `Reduce*` traits).
+// ===========================================================================
+
+// `impl_uint_slice_scalar` must always be defined (not gated by `not(simd)`)
+// because `u128` always uses scalar even when SIMD is enabled.
+macro_rules! impl_uint_slice_scalar {
+    ($($t:ty),* $(,)?) => {
+        $(
+            impl ReduceOnceSlice<$t> for UintModulus<$t> {
+                #[inline]
+                fn reduce_once_slice_assign(self, values: &mut [$t]) {
+                    values.iter_mut().for_each(|v| self.reduce_once_assign(v));
+                }
+                #[inline]
+                fn reduce_once_slice_to(self, input: &[$t], output: &mut [$t]) {
+                    debug_assert_eq!(input.len(), output.len());
+                    input.iter().zip(output).for_each(|(&i, o)| *o = self.reduce_once(i));
+                }
+            }
+
+            impl ReduceNegSlice<$t> for UintModulus<$t> {
+                #[inline]
+                fn reduce_neg_slice_assign(self, values: &mut [$t]) {
+                    values.iter_mut().for_each(|v| self.reduce_neg_assign(v));
+                }
+                #[inline]
+                fn reduce_neg_slice_to(self, input: &[$t], output: &mut [$t]) {
+                    debug_assert_eq!(input.len(), output.len());
+                    input.iter().zip(output).for_each(|(&i, o)| *o = self.reduce_neg(i));
+                }
+            }
+
+            impl ReduceAddSlice<$t> for UintModulus<$t> {
+                #[inline]
+                fn reduce_add_slice_assign(self, a: &mut [$t], b: &[$t]) {
+                    a.iter_mut().zip(b).for_each(|(a, &b)| self.reduce_add_assign(a, b));
+                }
+                #[inline]
+                fn reduce_add_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
+                    debug_assert_eq!(a.len(), b.len());
+                    debug_assert_eq!(a.len(), output.len());
+                    a.iter().zip(b).zip(output).for_each(|((&a_val, &b_val), o)| {
+                        *o = self.reduce_add(a_val, b_val);
+                    });
+                }
+            }
+
+            impl ReduceSubSlice<$t> for UintModulus<$t> {
+                #[inline]
+                fn reduce_sub_slice_assign(self, a: &mut [$t], b: &[$t]) {
+                    a.iter_mut().zip(b).for_each(|(a, &b)| self.reduce_sub_assign(a, b));
+                }
+                #[inline]
+                fn reduce_sub_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
+                    debug_assert_eq!(a.len(), b.len());
+                    debug_assert_eq!(a.len(), output.len());
+                    a.iter().zip(b).zip(output).for_each(|((&a_val, &b_val), o)| {
+                        *o = self.reduce_sub(a_val, b_val);
+                    });
+                }
+                #[inline]
+                fn reduce_sub_slice_rev_assign(self, a: &[$t], b: &mut [$t]) {
+                    a.iter().zip(b).for_each(|(&a_val, b)| {
+                        if a_val < *b {
+                            *b = a_val.wrapping_sub(*b).wrapping_add(self.0);
+                        } else {
+                            *b = a_val - *b;
+                        }
+                    });
+                }
+            }
+        )*
+    };
+}
+
+#[cfg(feature = "simd")]
+macro_rules! impl_uint_slice_simd {
+    ($t:ty, $lanes:expr) => {
+        impl ReduceOnceSlice<$t> for UintModulus<$t> {
+            #[inline]
+            fn reduce_once_slice_assign(self, values: &mut [$t]) {
+                super::simd::reduce_once_slice_assign::<$t, { $lanes }>(self.0, values)
+            }
+            #[inline]
+            fn reduce_once_slice_to(self, input: &[$t], output: &mut [$t]) {
+                super::simd::reduce_once_slice_to::<$t, { $lanes }>(self.0, input, output)
+            }
+        }
+
+        impl ReduceNegSlice<$t> for UintModulus<$t> {
+            #[inline]
+            fn reduce_neg_slice_assign(self, values: &mut [$t]) {
+                super::simd::reduce_neg_slice_assign::<$t, { $lanes }>(self.0, values)
+            }
+            #[inline]
+            fn reduce_neg_slice_to(self, input: &[$t], output: &mut [$t]) {
+                super::simd::reduce_neg_slice_to::<$t, { $lanes }>(self.0, input, output)
+            }
+        }
+
+        impl ReduceAddSlice<$t> for UintModulus<$t> {
+            #[inline]
+            fn reduce_add_slice_assign(self, a: &mut [$t], b: &[$t]) {
+                super::simd::reduce_add_slice_assign::<$t, { $lanes }>(self.0, a, b)
+            }
+            #[inline]
+            fn reduce_add_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
+                super::simd::reduce_add_slice_to::<$t, { $lanes }>(self.0, a, b, output)
+            }
+        }
+
+        impl ReduceSubSlice<$t> for UintModulus<$t> {
+            #[inline]
+            fn reduce_sub_slice_assign(self, a: &mut [$t], b: &[$t]) {
+                super::simd::reduce_sub_slice_assign::<$t, { $lanes }>(self.0, a, b)
+            }
+            #[inline]
+            fn reduce_sub_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
+                super::simd::reduce_sub_slice_to::<$t, { $lanes }>(self.0, a, b, output)
+            }
+            #[inline]
+            fn reduce_sub_slice_rev_assign(self, a: &[$t], b: &mut [$t]) {
+                super::simd::reduce_sub_slice_rev_assign::<$t, { $lanes }>(self.0, a, b)
+            }
+        }
+    };
+}
+
+// u128 always falls back to scalar — `Simd<u128, _>` is not viable on most targets.
+impl_uint_slice_scalar!(u128);
+
+// When SIMD is off, every primitive width falls back to scalar.
+#[cfg(not(feature = "simd"))]
+impl_uint_slice_scalar!(u8, u16, u32, u64, usize);
+
+#[cfg(feature = "simd")]
+impl_uint_slice_simd!(u8, primus_integer::lanes::VECTOR_BITS / 8);
+#[cfg(feature = "simd")]
+impl_uint_slice_simd!(u16, primus_integer::lanes::VECTOR_BITS / 16);
+#[cfg(feature = "simd")]
+impl_uint_slice_simd!(u32, primus_integer::lanes::VECTOR_BITS / 32);
+#[cfg(feature = "simd")]
+impl_uint_slice_simd!(u64, primus_integer::lanes::VECTOR_BITS / 64);
+#[cfg(all(feature = "simd", target_pointer_width = "64"))]
+impl_uint_slice_simd!(usize, primus_integer::lanes::VECTOR_BITS / 64);
+#[cfg(all(feature = "simd", target_pointer_width = "32"))]
+impl_uint_slice_simd!(usize, primus_integer::lanes::VECTOR_BITS / 32);

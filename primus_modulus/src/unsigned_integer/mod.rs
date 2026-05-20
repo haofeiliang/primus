@@ -1,6 +1,8 @@
 use primus_integer::UnsignedInteger;
 
 mod ops;
+#[cfg(feature = "simd")]
+mod simd;
 
 /// Unsigned integer modulus.
 ///
