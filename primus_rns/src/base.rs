@@ -1,7 +1,7 @@
 use std::slice::Iter;
 
 use itertools::Itertools;
-use primus_factor::{FactorMul, ShoupFactor};
+use primus_factor::{FactorMul, FactorSliceOps, ShoupFactor};
 use primus_integer::{
     BigUint, BigUintIter, BigUintIterMut, Data, DataMut, RawData, UnsignedInteger, izip,
     multiply_many_values, multiply_many_values_except_inplace,
@@ -10,6 +10,14 @@ use primus_modulo::prelude::*;
 use primus_modulus::UintModulus;
 use primus_poly::{BigUintPolynomial, CrtPolynomial, Polynomial};
 use primus_reduce::{FieldContext, ReduceAddAssign};
+
+#[cfg(feature = "simd")]
+use primus_integer::{SimdArray, SimdMaskArray, SimdUnsignedInteger};
+#[cfg(feature = "simd")]
+use std::simd::{
+    Simd,
+    cmp::{SimdOrd, SimdPartialOrd},
+};
 
 use crate::RNSError;
 
@@ -30,6 +38,197 @@ where
     punctured_product: Vec<T>,
     inv_punctured_product_mod_modulus: Vec<ShoupFactor<T>>,
 }
+
+// ===========================================================================
+// Wrapping decompose dispatch trait – scalar / SIMD.
+//
+// Pattern: same as `UintModulus` slice traits — always provide a scalar
+// blanket impl, then override with concrete SIMD impls under `cfg(simd)`.
+// ===========================================================================
+
+/// Dispatch trait dispatching wrapping-decompose inner loops to scalar or SIMD.
+trait WrappingDecomposeDispatch: UnsignedInteger {
+    /// `residues[i] = if small_values[i] < half { small_values[i] } else { temp + small_values[i] }`
+    fn decompose_chunk(residues: &mut [Self], small_values: &[Self], half: Self, temp: Self);
+
+    /// Fused: `dest[i] += factor * decomposed(small_values[i])  (mod modulus)`.
+    fn decompose_chunk_scaled(
+        dest: &mut [Self],
+        small_values: &[Self],
+        half: Self,
+        temp: Self,
+        modulus: Self,
+        factor: ShoupFactor<Self>,
+    );
+}
+
+// ---- scalar helpers ------------------------------------------------------
+
+#[inline]
+fn decompose_chunk_scalar<T: UnsignedInteger>(
+    residues: &mut [T],
+    small_values: &[T],
+    half: T,
+    temp: T,
+) {
+    for (residue, &value) in residues.iter_mut().zip(small_values) {
+        *residue = if value < half { value } else { temp + value };
+    }
+}
+
+#[inline]
+fn decompose_chunk_scaled_scalar<T: UnsignedInteger>(
+    dest: &mut [T],
+    small_values: &[T],
+    half: T,
+    temp: T,
+    modulus: T,
+    factor: ShoupFactor<T>,
+) {
+    for (d, &value) in dest.iter_mut().zip(small_values) {
+        let centered = if value < half { value } else { temp + value };
+        UintModulus(modulus).reduce_add_assign(d, factor.factor_mul_modulo(centered, modulus));
+    }
+}
+
+// ---- SIMD helpers --------------------------------------------------------
+
+#[cfg(feature = "simd")]
+use primus_factor::SimdShoupFactor;
+
+#[cfg(feature = "simd")]
+#[inline]
+fn decompose_chunk_simd<T: SimdUnsignedInteger, const N: usize>(
+    residues: &mut [T],
+    small_values: &[T],
+    half: T,
+    temp: T,
+) where
+    Simd<T, N>: SimdArray<T, N>,
+{
+    let half_simd = Simd::splat(half);
+    let temp_simd = Simd::splat(temp);
+    let (res_chunks, res_rem) = residues.as_chunks_mut::<N>();
+    let (val_chunks, val_rem) = small_values.as_chunks::<N>();
+    for (res, val) in res_chunks.iter_mut().zip(val_chunks) {
+        let v = Simd::from_array(*val);
+        let mask = v.simd_lt(half_simd);
+        *res = mask.select(v, temp_simd + v).to_array();
+    }
+    decompose_chunk_scalar(res_rem, val_rem, half, temp);
+}
+
+#[cfg(feature = "simd")]
+#[inline]
+fn decompose_chunk_scaled_simd<T: SimdUnsignedInteger, const N: usize>(
+    dest: &mut [T],
+    small_values: &[T],
+    half: T,
+    temp: T,
+    modulus: T,
+    factor: ShoupFactor<T>,
+) where
+    Simd<T, N>: SimdArray<T, N>,
+{
+    let half_simd = Simd::splat(half);
+    let temp_simd = Simd::splat(temp);
+    let modulus_simd = Simd::splat(modulus);
+    let simd_factor = SimdShoupFactor::<T, N>::from(factor);
+
+    let (dest_chunks, dest_rem) = dest.as_chunks_mut::<N>();
+    let (val_chunks, val_rem) = small_values.as_chunks::<N>();
+    for (dest_chunk, val_chunk) in dest_chunks.iter_mut().zip(val_chunks) {
+        let v = Simd::from_array(*val_chunk);
+        let mask = v.simd_lt(half_simd);
+        let centered = mask.select(v, temp_simd + v);
+        let product = simd_factor.factor_mul_modulo(centered, modulus_simd);
+        let dest_val = Simd::from_array(*dest_chunk);
+        let sum = dest_val + product;
+        *dest_chunk = sum.simd_min(sum - modulus_simd).to_array();
+    }
+    decompose_chunk_scaled_scalar(dest_rem, val_rem, half, temp, modulus, factor);
+}
+
+// ---- macro-generated impls -----------------------------------------------
+//
+// Pattern: same as `primus_factor` — blanket impl marked `default` when
+// `min_specialization` is available (nightly + simd), then concrete SIMD
+// impls override it at monomorphisation time. Without simd, the blanket is
+// the only impl and `default` is omitted.
+
+macro_rules! impl_decompose_blanket {
+    ($($default_kw:ident)?) => {
+        impl<T: UnsignedInteger> WrappingDecomposeDispatch for T {
+            $($default_kw)? fn decompose_chunk(residues: &mut [Self], small_values: &[Self], half: Self, temp: Self) {
+                decompose_chunk_scalar(residues, small_values, half, temp);
+            }
+            $($default_kw)? fn decompose_chunk_scaled(
+                dest: &mut [Self],
+                small_values: &[Self],
+                half: Self,
+                temp: Self,
+                modulus: Self,
+                factor: ShoupFactor<Self>,
+            ) {
+                decompose_chunk_scaled_scalar(dest, small_values, half, temp, modulus, factor);
+            }
+        }
+    };
+}
+
+#[cfg(not(feature = "simd"))]
+impl_decompose_blanket!();
+
+#[cfg(feature = "simd")]
+impl_decompose_blanket!(default);
+
+#[cfg(feature = "simd")]
+macro_rules! impl_decompose_simd {
+    ($t:ty, $lanes:expr) => {
+        impl WrappingDecomposeDispatch for $t {
+            #[inline]
+            fn decompose_chunk(
+                residues: &mut [Self],
+                small_values: &[Self],
+                half: Self,
+                temp: Self,
+            ) {
+                decompose_chunk_simd::<$t, { $lanes }>(residues, small_values, half, temp);
+            }
+            #[inline]
+            fn decompose_chunk_scaled(
+                dest: &mut [Self],
+                small_values: &[Self],
+                half: Self,
+                temp: Self,
+                modulus: Self,
+                factor: ShoupFactor<Self>,
+            ) {
+                decompose_chunk_scaled_simd::<$t, { $lanes }>(
+                    dest,
+                    small_values,
+                    half,
+                    temp,
+                    modulus,
+                    factor,
+                );
+            }
+        }
+    };
+}
+
+#[cfg(feature = "simd")]
+impl_decompose_simd!(u8, primus_integer::lanes::VECTOR_BITS / 8);
+#[cfg(feature = "simd")]
+impl_decompose_simd!(u16, primus_integer::lanes::VECTOR_BITS / 16);
+#[cfg(feature = "simd")]
+impl_decompose_simd!(u32, primus_integer::lanes::VECTOR_BITS / 32);
+#[cfg(feature = "simd")]
+impl_decompose_simd!(u64, primus_integer::lanes::VECTOR_BITS / 64);
+#[cfg(all(feature = "simd", target_pointer_width = "64"))]
+impl_decompose_simd!(usize, primus_integer::lanes::VECTOR_BITS / 64);
+#[cfg(all(feature = "simd", target_pointer_width = "32"))]
+impl_decompose_simd!(usize, primus_integer::lanes::VECTOR_BITS / 32);
 
 impl<T, M> RNSBase<T, M>
 where
@@ -218,9 +417,7 @@ where
                 .zip(self.moduli().iter().map(|m| m.value_unchecked()))
             {
                 let temp = modulus - small_values_modulus;
-                for (residue, &value) in residues.iter_mut().zip(small_values) {
-                    *residue = if value < half { value } else { temp + value };
-                }
+                T::decompose_chunk(residues, small_values, half, temp);
             }
         } else {
             for residues in multi_residues.chunks_exact_mut(value_count) {
@@ -260,11 +457,7 @@ where
             )
             .for_each(|(dest_chunk, modulus, &factor)| {
                 let temp = modulus - small_values_modulus;
-                for (d, &value) in dest_chunk.iter_mut().zip(small_values) {
-                    let centered = if value < half { value } else { temp + value };
-                    UintModulus(modulus)
-                        .reduce_add_assign(d, factor.factor_mul_modulo(centered, modulus));
-                }
+                T::decompose_chunk_scaled(dest_chunk, small_values, half, temp, modulus, factor);
             });
         } else {
             izip!(
@@ -272,11 +465,8 @@ where
                 self.moduli().iter().map(|m| m.value_unchecked()),
                 factor,
             )
-            .for_each(|(dest_chunk, modulus, &factor)| {
-                for (d, &value) in dest_chunk.iter_mut().zip(small_values) {
-                    UintModulus(modulus)
-                        .reduce_add_assign(d, factor.factor_mul_modulo(value, modulus));
-                }
+            .for_each(|(dest_chunk, _modulus, &factor)| {
+                factor.add_factor_mul_slice_assign(dest_chunk, small_values, _modulus);
             });
         }
     }
