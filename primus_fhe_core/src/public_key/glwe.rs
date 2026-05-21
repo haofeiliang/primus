@@ -100,7 +100,7 @@ impl<T: UnsignedInteger> DcrtGlwePublicKey<T> {
             rng,
         );
         table.transform_slice(&mut v);
-        let v_dcrt_poly = DcrtPolynomial(v.as_ref());
+        let v_dcrt_poly = DcrtPolynomial(v.as_slice());
 
         result
             .iter_dcrt_poly_mut(rns_poly_len)

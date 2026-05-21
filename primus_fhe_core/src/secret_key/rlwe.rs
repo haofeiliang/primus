@@ -153,6 +153,23 @@ impl<T: UnsignedInteger> NttRlweSecretKey<T> {
         }
     }
 
+    /// Creates a new [`NttRlweSecretKey`] from a coefficient secret key.
+    #[inline]
+    pub fn from_coeff_secret_key_owned<Table>(
+        secret_key: RlweSecretKey<T>,
+        ntt_table: &Table,
+    ) -> Self
+    where
+        Table: NttTable<ValueT = T>,
+    {
+        let key = secret_key.key;
+        let key = ntt_table.transform_inplace(key);
+        Self {
+            key,
+            distr: secret_key.distr,
+        }
+    }
+
     /// Performs `b-as`.
     pub fn phase_inplace<Table, M, A>(
         &self,
@@ -471,7 +488,7 @@ impl<T: UnsignedInteger> NttRlweSecretKey<T> {
 
         let mut a = a.to_vec();
         ntt_table.transform_slice(&mut a);
-        NttPolynomial(a.as_mut()).mul_assign(&self.key, modulus);
+        NttPolynomial(a.as_mut_slice()).mul_assign(&self.key, modulus);
         ntt_table.inverse_transform_slice(&mut a);
 
         let mut messages: Vec<T> = b
@@ -509,7 +526,7 @@ impl<T: UnsignedInteger> NttRlweSecretKey<T> {
 
         let mut a = a.to_vec();
         ntt_table.transform_slice(&mut a);
-        NttPolynomial(a.as_mut()).mul_assign(&self.key, modulus);
+        NttPolynomial(a.as_mut_slice()).mul_assign(&self.key, modulus);
         ntt_table.inverse_transform_slice(&mut a);
 
         b.iter()
