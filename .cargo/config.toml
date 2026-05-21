@@ -1,2 +1,5 @@
 [build]
 rustflags = ["-C", "target-cpu=native"]
+
+[target.'cfg(target_os = "windows")']
+rustflags = ["-A", "linker-messages"]
