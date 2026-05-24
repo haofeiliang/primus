@@ -9,7 +9,7 @@ pub trait CarryingAdd: Sized {
 
     /// Calculates `self` + `rhs` + `carry` and checks for overflow.
     ///
-    /// Performs “ternary addition” of two integer operands and a carry-in bit,
+    /// Performs "ternary addition" of two integer operands and a carry-in bit,
     /// and returns a tuple of the sum along with a boolean indicating
     /// whether an arithmetic overflow would occur. On overflow, the wrapped value is returned.
     ///

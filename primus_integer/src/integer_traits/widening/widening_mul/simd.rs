@@ -25,10 +25,10 @@ impl_simd_uint_widening_mul! {u16, u32, 16}
 impl_simd_uint_widening_mul! {u32, u64, 32}
 
 // This code is a translation of the __mulddi3 function in LLVM's
-// compiler-rt. It is an optimised variant of the common method
+// compiler-rt. It is an optimized variant of the common method
 // `(a + b) * (c + d) = ac + ad + bc + bd`.
 //
-// For some reason LLVM can optimise the C version very well, but
+// For some reason LLVM can optimize the C version very well, but
 // keeps shuffling registers in this Rust translation.
 macro_rules! simd_uint_widening_mul_large {
     ($T:ty, $Half:literal) => {
