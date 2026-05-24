@@ -1,0 +1,58 @@
+use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_reduce::ReduceSubSlice;
+
+use super::Polynomial;
+
+impl<S, T> Polynomial<S>
+where
+    S: RawData<Elem = T> + DataMut,
+    T: UnsignedInteger,
+{
+    /// Performs `self - rhs` according to `modulus`.
+    #[inline]
+    pub fn sub<M, A>(mut self, rhs: &Polynomial<A>, modulus: M) -> Self
+    where
+        M: Copy + ReduceSubSlice<T>,
+        A: RawData<Elem = T> + Data,
+    {
+        self.sub_assign(rhs, modulus);
+        self
+    }
+
+    /// Performs `self -= rhs` according to `modulus`.
+    #[inline]
+    pub fn sub_assign<M, A>(&mut self, rhs: &Polynomial<A>, modulus: M)
+    where
+        M: Copy + ReduceSubSlice<T>,
+        A: RawData<Elem = T> + Data,
+    {
+        modulus.reduce_sub_slice_assign(self.as_mut(), rhs.as_ref());
+    }
+}
+
+impl<S, T> Polynomial<S>
+where
+    S: RawData<Elem = T> + Data,
+    T: UnsignedInteger,
+{
+    /// Performs `rhs = self - rhs` according to `modulus`.
+    #[inline]
+    pub fn sub_to_right<M, A>(&self, rhs: &mut Polynomial<A>, modulus: M)
+    where
+        M: Copy + ReduceSubSlice<T>,
+        A: RawData<Elem = T> + DataMut,
+    {
+        modulus.reduce_sub_slice_rev_assign(self.as_ref(), rhs.as_mut());
+    }
+
+    /// Performs `result = self - rhs` according to `modulus`.
+    #[inline]
+    pub fn sub_inplace<M, A, B>(&self, rhs: &Polynomial<A>, result: &mut Polynomial<B>, modulus: M)
+    where
+        M: Copy + ReduceSubSlice<T>,
+        A: RawData<Elem = T> + Data,
+        B: RawData<Elem = T> + DataMut,
+    {
+        modulus.reduce_sub_slice_to(self.as_ref(), rhs.as_ref(), result.as_mut());
+    }
+}

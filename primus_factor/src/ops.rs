@@ -1,0 +1,73 @@
+pub trait LazyFactorMul<T> {
+    /// Calculates `self * b (mod modulus)`.
+    fn lazy_factor_mul_modulo(self, b: T, modulus: T) -> T;
+}
+
+pub trait FactorMul<T>: LazyFactorMul<T> {
+    /// Calculates `self * b (mod modulus)`.
+    fn factor_mul_modulo(self, b: T, modulus: T) -> T;
+}
+
+/// Slice-level multiplication by a precomputed factor.
+///
+/// Implementations may use SIMD internally when the `simd`
+/// features are enabled. Callers keep the normal scalar slice layout and the
+/// remainder is handled by the scalar path.
+pub trait LazyFactorSliceOps<T> {
+    /// Calculates `factor * value (mod 2*modulus)` for each element in-place.
+    fn lazy_factor_mul_slice_assign(self, values: &mut [T], modulus: T);
+
+    /// Calculates `factor * input (mod 2*modulus)` into `output`.
+    ///
+    /// # Debug assertions
+    ///
+    /// Debug builds assert that `input.len() == output.len()`. Release builds
+    /// assume callers provide equal-length slices.
+    fn lazy_factor_mul_slice_to(self, input: &[T], output: &mut [T], modulus: T);
+}
+
+/// Slice-level multiplication by a precomputed factor.
+///
+/// Implementations may use SIMD internally when the `simd`
+/// features are enabled. Callers keep the normal scalar slice layout and the
+/// remainder is handled by the scalar path.
+pub trait FactorSliceOps<T> {
+    /// Calculates `factor * value (mod modulus)` for each element in-place.
+    fn factor_mul_slice_assign(self, values: &mut [T], modulus: T);
+
+    /// Calculates `factor * input (mod modulus)` into `output`.
+    ///
+    /// # Debug assertions
+    ///
+    /// Debug builds assert that `input.len() == output.len()`. Release builds
+    /// assume callers provide equal-length slices.
+    fn factor_mul_slice_to(self, input: &[T], output: &mut [T], modulus: T);
+
+    /// Calculates `acc += factor * rhs (mod modulus)` element-wise.
+    ///
+    /// # Debug assertions
+    ///
+    /// Debug builds assert that `acc.len() == rhs.len()`. Release builds
+    /// assume callers provide equal-length slices.
+    fn add_factor_mul_slice_assign(self, acc: &mut [T], rhs: &[T], modulus: T);
+
+    /// Calculates `acc -= factor * rhs (mod modulus)` element-wise.
+    ///
+    /// Useful for NTT inverse butterflies where `factor` is a fixed twiddle.
+    ///
+    /// # Debug assertions
+    ///
+    /// Debug builds assert that `acc.len() == rhs.len()`. Release builds
+    /// assume callers provide equal-length slices.
+    fn sub_factor_mul_slice_assign(self, acc: &mut [T], rhs: &[T], modulus: T);
+
+    /// Calculates `output[i] = factor * b[i] + c[i] (mod modulus)`.
+    ///
+    /// Useful for NTT forward butterflies where `factor` is a fixed twiddle.
+    ///
+    /// # Debug assertions
+    ///
+    /// Debug builds assert that `b`, `c`, and `output` have equal lengths.
+    /// Release builds assume callers provide equal-length slices.
+    fn factor_mul_add_slice_to(self, b: &[T], c: &[T], output: &mut [T], modulus: T);
+}
