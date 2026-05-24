@@ -19,6 +19,7 @@ const FAST_DIV_WIDE: bool = cfg!(any(
 
 /// A trait for types that support combined division and remainder operation.
 pub trait DivRem: Sized {
+    /// Computes `(self / divisor, self % divisor)` in one operation.
     fn div_rem(self, divisor: Self) -> (Self, Self);
 }
 
@@ -37,15 +38,16 @@ impl_div_rem! { u8 u16 u32 u64 u128 usize }
 
 /// A trait for types that support division and remainder operation by a scalar.
 pub trait DivRemScalar: Sized {
+    /// Divides a multi-limb `dividend` by a single-limb `divisor`, writing the
+    /// quotient into `quotient` and returning the remainder.
     fn div_rem_scalar(dividend: &[Self], divisor: Self, quotient: &mut [Self]) -> Self;
 }
 
 /// Divides two limbs `(hi << BITS) | lo` by `divisor`, returning the quotient.
 ///
-/// # Correctness
-///
 /// Callers must ensure `hi < divisor`.
 pub trait DivWide: Sized {
+    /// Computes `((hi << BITS) | lo) / divisor`.
     fn div_wide(lo: Self, hi: Self, divisor: Self) -> Self;
 }
 

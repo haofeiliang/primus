@@ -4,9 +4,10 @@ use std::{
     slice::SliceIndex,
 };
 
+use primus_data::{Data, DataMut, RawData};
 use serde::{Deserialize, Serialize};
 
-use crate::{Data, DataMut, RawData, UnsignedInteger, impl_iters, izip};
+use crate::{UnsignedInteger, impl_iters, izip};
 
 /// A big unsigned integer backed by externally provided limb storage.
 ///

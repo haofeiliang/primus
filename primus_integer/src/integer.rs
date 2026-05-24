@@ -83,7 +83,6 @@ pub trait Integer:
     + ShrAssign<u32>
     + Pow<u32, Output = Self>
     + Pow<usize, Output = Self>
-    + SampleUniform<Sampler: Copy + Send + Sync>
     + Serialize
     + for<'de> Deserialize<'de>
     + Zeroize
@@ -96,5 +95,12 @@ macro_rules! empty_trait_impl {
     )*)
 }
 
-// `isize` is not supported by `rand::distr::uniform::SampleUniform`.
-empty_trait_impl!(Integer for u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128);
+empty_trait_impl!(Integer for u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
+
+/// Signed integer types used as the scalar basis of ciphertext arithmetic.
+///
+/// Only `i16`, `i32`, and `i64` are included — `i8` is too narrow and `i128`
+/// lacks native SIMD support.
+pub trait FheInt: Integer + SampleUniform<Sampler: Copy + Send + Sync> {}
+
+empty_trait_impl!(FheInt for i16 i32 i64);

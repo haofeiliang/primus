@@ -17,11 +17,17 @@ pub trait WideningOps: CarryingAdd + BorrowingSub + WideningMul + CarryingMul {}
 
 impl<T> WideningOps for T where T: CarryingAdd + BorrowingSub + WideningMul + CarryingMul {}
 
+/// [`Widening`] for `u8`.
 pub type WideningU8 = Widening<u8>;
+/// [`Widening`] for `u16`.
 pub type WideningU16 = Widening<u16>;
+/// [`Widening`] for `u32`.
 pub type WideningU32 = Widening<u32>;
+/// [`Widening`] for `u64`.
 pub type WideningU64 = Widening<u64>;
+/// [`Widening`] for `u128`.
 pub type WideningU128 = Widening<u128>;
+/// [`Widening`] for `usize`.
 pub type WideningUsize = Widening<usize>;
 
 /// A double-width unsigned integer represented as a (low, high) limb pair.

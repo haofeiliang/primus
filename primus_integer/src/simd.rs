@@ -30,16 +30,28 @@ use crate::{BorrowingSub, CarryingAdd, CarryingMul, WideningMul};
 
 use super::UnsignedInteger;
 
-pub trait SimdUnsignedInteger: UnsignedInteger + SimdElement + SimdCast {}
+/// Unsigned integer types that can serve as SIMD lane elements.
+pub trait SimdUnsignedInteger: UnsignedInteger + SimdElement + SimdCast {
+    /// The number of lanes in a SIMD vector for this element type at the
+    /// target's preferred vector width.
+    const LANE_COUNT: usize;
+    /// Twice [`LANE_COUNT`](Self::LANE_COUNT), for double-width operations.
+    const DOUBLE_LANE_COUNT: usize;
+}
 
 macro_rules! impl_simd_unsigned_integer {
     ($($t:ty)*) => ($(
-        impl SimdUnsignedInteger for $t {}
+        impl SimdUnsignedInteger for $t {
+            const LANE_COUNT: usize = lanes::VECTOR_BITS / <$t>::BITS as usize;
+            const DOUBLE_LANE_COUNT: usize = Self::LANE_COUNT * 2;
+        }
     )*)
 }
 
 impl_simd_unsigned_integer! {u8 u16 u32 u64 usize}
 
+/// SIMD vector of `N` elements of type `T`, extending [`Simd`] with the
+/// arithmetic and comparison capabilities required by higher-level crates.
 pub trait SimdArray<T: SimdUnsignedInteger, const N: usize>
 where
     Self: Send + Sync + Clone + Copy + Default,
@@ -85,6 +97,7 @@ macro_rules! impl_simd_array {
 
 impl_simd_array! {u8 u16 u32 u64 usize}
 
+/// SIMD mask of `N` elements, providing bitwise and selection operations.
 #[allow(clippy::len_without_is_empty)]
 pub trait SimdMaskArray<T: MaskElement, const N: usize>
 where

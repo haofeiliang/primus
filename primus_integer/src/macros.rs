@@ -62,14 +62,17 @@ macro_rules! izip {
 macro_rules! impl_iters {
     ($poly:ident, $short_name:ident) => {
         paste::paste! {
+            /// Iterator over non-overlapping chunks of a `$poly` buffer.
             pub struct [<$poly Iter>]<'a, T>
             where
                 T: UnsignedInteger,
             {
+                /// The underlying chunk iterator.
                 pub iter: core::slice::ChunksExact<'a, T>
             }
 
             impl<'a, T: UnsignedInteger> [<$poly Iter>]<'a, T> {
+                /// Creates a new iterator over `$poly` chunks of the given length.
                 #[inline]
                 pub fn new(data:&'a [T], [<$short_name _len>]:usize) -> Self{
                     Self {
@@ -91,14 +94,17 @@ macro_rules! impl_iters {
         }
 
         paste::paste! {
+            /// Mutable iterator over non-overlapping chunks of a `$poly` buffer.
             pub struct [<$poly IterMut>]<'a, T>
             where
                 T: UnsignedInteger,
             {
+                /// The underlying mutable chunk iterator.
                 pub iter: core::slice::ChunksExactMut<'a, T>
             }
 
             impl<'a, T: UnsignedInteger> [<$poly IterMut>]<'a, T> {
+                /// Creates a new mutable iterator over `$poly` chunks of the given length.
                 #[inline]
                 pub fn new(data:&'a mut [T], [<$short_name _len>]:usize) -> Self{
                     Self {

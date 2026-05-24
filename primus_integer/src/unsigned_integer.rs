@@ -37,6 +37,7 @@ pub trait UnsignedInteger:
     + TryFrom<usize, Error: Debug>
     + TryInto<usize, Error: Debug>
 {
+    /// The matching signed type (e.g. `i64` for `u64`).
     type SignedInteger: Integer;
 
     /// Returns `true` if and only if `self == 2^k` for some `k`.
@@ -82,29 +83,28 @@ impl_unsigned_integer! {u16, i16}
 impl_unsigned_integer! {u32, i32}
 impl_unsigned_integer! {u64, i64}
 impl_unsigned_integer! {u128, i128}
+impl_unsigned_integer! {usize, isize}
 
-#[cfg(target_pointer_width = "64")]
-impl UnsignedInteger for usize {
-    type SignedInteger = i64;
-    #[inline]
-    fn cast_from_signed(value: Self::SignedInteger) -> Self {
-        value as usize
-    }
-    #[inline(always)]
-    fn wrapping_add_signed(self, rhs: Self::SignedInteger) -> Self {
-        <usize>::wrapping_add_signed(self, rhs as isize)
-    }
+#[cfg(not(feature = "simd"))]
+/// Unsigned integer types used as the scalar basis of ciphertext arithmetic.
+///
+/// Only `u16`, `u32`, and `u64` are included — `u8` is too narrow, `u128`
+/// lacks native SIMD support, and `usize` is platform-dependent.
+pub trait FheUint: UnsignedInteger {}
+
+#[cfg(feature = "simd")]
+/// Unsigned integer types used as the scalar basis of ciphertext arithmetic.
+///
+/// Only `u16`, `u32`, and `u64` are included — `u8` is too narrow, `u128`
+/// lacks native SIMD support, and `usize` is platform-dependent.
+pub trait FheUint: UnsignedInteger + crate::SimdUnsignedInteger {}
+
+macro_rules! impl_fhe_uint {
+    ($t:ty) => {
+        impl FheUint for $t {}
+    };
 }
 
-#[cfg(target_pointer_width = "32")]
-impl UnsignedInteger for usize {
-    type SignedInteger = i32;
-    #[inline]
-    fn cast_from_signed(value: Self::SignedInteger) -> Self {
-        value as usize
-    }
-    #[inline(always)]
-    fn wrapping_add_signed(self, rhs: Self::SignedInteger) -> Self {
-        <usize>::wrapping_add_signed(self, rhs as isize)
-    }
-}
+impl_fhe_uint!(u16);
+impl_fhe_uint!(u32);
+impl_fhe_uint!(u64);

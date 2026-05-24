@@ -8,6 +8,8 @@
 //! optimized binary GCD, half-GCD for big integers) and when each is worth
 //! considering, see `ALGORITHMS.md` in the crate root.
 
+#![deny(missing_docs)]
+
 /// Greatest common divisor and Bézout coefficients
 pub trait Xgcd: Sized {
     /// Calculates the Greatest Common Divisor (GCD) of the number and `other`. The
