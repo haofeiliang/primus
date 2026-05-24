@@ -35,7 +35,7 @@ use crate::ntt::hexl::{
 /// - `twice_modulus`: Twice the modulus, i.e. `2*q` represented as 8 64-bit signed integers in SIMD form.
 ///
 /// # Details
-/// See Algorithm 4 of https://arxiv.org/pdf/1205.2926.pdf
+/// See Algorithm 4 of <https://arxiv.org/pdf/1205.2926.pdf>
 #[inline]
 pub fn fwd_butterfly_radix2(
     x: &mut u64,
@@ -201,7 +201,7 @@ pub fn forward_transform_to_bit_reverse_radix2_inplace(
 ///
 /// Notes:
 /// - This corresponds to the Harvey butterfly form. See Algorithm 3 in
-///   https://arxiv.org/pdf/1205.2926.pdf
+///   <https://arxiv.org/pdf/1205.2926.pdf>
 ///
 /// Parameters:
 /// - `w`: root of unity `W`

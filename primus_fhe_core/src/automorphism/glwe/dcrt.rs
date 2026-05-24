@@ -140,7 +140,7 @@ pub fn dcrt_poly_ntt_auto_inplace<T: UnsignedInteger>(
 /// For each secret-key polynomial s_i (in NTT domain), apply NTT-domain
 /// permutation σ_k(s_i) and encrypt under a GLEV ciphertext.
 ///
-/// Unlike [`super::crt::generate_auto_key_data`] which requires a coefficient-domain
+/// Unlike `super::crt::generate_auto_key_data` which requires a coefficient-domain
 /// secret key, this only needs the NTT-domain secret key.
 fn generate_ntt_auto_key_data<T, M, Table, R>(
     params: &CrtGlevParameters<T, M>,

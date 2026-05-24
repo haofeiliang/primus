@@ -5,7 +5,7 @@
 //! Slice operations follow the trait surface of [`super::BarrettModulus`]; on
 //! hosts compiled with `target_feature = "avx512ifma"` (and `avx512f` /
 //! `avx512dq`) the mul-family slice kernels go through the IFMA path in
-//! [`simd_ifma`]. Other configurations transparently delegate to the inner
+//! `simd_ifma`. Other configurations transparently delegate to the inner
 //! [`super::BarrettModulus<u64>`].
 
 use core::fmt::Display;
@@ -37,7 +37,7 @@ pub const MAX_VALUE: u64 = 1u64 << 50;
 /// Stores two precomputed forms of `µ = ⌊2^104 / m⌋`:
 ///
 /// - `mu_lo52` / `mu_hi`: 52-bit / ≤4-bit pieces consumed by the IFMA
-///   kernels in [`simd_ifma`].
+///   kernels in `simd_ifma`.
 /// - `inner`: a full [`BarrettModulus<u64>`] reused for scalar ops and as
 ///   the non-IFMA SIMD fallback.
 #[derive(Debug, Clone, Copy)]

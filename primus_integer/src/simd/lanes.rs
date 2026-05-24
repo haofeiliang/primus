@@ -2,7 +2,7 @@
 //!
 //! This is the single source of truth for the default lane count used by
 //! SIMD slice kernels across the workspace. Downstream crates should read
-//! [`VECTOR_BITS`] (or call [`lanes`]) instead of re-defining their own
+//! [`VECTOR_BITS`] (or call [`lanes_for_bits`]) instead of re-defining their own
 //! per-target constant.
 
 /// Native SIMD vector width in bits.

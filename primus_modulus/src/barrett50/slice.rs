@@ -1,7 +1,7 @@
 //! Slice trait wiring for [`Barrett50Modulus`].
 //!
 //! The mul-family slice traits dispatch to the IFMA kernels in
-//! [`super::simd_ifma`] when the target feature combo
+//! `super::simd_ifma` when the target feature combo
 //! `avx512f + avx512dq + avx512ifma` is enabled at compile time;
 //! otherwise (and for the non-mul traits in all configurations) they
 //! delegate to the wrapped [`crate::BarrettModulus<u64>`], whose own

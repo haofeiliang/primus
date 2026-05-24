@@ -1,10 +1,10 @@
-//! Value-side mirror of [`primus_reduce::slice_ops`].
+//! Value-side mirror of `primus_reduce::slice_ops`.
 //!
 //! Each trait is implemented on `[T]` and delegates to the corresponding
 //! modulus-receiver trait, mirroring the scalar `XxxModulo` / `ReduceXxx`
 //! pairing in [`crate::ops`].
 //!
-//! See [`primus_reduce::slice_ops`] for the conventions on length checks
+//! See `primus_reduce::slice_ops` for the conventions on length checks
 //! and value-range invariants.
 
 use primus_reduce::prelude::*;

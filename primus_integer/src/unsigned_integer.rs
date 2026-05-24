@@ -11,7 +11,7 @@ use crate::{
 /// `UnsignedInteger` extends [`Integer`] with operations that only make sense
 /// for unsigned values: carrying add/sub, widening/carrying multiplication,
 /// division with remainder, fast wide division, the extended GCD
-/// ([`Xgcd`](primus_gcd::Xgcd)), and conversions from signed integers.
+/// ([`Xgcd`]), and conversions from signed integers.
 ///
 /// It is implemented for all standard Rust unsigned integer types (`u8`–`u128`,
 /// `usize`) and serves as the principal value-type bound throughout the
@@ -21,7 +21,7 @@ use crate::{
 ///
 /// [`SignedInteger`](UnsignedInteger::SignedInteger) is the matching signed
 /// type (e.g. `i64` for `u64`) and is used internally by algorithms such as
-/// [`Xgcd::xgcd`](primus_gcd::Xgcd::xgcd) that need signed intermediate
+/// [`Xgcd::xgcd`] that need signed intermediate
 /// cofactors.
 pub trait UnsignedInteger:
     Integer

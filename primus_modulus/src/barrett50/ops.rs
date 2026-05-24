@@ -1,6 +1,6 @@
 //! Scalar trait impls — all delegate to `Barrett50Modulus::inner`
 //! (`BarrettModulus<u64>`). Scalar paths are not IFMA-accelerated; the
-//! win lives in the SIMD slice kernels in [`super::simd_ifma`].
+//! win lives in the SIMD slice kernels in `super::simd_ifma`.
 
 use primus_integer::UnsignedInteger;
 use primus_reduce::ReduceError;

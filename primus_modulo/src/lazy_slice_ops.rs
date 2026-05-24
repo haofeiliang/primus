@@ -1,4 +1,4 @@
-//! Value-side mirror of [`primus_reduce::lazy_slice_ops`].
+//! Value-side mirror of `primus_reduce::lazy_slice_ops`.
 //!
 //! Results are in `[0, 2 * modulus)`; callers must perform a final
 //! reduction (e.g. via [`crate::slice_ops::OnceModuloSlice`]) when a

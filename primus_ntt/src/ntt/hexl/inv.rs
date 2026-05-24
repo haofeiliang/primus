@@ -20,7 +20,7 @@ use super::utils::*;
 /// - `input_less_than_mod`: If `true`, assumes `X, Y < q`. Otherwise assumes `X, Y < 2*q`.
 ///
 /// # Details
-/// See Algorithm 3 of https://arxiv.org/pdf/1205.2926.pdf
+/// See Algorithm 3 of <https://arxiv.org/pdf/1205.2926.pdf>
 pub unsafe fn inv_butterfly<const BIT_SHIFT: u32, const INPUT_LESS_THAN_MOD: bool>(
     x: &mut __m512i,
     y: &mut __m512i,

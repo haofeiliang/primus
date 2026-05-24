@@ -1,7 +1,7 @@
 //! SIMD abstractions for unsigned integer types.
 //!
 //! This module provides traits and blanket implementations that extend the
-//! scalar [`UnsignedInteger`](crate::UnsignedInteger) operations to SIMD
+//! scalar [`UnsignedInteger`] operations to SIMD
 //! vectors when the `simd` features are enabled.
 //!
 //! [`SimdUnsignedInteger`] marks unsigned integer types that can serve as

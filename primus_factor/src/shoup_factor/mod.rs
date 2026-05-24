@@ -11,7 +11,7 @@ pub use simd::SimdShoupFactor;
 /// Lower-level SIMD slice kernels with an explicit lane count, for callers
 /// that want to override the default vector width.
 ///
-/// The default trait impls in [`ShoupFactorSliceOps`] pick a lane count at
+/// The default trait impls in [`FactorSliceOps`] pick a lane count at
 /// compile time based on the target CPU's SIMD width
 /// (see [`primus_integer::lanes`]). Reach for this module only when
 /// you have measured a different `N` that performs better on your workload.
