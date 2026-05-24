@@ -103,4 +103,4 @@ empty_trait_impl!(Integer for u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isiz
 /// lacks native SIMD support.
 pub trait FheInt: Integer + SampleUniform<Sampler: Copy + Send + Sync> {}
 
-empty_trait_impl!(FheInt for i16 i32 i64);
+empty_trait_impl!(FheInt for i16 i32 i64 u16 u32 u64);

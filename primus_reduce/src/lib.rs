@@ -35,12 +35,12 @@ pub use ops::*;
 pub use slice_ops::*;
 
 use num_traits::ConstZero;
-use primus_integer::Integer;
+use primus_integer::FheUint;
 use rand::distr::Uniform;
 
 /// Trait for types that represent a modulus.
 pub trait Modulus: Copy + Debug + Send + Sync {
-    type ValueT: Integer;
+    type ValueT: FheUint;
 
     /// Returns the modulus value, or `None` when the modulus is implicit
     /// (e.g. a native power-of-two modulus where the value is `2^BITS` and
@@ -57,7 +57,7 @@ pub trait Modulus: Copy + Debug + Send + Sync {
     /// result is implementation-defined (typically `0` from wrapping); use
     /// [`value`](Self::value) when correctness depends on the distinction.
     #[must_use]
-    fn value_unchecked(self) -> Self::ValueT;
+    unsafe fn value_unchecked(self) -> Self::ValueT;
 
     /// Returns the value of the modulus minus one.
     ///
@@ -66,7 +66,7 @@ pub trait Modulus: Copy + Debug + Send + Sync {
     #[must_use]
     fn minus_one(self) -> Self::ValueT;
 
-    /// Returns a [Uniform] distribution over the values of [Modulus].
+    /// Returns a [`Uniform`] distribution over the values of [`Modulus`].
     ///
     /// # Panics
     ///

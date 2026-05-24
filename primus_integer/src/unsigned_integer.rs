@@ -2,6 +2,8 @@ use core::fmt::Debug;
 
 use primus_gcd::Xgcd;
 
+#[cfg(feature = "simd")]
+use crate::FheInt;
 use crate::{
     BorrowingSub, CarryingAdd, CarryingMul, DivRem, DivRemScalar, DivWide, Integer, WideningMul,
 };
@@ -97,7 +99,7 @@ pub trait FheUint: UnsignedInteger {}
 ///
 /// Only `u16`, `u32`, and `u64` are included — `u8` is too narrow, `u128`
 /// lacks native SIMD support, and `usize` is platform-dependent.
-pub trait FheUint: UnsignedInteger + crate::SimdUnsignedInteger {}
+pub trait FheUint: UnsignedInteger + FheInt + crate::SimdUnsignedInteger {}
 
 macro_rules! impl_fhe_uint {
     ($t:ty) => {

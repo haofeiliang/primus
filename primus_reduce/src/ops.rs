@@ -280,7 +280,7 @@ pub trait TryReduceInv<T> {
     ///
     /// # Errors
     ///
-    /// If there dose not exist the such inverse, a [`ReduceError`] will be returned.
+    /// If there does not exist the such inverse, a [`ReduceError`] will be returned.
     fn try_reduce_inv(self, value: T) -> Result<Self::Output, ReduceError<T>>;
 }
 
@@ -342,41 +342,4 @@ pub trait ReduceExpPowOf2<T> {
     fn reduce_exp_power_of_2(self, base: T, exp_log: u32) -> T;
 }
 
-/// The modular dot product.
-///
-/// This is always used for slice. For example, `u64` slice `[u64]`.
-///
-/// For two same length slice `a = (a₀, a₁, ..., an)` and `b = (b₀, b₁, ..., bn)`.
-///
-/// This trait will calculate `a₀×b₀ + a₁×b₁ + ... + an×bn mod modulus`.
-pub trait ReduceDotProduct<T> {
-    /// Output type.
-    type Output;
 
-    /// Calculate `∑a_i×b_i (mod modulus)` where `self` is modulus.
-    ///
-    /// # Correctness
-    ///
-    /// - Each `a_i < modulus` and `b_i < modulus`
-    ///
-    /// # Panics
-    ///
-    /// Panics if `a.as_ref().len() != b.as_ref().len()`.
-    #[must_use]
-    fn reduce_dot_product(self, a: impl AsRef<[T]>, b: impl AsRef<[T]>) -> Self::Output;
-
-    /// Calculate `∑a_i×b_i (mod modulus)` where `self` is modulus.
-    ///
-    /// # Correctness
-    ///
-    /// - Each `a_i < modulus` and `b_i < modulus`
-    /// - If the iterators yield different numbers of elements, iteration
-    ///   stops at the shorter (standard `zip` semantics); callers that
-    ///   require equal length should use [`reduce_dot_product`](Self::reduce_dot_product).
-    #[must_use]
-    fn reduce_dot_product_iter(
-        self,
-        a: impl IntoIterator<Item = T>,
-        b: impl IntoIterator<Item = T>,
-    ) -> Self::Output;
-}
