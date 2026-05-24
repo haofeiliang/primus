@@ -15,6 +15,8 @@
 //! `Reduce*` (and `LazyReduce*`) trait for your modulus type and the
 //! corresponding context trait is granted automatically.
 
+#![deny(missing_docs)]
+
 use core::fmt::Debug;
 
 mod common;
@@ -40,6 +42,7 @@ use rand::distr::Uniform;
 
 /// Trait for types that represent a modulus.
 pub trait Modulus: Copy + Debug + Send + Sync {
+    /// The scalar type that values are reduced into (e.g. `u64`).
     type ValueT: FheUint;
 
     /// Returns the modulus value, or `None` when the modulus is implicit
@@ -50,12 +53,11 @@ pub trait Modulus: Copy + Debug + Send + Sync {
 
     /// Returns the modulus value without checking that it fits in `ValueT`.
     ///
-    /// # Returns
+    /// # Safety
     ///
-    /// For an explicit modulus, returns the same value as [`value`](Self::value)
-    /// would unwrap. For an implicit modulus (e.g. native `2^BITS`), the
-    /// result is implementation-defined (typically `0` from wrapping); use
-    /// [`value`](Self::value) when correctness depends on the distinction.
+    /// The caller must ensure that the modulus value can be represented in
+    /// `ValueT`, or must be prepared to handle any implementation-defined
+    /// sentinel value (such as `0`) returned for implicit moduli.
     #[must_use]
     unsafe fn value_unchecked(self) -> Self::ValueT;
 

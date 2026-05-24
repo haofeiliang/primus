@@ -341,5 +341,3 @@ pub trait ReduceExpPowOf2<T> {
     #[must_use]
     fn reduce_exp_power_of_2(self, base: T, exp_log: u32) -> T;
 }
-
-

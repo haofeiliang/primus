@@ -174,3 +174,65 @@ where
         modulus.reduce_scalar_mul_add_slice_to(scalar, self, c, output);
     }
 }
+
+/// The modular dot product.
+///
+/// This is always used for slice. For example, `u64` slice `[u64]`.
+///
+/// For two same length slice `a = (a₀, a₁, ..., an)` and `b = (b₀, b₁, ..., bn)`.
+///
+/// This trait will calculate `a₀×b₀ + a₁×b₁ + ... + an×bn mod modulus`.
+pub trait DotProductModulo<M, T>
+where
+    Self: AsRef<[T]>,
+{
+    /// Calculate `∑a_i×b_i (mod modulus)`.
+    fn dot_product_modulo<B>(self, b: B, modulus: M) -> T
+    where
+        B: AsRef<[T]>;
+}
+
+impl<M, T, A> DotProductModulo<M, T> for A
+where
+    A: AsRef<[T]>,
+    M: ReduceDotProduct<T, Output = T>,
+{
+    #[inline(always)]
+    fn dot_product_modulo<B>(self, b: B, modulus: M) -> T
+    where
+        B: AsRef<[T]>,
+    {
+        modulus.reduce_dot_product(self, b)
+    }
+}
+
+/// The modular dot product.
+///
+/// This is always used for slice. For example, `u64` slice `[u64]`.
+///
+/// For two same length slice `a = (a₀, a₁, ..., an)` and `b = (b₀, b₁, ..., bn)`.
+///
+/// This trait will calculate `a₀×b₀ + a₁×b₁ + ... + an×bn mod modulus`.
+pub trait DotProductModuloIter<M, T>
+where
+    Self: IntoIterator<Item = T>,
+{
+    /// Calculate `∑a_i×b_i (mod modulus)`.
+    fn dot_product_modulo_iter<B>(self, b: B, modulus: M) -> T
+    where
+        B: IntoIterator<Item = T>;
+}
+
+impl<M, T, A> DotProductModuloIter<M, T> for A
+where
+    A: IntoIterator<Item = T>,
+    M: ReduceDotProduct<T, Output = T>,
+{
+    #[inline(always)]
+    fn dot_product_modulo_iter<B>(self, b: B, modulus: M) -> T
+    where
+        B: IntoIterator<Item = T>,
+    {
+        modulus.reduce_dot_product_iter(self, b)
+    }
+}

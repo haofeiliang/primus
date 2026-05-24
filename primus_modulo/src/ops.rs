@@ -2,8 +2,6 @@ use primus_integer::UnsignedInteger;
 use primus_reduce::ReduceError;
 use primus_reduce::prelude::*;
 
-use crate::ModuloError;
-
 /// The modulo operation.
 pub trait Modulo<M> {
     /// Output type.
@@ -450,8 +448,8 @@ where
     ///
     /// # Errors
     ///
-    /// If there does not exist such an inverse, a [`ModuloError`] will be returned.
-    fn try_inv_modulo(self, modulus: M) -> Result<Self::Output, ModuloError<Self>>;
+    /// If there does not exist such an inverse, a [`ReduceError`] will be returned.
+    fn try_inv_modulo(self, modulus: M) -> Result<Self::Output, ReduceError<Self>>;
 }
 
 impl<T, M> TryInvModulo<M> for T
@@ -461,10 +459,8 @@ where
     type Output = <M as TryReduceInv<T>>::Output;
 
     #[inline(always)]
-    fn try_inv_modulo(self, modulus: M) -> Result<Self::Output, ModuloError<Self>> {
-        modulus.try_reduce_inv(self).map_err(|e| match e {
-            ReduceError::NoInverse { value, modulus } => ModuloError::NoInverse { value, modulus },
-        })
+    fn try_inv_modulo(self, modulus: M) -> Result<Self::Output, ReduceError<Self>> {
+        modulus.try_reduce_inv(self)
     }
 }
 
@@ -534,67 +530,5 @@ where
     #[inline(always)]
     fn exp_power_of_2_modulo(self, exp_log: u32, modulus: M) -> Self {
         modulus.reduce_exp_power_of_2(self, exp_log)
-    }
-}
-
-/// The modular dot product.
-///
-/// This is always used for slice. For example, `u64` slice `[u64]`.
-///
-/// For two same length slice `a = (a₀, a₁, ..., an)` and `b = (b₀, b₁, ..., bn)`.
-///
-/// This trait will calculate `a₀×b₀ + a₁×b₁ + ... + an×bn mod modulus`.
-pub trait DotProductModulo<M, T>
-where
-    Self: AsRef<[T]>,
-{
-    /// Calculate `∑a_i×b_i (mod modulus)`.
-    fn dot_product_modulo<B>(self, b: B, modulus: M) -> T
-    where
-        B: AsRef<[T]>;
-}
-
-impl<M, T, A> DotProductModulo<M, T> for A
-where
-    A: AsRef<[T]>,
-    M: ReduceDotProduct<T, Output = T>,
-{
-    #[inline(always)]
-    fn dot_product_modulo<B>(self, b: B, modulus: M) -> T
-    where
-        B: AsRef<[T]>,
-    {
-        modulus.reduce_dot_product(self, b)
-    }
-}
-
-/// The modular dot product.
-///
-/// This is always used for slice. For example, `u64` slice `[u64]`.
-///
-/// For two same length slice `a = (a₀, a₁, ..., an)` and `b = (b₀, b₁, ..., bn)`.
-///
-/// This trait will calculate `a₀×b₀ + a₁×b₁ + ... + an×bn mod modulus`.
-pub trait DotProductModuloIter<M, T>
-where
-    Self: IntoIterator<Item = T>,
-{
-    /// Calculate `∑a_i×b_i (mod modulus)`.
-    fn dot_product_modulo_iter<B>(self, b: B, modulus: M) -> T
-    where
-        B: IntoIterator<Item = T>;
-}
-
-impl<M, T, A> DotProductModuloIter<M, T> for A
-where
-    A: IntoIterator<Item = T>,
-    M: ReduceDotProduct<T, Output = T>,
-{
-    #[inline(always)]
-    fn dot_product_modulo_iter<B>(self, b: B, modulus: M) -> T
-    where
-        B: IntoIterator<Item = T>,
-    {
-        modulus.reduce_dot_product_iter(self, b)
     }
 }

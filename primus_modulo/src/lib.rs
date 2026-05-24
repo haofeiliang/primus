@@ -8,7 +8,7 @@
 //!
 //! The naming convention is `XxxModulo` (value-side) ↔ `ReduceXxx` (modulus-side).
 
-mod error;
+#![deny(missing_docs)]
 
 mod lazy_ops;
 mod lazy_slice_ops;
@@ -16,8 +16,6 @@ mod ops;
 mod slice_ops;
 
 pub mod prelude;
-
-pub use error::ModuloError;
 
 pub use lazy_ops::*;
 pub use lazy_slice_ops::*;

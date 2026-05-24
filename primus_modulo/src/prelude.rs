@@ -1,5 +1,4 @@
-//! Prelude: re-exports all operation traits but deliberately omits
-//! [`ModuloError`](crate::ModuloError) — import that explicitly when needed.
+//! Prelude: re-exports all operation traits.
 
 pub use crate::lazy_ops::*;
 pub use crate::lazy_slice_ops::*;
