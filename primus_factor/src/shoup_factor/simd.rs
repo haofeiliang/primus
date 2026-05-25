@@ -46,9 +46,7 @@ where
         let mut quotient = [T::ZERO; N];
         let values = value.as_array();
         for i in 0..N {
-            let mut temp = [T::ZERO; 2];
-            DivRemScalar::div_rem_scalar(&[T::ZERO, values[i]], modulus, &mut temp);
-            quotient[i] = temp[0];
+            quotient[i] = DivWide::div_wide(T::ZERO, values[i], modulus);
         }
 
         Self {
@@ -90,9 +88,7 @@ where
         let mut quotient = [T::ZERO; N];
         let values = self.value.as_array();
         for i in 0..N {
-            let mut temp = [T::ZERO; 2];
-            DivRemScalar::div_rem_scalar(&[T::ZERO, values[i]], modulus, &mut temp);
-            quotient[i] = temp[0];
+            quotient[i] = DivWide::div_wide(T::ZERO, values[i], modulus);
         }
 
         self.quotient = quotient.into();

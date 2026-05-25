@@ -10,7 +10,7 @@
 
 use core::fmt::Display;
 
-use primus_integer::DivRemScalar;
+use primus_integer::DivWide;
 
 use crate::BarrettModulus;
 
@@ -90,12 +90,10 @@ impl Barrett50Modulus {
     pub fn new_unchecked(value: u64) -> Self {
         // µ_104 = ⌊2^104 / value⌋. Dividend laid out as little-endian
         // 64-bit limbs: 2^104 = 0 + (1 << 40) · 2^64 + 0 · 2^128.
-        let mut quotient = [0u64; 3];
-        let _rem =
-            <u64 as DivRemScalar>::div_rem_scalar(&[0u64, 1u64 << 40, 0u64], value, &mut quotient);
+
         // For value ∈ [2^48, 2^50): µ_104 ∈ (2^54, 2^56], so quotient[1..]
         // is all zero — the value fits in quotient[0].
-        let mu_104 = quotient[0];
+        let mu_104 = DivWide::div_wide(0u64, 1u64 << 40, value);
         let mu_lo52 = mu_104 & ((1u64 << 52) - 1);
         let mu_hi = mu_104 >> 52;
         let neg_m_mod_pow2_52 = (1u64 << 52).wrapping_sub(value);

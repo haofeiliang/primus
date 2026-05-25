@@ -1,4 +1,4 @@
-use primus_integer::{DivRemScalar, UnsignedInteger};
+use primus_integer::{DivWide, UnsignedInteger};
 
 use crate::{FactorMul, FactorSliceOps, LazyFactorMul, LazyFactorSliceOps};
 
@@ -45,13 +45,9 @@ impl<T: UnsignedInteger> ShoupFactor<T> {
         debug_assert!(value < modulus);
 
         // Calculate the quotient of `value * 2^64 / modulus`.
-        let mut quotient = [T::ZERO; 2];
-        DivRemScalar::div_rem_scalar(&[T::ZERO, value], modulus, &mut quotient);
+        let quotient = DivWide::div_wide(T::ZERO, value, modulus);
 
-        Self {
-            value,
-            quotient: quotient[0],
-        }
+        Self { value, quotient }
     }
 
     /// Resets the `modulus` of [`ShoupFactor<T>`].
@@ -60,10 +56,7 @@ impl<T: UnsignedInteger> ShoupFactor<T> {
         debug_assert!(self.value < modulus);
 
         // Calculate the quotient of `value * 2^64 / modulus`.
-        let mut quotient = [T::ZERO; 2];
-        DivRemScalar::div_rem_scalar(&[T::ZERO, self.value], modulus, &mut quotient);
-
-        self.quotient = quotient[0];
+        self.quotient = DivWide::div_wide(T::ZERO, self.value, modulus);
     }
 
     /// Resets the content of [`ShoupFactor<T>`].
