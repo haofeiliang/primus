@@ -2,10 +2,9 @@ use core::fmt::Debug;
 
 use primus_gcd::Xgcd;
 
-#[cfg(feature = "simd")]
-use crate::FheInt;
 use crate::{
-    BorrowingSub, CarryingAdd, CarryingMul, DivRem, DivRemScalar, DivWide, Integer, WideningMul,
+    BorrowingSub, CarryingAdd, CarryingMul, DivRem, DivRemScalar, DivWide, FheInt, Integer,
+    WideningMul,
 };
 
 /// An abstraction over unsigned integer types.
@@ -92,7 +91,7 @@ impl_unsigned_integer! {usize, isize}
 ///
 /// Only `u16`, `u32`, and `u64` are included — `u8` is too narrow, `u128`
 /// lacks native SIMD support, and `usize` is platform-dependent.
-pub trait FheUint: UnsignedInteger {}
+pub trait FheUint: UnsignedInteger + FheInt {}
 
 #[cfg(feature = "simd")]
 /// Unsigned integer types used as the scalar basis of ciphertext arithmetic.

@@ -1,23 +1,9 @@
-use std::simd::{
-    Simd,
-    cmp::{SimdOrd, SimdPartialEq},
-};
+use std::simd::{Simd, cmp::SimdOrd};
 
-use primus_integer::{SimdArray, SimdMaskArray, SimdUnsignedInteger};
+use primus_integer::{SimdArray, SimdUnsignedInteger};
 
 #[inline]
-fn simd_reduce_once<T: SimdUnsignedInteger, const N: usize>(
-    v: Simd<T, N>,
-    m: Simd<T, N>,
-) -> Simd<T, N>
-where
-    Simd<T, N>: SimdArray<T, N>,
-{
-    v.simd_min(v - m)
-}
-
-#[inline]
-fn simd_reduce_add<T: SimdUnsignedInteger, const N: usize>(
+pub fn simd_reduce_add<T: SimdUnsignedInteger, const N: usize>(
     a: Simd<T, N>,
     b: Simd<T, N>,
     m: Simd<T, N>,
@@ -30,7 +16,7 @@ where
 }
 
 #[inline]
-fn simd_reduce_sub<T: SimdUnsignedInteger, const N: usize>(
+pub fn simd_reduce_sub<T: SimdUnsignedInteger, const N: usize>(
     a: Simd<T, N>,
     b: Simd<T, N>,
     m: Simd<T, N>,
@@ -38,106 +24,22 @@ fn simd_reduce_sub<T: SimdUnsignedInteger, const N: usize>(
 where
     Simd<T, N>: SimdArray<T, N>,
 {
+    // `a, b ∈ [0, m)`. When `a >= b`, `diff = a - b < m` and `diff + m < 2m`
+    // does not wrap (provided `m < 2^{BITS-1}`), so `min` picks `diff`.
+    // When `a < b`, `diff` wraps to a huge value and `diff + m` wraps back to
+    // the canonical `(a - b) mod m`, so `min` picks the wrapped-back result.
+    // Lowers to a single `vpminuq` on AVX-512.
     let diff = a - b;
     diff.simd_min(diff + m)
-}
-
-#[inline]
-fn simd_reduce_neg<T: SimdUnsignedInteger, const N: usize>(
-    v: Simd<T, N>,
-    m: Simd<T, N>,
-) -> Simd<T, N>
-where
-    Simd<T, N>: SimdArray<T, N>,
-{
-    let zero = Simd::splat(T::ZERO);
-    v.simd_eq(zero).select(zero, m - v)
 }
 
 // ===========================================================================
 // SIMD slice kernels.
 // ===========================================================================
 
-#[inline]
-pub fn reduce_once_slice_assign<T: SimdUnsignedInteger, const N: usize>(
-    modulus: T,
-    values: &mut [T],
-) where
-    Simd<T, N>: SimdArray<T, N>,
-{
-    let m = Simd::splat(modulus);
-    let (chunks, rem) = values.as_chunks_mut::<N>();
-    for chunk in chunks {
-        let v = Simd::from_array(*chunk);
-        *chunk = simd_reduce_once(v, m).to_array();
-    }
-    // Scalar fallback for remainder.
-    for v in rem {
-        if *v >= modulus {
-            *v -= modulus;
-        }
-    }
-}
-
-#[inline]
-pub fn reduce_once_slice_to<T: SimdUnsignedInteger, const N: usize>(
-    modulus: T,
-    input: &[T],
-    output: &mut [T],
-) where
-    Simd<T, N>: SimdArray<T, N>,
-{
-    debug_assert_eq!(input.len(), output.len());
-    let m = Simd::splat(modulus);
-    let (in_chunks, in_rem) = input.as_chunks::<N>();
-    let (out_chunks, out_rem) = output.as_chunks_mut::<N>();
-    for (i, o) in in_chunks.iter().zip(out_chunks) {
-        let v = Simd::from_array(*i);
-        *o = simd_reduce_once(v, m).to_array();
-    }
-    for (i, o) in in_rem.iter().zip(out_rem) {
-        *o = if *i >= modulus { *i - modulus } else { *i };
-    }
-}
-
-#[inline]
-pub fn reduce_neg_slice_assign<T: SimdUnsignedInteger, const N: usize>(modulus: T, values: &mut [T])
-where
-    Simd<T, N>: SimdArray<T, N>,
-{
-    let m = Simd::splat(modulus);
-    let (chunks, rem) = values.as_chunks_mut::<N>();
-    for chunk in chunks {
-        let v = Simd::from_array(*chunk);
-        *chunk = simd_reduce_neg(v, m).to_array();
-    }
-    for v in rem {
-        if !v.is_zero() {
-            *v = modulus - *v;
-        }
-    }
-}
-
-#[inline]
-pub fn reduce_neg_slice_to<T: SimdUnsignedInteger, const N: usize>(
-    modulus: T,
-    input: &[T],
-    output: &mut [T],
-) where
-    Simd<T, N>: SimdArray<T, N>,
-{
-    debug_assert_eq!(input.len(), output.len());
-    let m = Simd::splat(modulus);
-    let (in_chunks, in_rem) = input.as_chunks::<N>();
-    let (out_chunks, out_rem) = output.as_chunks_mut::<N>();
-    for (i, o) in in_chunks.iter().zip(out_chunks) {
-        let v = Simd::from_array(*i);
-        *o = simd_reduce_neg(v, m).to_array();
-    }
-    for (i, o) in in_rem.iter().zip(out_rem) {
-        *o = if i.is_zero() { *i } else { modulus - *i };
-    }
-}
+pub use crate::common::uint::simd::{
+    reduce_neg_slice_assign, reduce_neg_slice_to, reduce_once_slice_assign, reduce_once_slice_to,
+};
 
 #[inline]
 pub fn reduce_add_slice_assign<T: SimdUnsignedInteger, const N: usize>(
@@ -157,12 +59,7 @@ pub fn reduce_add_slice_assign<T: SimdUnsignedInteger, const N: usize>(
         *ac = simd_reduce_add(av, bv, m).to_array();
     }
     for (a, &b) in a_rem.iter_mut().zip(b_rem) {
-        let diff = modulus - b;
-        if diff > *a {
-            *a += b;
-        } else {
-            *a = a.wrapping_sub(diff);
-        }
+        super::reduce_add_assign(modulus, a, b);
     }
 }
 
@@ -186,9 +83,8 @@ pub fn reduce_add_slice_to<T: SimdUnsignedInteger, const N: usize>(
         let bv = Simd::from_array(*bc);
         *oc = simd_reduce_add(av, bv, m).to_array();
     }
-    for ((&a_val, &b_val), o) in a_rem.iter().zip(b_rem).zip(o_rem) {
-        let sum = a_val + b_val;
-        *o = if sum >= modulus { sum - modulus } else { sum };
+    for ((&a, &b), o) in a_rem.iter().zip(b_rem).zip(o_rem) {
+        *o = super::reduce_add(modulus, a, b);
     }
 }
 
@@ -210,8 +106,7 @@ pub fn reduce_sub_slice_assign<T: SimdUnsignedInteger, const N: usize>(
         *ac = simd_reduce_sub(av, bv, m).to_array();
     }
     for (a, &b) in a_rem.iter_mut().zip(b_rem) {
-        let diff = a.wrapping_sub(b);
-        *a = diff.min(diff.wrapping_add(modulus));
+        super::reduce_sub_assign(modulus, a, b);
     }
 }
 
@@ -235,9 +130,8 @@ pub fn reduce_sub_slice_to<T: SimdUnsignedInteger, const N: usize>(
         let bv = Simd::from_array(*bc);
         *oc = simd_reduce_sub(av, bv, m).to_array();
     }
-    for ((&a_val, &b_val), o) in a_rem.iter().zip(b_rem).zip(o_rem) {
-        let diff = a_val.wrapping_sub(b_val);
-        *o = diff.min(diff.wrapping_add(modulus));
+    for ((&a, &b), o) in a_rem.iter().zip(b_rem).zip(o_rem) {
+        *o = super::reduce_sub(modulus, a, b);
     }
 }
 
@@ -258,8 +152,7 @@ pub fn reduce_sub_slice_rev_assign<T: SimdUnsignedInteger, const N: usize>(
         let bv = Simd::from_array(*bc);
         *bc = simd_reduce_sub(av, bv, m).to_array();
     }
-    for (&a_val, b) in a_rem.iter().zip(b_rem) {
-        let diff = a_val.wrapping_sub(*b);
-        *b = diff.min(diff.wrapping_add(modulus));
+    for (&a, b) in a_rem.iter().zip(b_rem) {
+        *b = super::reduce_sub(modulus, a, *b);
     }
 }

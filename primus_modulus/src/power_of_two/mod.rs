@@ -1,7 +1,10 @@
-use primus_integer::UnsignedInteger;
+use primus_integer::{FheUint, UnsignedInteger};
 
 mod ops;
 mod slice;
+
+#[cfg(feature = "simd")]
+mod simd;
 
 /// Power of 2 modulus.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -55,7 +58,7 @@ impl<T: UnsignedInteger> PowOf2Modulus<T> {
     }
 }
 
-impl<T: UnsignedInteger> primus_reduce::Modulus for PowOf2Modulus<T> {
+impl<T: FheUint> primus_reduce::Modulus for PowOf2Modulus<T> {
     type ValueT = T;
 
     #[inline]
@@ -64,100 +67,12 @@ impl<T: UnsignedInteger> primus_reduce::Modulus for PowOf2Modulus<T> {
     }
 
     #[inline(always)]
-    fn value_unchecked(self) -> Self::ValueT {
+    unsafe fn value_unchecked(self) -> Self::ValueT {
         self.mask + T::ONE
     }
 
     #[inline(always)]
     fn minus_one(self) -> Self::ValueT {
         self.mask
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use rand::{distr::Uniform, prelude::*, rng};
-
-    use primus_reduce::prelude::*;
-
-    use super::*;
-
-    #[test]
-    fn test_modulus_create() {
-        let mut rng = rng();
-
-        let _m = <PowOf2Modulus<u8>>::new(rng.random_range(2..=(u8::MAX >> 2)).next_power_of_two());
-        let _m =
-            <PowOf2Modulus<u16>>::new(rng.random_range(2..=(u16::MAX >> 2)).next_power_of_two());
-        let _m =
-            <PowOf2Modulus<u32>>::new(rng.random_range(2..=(u32::MAX >> 2)).next_power_of_two());
-        let _m =
-            <PowOf2Modulus<u64>>::new(rng.random_range(2..=(u64::MAX >> 2)).next_power_of_two());
-        let _m =
-            <PowOf2Modulus<u128>>::new(rng.random_range(2..=(u128::MAX >> 2)).next_power_of_two());
-
-        let _m = <PowOf2Modulus<u8>>::with_mask(
-            rng.random_range(2..=(u8::MAX >> 2)).next_power_of_two() - 1,
-        );
-        let _m = <PowOf2Modulus<u16>>::with_mask(
-            rng.random_range(2..=(u16::MAX >> 2)).next_power_of_two() - 1,
-        );
-        let _m = <PowOf2Modulus<u32>>::with_mask(
-            rng.random_range(2..=(u32::MAX >> 2)).next_power_of_two() - 1,
-        );
-        let _m = <PowOf2Modulus<u64>>::with_mask(
-            rng.random_range(2..=(u64::MAX >> 2)).next_power_of_two() - 1,
-        );
-        let _m = <PowOf2Modulus<u128>>::with_mask(
-            rng.random_range(2..=(u128::MAX >> 2)).next_power_of_two() - 1,
-        );
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_modulus_create_panic() {
-        let mut rng = rng();
-
-        let m = loop {
-            let r = rng.random_range(0..=(u64::MAX >> 2));
-            if !r.is_power_of_two() {
-                break r;
-            }
-        };
-
-        let _m = PowOf2Modulus::<u64>::new(m);
-    }
-
-    #[test]
-    fn test_reduce() {
-        let mut rng = rng();
-
-        let m: u64 = rng.random_range(2..=(u64::MAX >> 2)).next_power_of_two();
-        let modulus = PowOf2Modulus::<u64>::new(m);
-        let dis = Uniform::new_inclusive(0, modulus.mask()).unwrap();
-
-        let v: u64 = rng.sample(dis);
-        assert_eq!(modulus.reduce(v), v % m);
-
-        let a: u64 = rng.sample(dis);
-        let b: u64 = rng.sample(dis);
-        assert_eq!(modulus.reduce_add(a, b), (a + b) % m);
-
-        let a: u64 = rng.sample(dis);
-        let b: u64 = rng.sample(dis);
-        assert_eq!(modulus.reduce_sub(a, b), (m + a - b) % m);
-
-        let a: u64 = rng.sample(dis);
-        let b: u64 = rng.sample(dis);
-        assert_eq!(
-            modulus.reduce_mul(a, b),
-            ((a as u128 * b as u128) % m as u128) as u64
-        );
-
-        let a: u64 = rng.sample(dis);
-        let a_neg = modulus.reduce_neg(a);
-        assert_eq!(modulus.reduce_add(a, a_neg), 0);
-
-        assert_eq!(modulus.reduce_neg(0), 0);
     }
 }

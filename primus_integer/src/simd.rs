@@ -70,12 +70,19 @@ where
     Self: Mul<Output = Self> + MulAssign,
     Self: Div<Output = Self> + DivAssign,
     Self: Rem<Output = Self> + RemAssign,
+    Self: BitAnd<Output = Self> + BitAndAssign,
+    Self: BitOr<Output = Self> + BitOrAssign,
+    Self: BitXor<Output = Self> + BitXorAssign,
+    Self: Not<Output = Self>,
     for<'a> Self: Add<&'a Self, Output = Self> + AddAssign<&'a Self>,
     for<'a> Self: Sub<&'a Self, Output = Self> + SubAssign<&'a Self>,
     for<'a> Self: Mul<&'a Self, Output = Self> + MulAssign<&'a Self>,
     for<'a> Self: Div<&'a Self, Output = Self> + DivAssign<&'a Self>,
     for<'a> Self: Rem<&'a Self, Output = Self> + RemAssign<&'a Self>,
-    Self: SimdUint,
+    for<'a> Self: BitAnd<&'a Self, Output = Self> + BitAndAssign<&'a Self>,
+    for<'a> Self: BitOr<&'a Self, Output = Self> + BitOrAssign<&'a Self>,
+    for<'a> Self: BitXor<&'a Self, Output = Self> + BitXorAssign<&'a Self>,
+    Self: SimdUint<Scalar = T>,
     Self: CarryingAdd<CarryT = Self::Mask>
         + BorrowingSub<BorrowT = Self::Mask>
         + WideningMul

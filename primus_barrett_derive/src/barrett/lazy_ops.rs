@@ -10,6 +10,47 @@ pub(crate) fn impl_lazy_reduce_ops(
 ) -> TokenStream {
     let [r0, r1] = ratio;
     quote! {
+        impl #name {
+            /// Calculates `value (mod 2*modulus)`.
+            #[inline]
+            fn lazy_reduce_wide(self, lo: #ty, hi: #ty) -> #ty {
+                use ::primus_modulus::integer::{CarryingMul, WideningMul};
+                // Step 1.
+                //                        ratio[1]  ratio[0]
+                //                   *          hi        lo
+                //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                //                      +-------------------+
+                //                      |         a         |    <-- lo * ratio[0]
+                //                      +-------------------+
+                //             +------------------+
+                //             |        b         |              <-- lo * ratio[1]
+                //             +------------------+
+                //             +------------------+
+                //             |        c         |              <-- hi * ratio[0]
+                //             +------------------+
+                //   +------------------+
+                //   |        d         |                        <-- hi * ratio[1]
+                //   +------------------+
+                //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                //             +--------+
+                //             |   q₃   |
+                //             +--------+
+                let ah = lo.widening_mul_hw(#r0);
+
+                let b = CarryingMul::carrying_mul(lo, #r1, ah);
+                let c = WideningMul::widening_mul(hi, #r0);
+
+                let d = hi.wrapping_mul(#r1);
+
+                let bch = b.1.carrying_add(c.1, b.0.overflowing_add(c.0).1).0;
+
+                let q = d.wrapping_add(bch);
+
+                // Step 2.
+                lo.wrapping_sub(q.wrapping_mul(#modulus))
+            }
+        }
+
         impl ::primus_modulus::reduce::LazyReduce<#ty> for #name {
             type Output = #ty;
 
@@ -45,40 +86,7 @@ pub(crate) fn impl_lazy_reduce_ops(
             /// Calculates `value (mod 2*modulus)`.
             #[inline]
             fn lazy_reduce(self, value: [#ty; 2]) -> Self::Output {
-                use ::primus_modulus::integer::{CarryingMul, WideningMul};
-                // Step 1.
-                //                        ratio[1]  ratio[0]
-                //                   *    value[1]  value[0]
-                //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                //                      +-------------------+
-                //                      |         a         |    <-- value[0] * ratio[0]
-                //                      +-------------------+
-                //             +------------------+
-                //             |        b         |              <-- value[0] * ratio[1]
-                //             +------------------+
-                //             +------------------+
-                //             |        c         |              <-- value[1] * ratio[0]
-                //             +------------------+
-                //   +------------------+
-                //   |        d         |                        <-- value[1] * ratio[1]
-                //   +------------------+
-                //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                //             +--------+
-                //             |   q₃   |
-                //             +--------+
-                let ah = value[0].widening_mul_hw(#r0);
-
-                let b = CarryingMul::carrying_mul(value[0], #r1, ah);
-                let c = WideningMul::widening_mul(value[1], #r0);
-
-                let d = value[1].wrapping_mul(#r1);
-
-                let bch = b.1 + c.1 + b.0.overflowing_add(c.0).1 as #ty;
-
-                let q = d.wrapping_add(bch);
-
-                // Step 2.
-                value[0].wrapping_sub(q.wrapping_mul(#modulus))
+                self.lazy_reduce_wide(value[0], value[1])
             }
         }
 
@@ -88,40 +96,7 @@ pub(crate) fn impl_lazy_reduce_ops(
             /// Calculates `value (mod 2*modulus)`.
             #[inline]
             fn lazy_reduce(self, value: (#ty, #ty)) -> Self::Output {
-                use ::primus_modulus::integer::{CarryingMul, WideningMul};
-                // Step 1.
-                //                        ratio[1]  ratio[0]
-                //                   *    value.1   value.0
-                //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                //                      +-------------------+
-                //                      |         a         |    <-- value.0 * ratio[0]
-                //                      +-------------------+
-                //             +------------------+
-                //             |        b         |              <-- value.0 * ratio[1]
-                //             +------------------+
-                //             +------------------+
-                //             |        c         |              <-- value.1 * ratio[0]
-                //             +------------------+
-                //   +------------------+
-                //   |        d         |                        <-- value.1 * ratio[1]
-                //   +------------------+
-                //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                //             +--------+
-                //             |   q₃   |
-                //             +--------+
-                let ah = value.0.widening_mul_hw(#r0);
-
-                let b = CarryingMul::carrying_mul(value.0, #r1, ah);
-                let c = WideningMul::widening_mul(value.1, #r0);
-
-                let d = value.1.wrapping_mul(#r1);
-
-                let bch = b.1 + c.1 + b.0.overflowing_add(c.0).1 as #ty;
-
-                let q = d.wrapping_add(bch);
-
-                // Step 2.
-                value.0.wrapping_sub(q.wrapping_mul(#modulus))
+                self.lazy_reduce_wide(value.0, value.1)
             }
         }
 
@@ -142,7 +117,7 @@ pub(crate) fn impl_lazy_reduce_ops(
                     }
                     [other @ .., last] => other
                         .iter()
-                        .rfold(*last, |acc, &x| self.lazy_reduce([x, acc])),
+                        .rfold(*last, |acc, &x| self.lazy_reduce_wide(x, acc)),
                 }
             }
         }

@@ -16,22 +16,31 @@
 pub use primus_integer as integer;
 pub use primus_reduce as reduce;
 
+#[macro_use]
+mod macros;
+
+pub mod common;
+
 mod barrett;
 mod barrett50;
+mod compact;
 mod montgomery;
+
 mod native;
 mod power_of_two;
-mod unsigned_integer;
+mod uint;
 
 #[cfg(feature = "derive")]
 pub use primus_barrett_derive::Barrett;
 
 pub use barrett::BarrettModulus;
 pub use barrett50::Barrett50Modulus;
+pub use compact::CompactModulus;
 pub use montgomery::MontgomeryModulus;
+
 pub use native::NativeModulus;
 pub use power_of_two::PowOf2Modulus;
-pub use unsigned_integer::UintModulus;
+pub use uint::UintModulus;
 
 #[cfg(feature = "simd")]
 pub use barrett::SimdBarrettModulus;

@@ -11,7 +11,8 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
             #[inline(always)]
             fn reduce(self, value: #ty) -> Self::Output {
                 use ::primus_modulus::reduce::{LazyReduce, ReduceOnce};
-                ::primus_modulus::UintModulus(#modulus).reduce_once(self.lazy_reduce(value))
+                use ::primus_modulus::common::compact;
+                compact::reduce_once(#modulus, self.lazy_reduce(value))
             }
         }
 
@@ -22,7 +23,8 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
             #[inline(always)]
             fn reduce(self, value: [#ty; 2]) -> Self::Output {
                 use ::primus_modulus::reduce::{LazyReduce, ReduceOnce};
-                ::primus_modulus::UintModulus(#modulus).reduce_once(self.lazy_reduce(value))
+                use ::primus_modulus::common::compact;
+                compact::reduce_once(#modulus, self.lazy_reduce(value))
             }
         }
 
@@ -33,7 +35,8 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
             #[inline(always)]
             fn reduce(self, value: (#ty, #ty)) -> Self::Output {
                 use ::primus_modulus::reduce::{LazyReduce, ReduceOnce};
-                ::primus_modulus::UintModulus(#modulus).reduce_once(self.lazy_reduce(value))
+                use ::primus_modulus::common::compact;
+                compact::reduce_once(#modulus, self.lazy_reduce(value))
             }
         }
 
@@ -44,7 +47,8 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
             #[inline(always)]
             fn reduce(self, value: &[#ty]) -> Self::Output {
                 use ::primus_modulus::reduce::{LazyReduce, ReduceOnce};
-                ::primus_modulus::UintModulus(#modulus).reduce_once(self.lazy_reduce(value))
+                use ::primus_modulus::common::compact;
+                compact::reduce_once(#modulus, self.lazy_reduce(value))
             }
         }
 
@@ -62,15 +66,16 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
 
             #[inline(always)]
             fn reduce_once(self, value: #ty) -> Self::Output {
-                use ::primus_modulus::reduce::ReduceOnce;
-                ::primus_modulus::UintModulus(#modulus).reduce_once(value)
+                use ::primus_modulus::common::compact;
+                compact::reduce_once(#modulus, value)
             }
         }
 
         impl ::primus_modulus::reduce::ReduceOnceAssign<#ty> for #name {
             #[inline(always)]
             fn reduce_once_assign(self, value: &mut #ty) {
-                ::primus_modulus::UintModulus(#modulus).reduce_once_assign(value);
+                use ::primus_modulus::common::compact;
+                compact::reduce_once_assign(#modulus, value);
             }
         }
 
@@ -79,16 +84,16 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
 
             #[inline(always)]
             fn reduce_add(self, a: #ty, b: #ty) -> Self::Output {
-                let sum = a + b;
-                if sum >= #modulus { sum - #modulus } else { sum }
+                use ::primus_modulus::common::compact;
+                compact::reduce_add(#modulus, a, b)
             }
         }
 
         impl ::primus_modulus::reduce::ReduceAddAssign<#ty> for #name {
             #[inline(always)]
             fn reduce_add_assign(self, a: &mut #ty, b: #ty) {
-                let sum = *a + b;
-                *a = if sum >= #modulus { sum - #modulus } else { sum };
+                use ::primus_modulus::common::compact;
+                compact::reduce_add_assign(#modulus, a, b);
             }
         }
 
@@ -97,16 +102,16 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
 
             #[inline(always)]
             fn reduce_double(self, value: #ty) -> Self::Output {
-                let sum = value << 1;
-                if sum >= #modulus { sum - #modulus } else { sum }
+                use ::primus_modulus::common::compact;
+                compact::reduce_double(#modulus, value)
             }
         }
 
         impl ::primus_modulus::reduce::ReduceDoubleAssign<#ty> for #name {
             #[inline(always)]
             fn reduce_double_assign(self, value: &mut #ty) {
-                let sum = *value << 1;
-                *value = if sum >= #modulus { sum - #modulus } else { sum };
+                use ::primus_modulus::common::compact;
+                compact::reduce_double_assign(#modulus, value);
             }
         }
 
@@ -115,22 +120,16 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
 
             #[inline(always)]
             fn reduce_sub(self, a: #ty, b: #ty) -> Self::Output {
-                if a >= b {
-                    a - b
-                } else {
-                    a + #modulus - b
-                }
+                use ::primus_modulus::common::compact;
+                compact::reduce_sub(#modulus, a, b)
             }
         }
 
         impl ::primus_modulus::reduce::ReduceSubAssign<#ty> for #name {
             #[inline(always)]
             fn reduce_sub_assign(self, a: &mut #ty, b: #ty) {
-                if *a >= b {
-                    *a -= b
-                } else {
-                    *a += #modulus - b
-                };
+                use ::primus_modulus::common::compact;
+                compact::reduce_sub_assign(#modulus, a, b);
             }
         }
 
@@ -139,14 +138,16 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
 
             #[inline(always)]
             fn reduce_neg(self, value: #ty) -> Self::Output {
-                ::primus_modulus::UintModulus(#modulus).reduce_neg(value)
+                use ::primus_modulus::common::compact;
+                compact::reduce_neg(#modulus, value)
             }
         }
 
         impl ::primus_modulus::reduce::ReduceNegAssign<#ty> for #name {
             #[inline(always)]
             fn reduce_neg_assign(self, value: &mut #ty) {
-                ::primus_modulus::UintModulus(#modulus).reduce_neg_assign(value);
+                use ::primus_modulus::common::compact;
+                compact::reduce_neg_assign(#modulus, value);
             }
         }
 
@@ -215,7 +216,8 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
 
             #[inline(always)]
             fn try_reduce_inv(self, value: #ty) -> Result<Self::Output, ::primus_modulus::reduce::ReduceError<#ty>> {
-                ::primus_modulus::UintModulus(#modulus).try_reduce_inv(value)
+                use ::primus_modulus::common::compact;
+                compact::try_reduce_inv(#modulus, value)
             }
         }
 
@@ -224,14 +226,16 @@ pub(crate) fn impl_reduce_ops(name: &Ident, modulus: &TokenStream, ty: &syn::Pat
 
             #[inline(always)]
             fn reduce_inv(self, value: #ty) -> Self::Output {
-                ::primus_modulus::UintModulus(#modulus).reduce_inv(value)
+                use ::primus_modulus::common::compact;
+                compact::reduce_inv(#modulus, value)
             }
         }
 
         impl ::primus_modulus::reduce::ReduceInvAssign<#ty> for #name {
             #[inline(always)]
             fn reduce_inv_assign(self, value: &mut #ty) {
-                ::primus_modulus::UintModulus(#modulus).reduce_inv_assign(value);
+                use ::primus_modulus::common::compact;
+                compact::reduce_inv_assign(#modulus, value);
             }
         }
 

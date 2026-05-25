@@ -1,8 +1,7 @@
-use primus_integer::UnsignedInteger;
+use primus_integer::{FheUint, UnsignedInteger};
 
-mod ops;
-#[cfg(feature = "simd")]
-mod simd;
+mod scalar;
+mod slice;
 
 /// Unsigned integer modulus.
 ///
@@ -16,21 +15,15 @@ impl<T: UnsignedInteger> UintModulus<T> {
     ///
     /// # Panics
     ///
-    /// Panics if `value >= 2^{T::BITS - 1}`. The SIMD `reduce_sub` kernel
-    /// relies on `modulus < 2^{BITS-1}` to avoid overflow in the wrapping
-    /// subtraction path. All FHE parameter sets satisfy this bound.
+    /// Panics if `value ≤ 1`.
     #[inline(always)]
     pub fn new(value: T) -> Self {
-        let limit = T::ONE << (T::BITS - 1);
-        assert!(
-            value < limit,
-            "UintModulus value must be < 2^(T::BITS - 1), got {value:?}"
-        );
+        assert!(value > T::ONE, "modulus can't be 0 or 1.");
         Self(value)
     }
 }
 
-impl<T: UnsignedInteger> primus_reduce::Modulus for UintModulus<T> {
+impl<T: FheUint> primus_reduce::Modulus for UintModulus<T> {
     type ValueT = T;
 
     #[inline(always)]
@@ -39,7 +32,7 @@ impl<T: UnsignedInteger> primus_reduce::Modulus for UintModulus<T> {
     }
 
     #[inline(always)]
-    fn value_unchecked(self) -> Self::ValueT {
+    unsafe fn value_unchecked(self) -> Self::ValueT {
         self.0
     }
 

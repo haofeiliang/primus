@@ -1,9 +1,12 @@
 use core::marker::PhantomData;
 
-use primus_integer::UnsignedInteger;
+use primus_integer::{FheUint, UnsignedInteger};
 
 mod ops;
 mod slice;
+
+#[cfg(feature = "simd")]
+mod simd;
 
 /// Native modulus.
 ///
@@ -30,7 +33,7 @@ impl<T: UnsignedInteger> NativeModulus<T> {
     }
 }
 
-impl<T: UnsignedInteger> primus_reduce::Modulus for NativeModulus<T> {
+impl<T: FheUint> primus_reduce::Modulus for NativeModulus<T> {
     type ValueT = T;
 
     #[inline(always)]
@@ -39,7 +42,7 @@ impl<T: UnsignedInteger> primus_reduce::Modulus for NativeModulus<T> {
     }
 
     #[inline(always)]
-    fn value_unchecked(self) -> Self::ValueT {
+    unsafe fn value_unchecked(self) -> Self::ValueT {
         panic!("The value of the Native Modulus can not be represented.");
     }
 

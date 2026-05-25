@@ -1,4 +1,8 @@
-const FAST_DIV_WIDE: bool = cfg!(any(target_arch = "x86", target_arch = "x86_64"));
+const FAST_DIV_WIDE: bool = cfg!(any(
+    target_arch = "x86",
+    target_arch = "x86_64",
+    target_arch = "aarch64"
+));
 
 macro_rules! impl_gen_ratio {
     ($T:ty, $W:ty, $HALF_BITS:ident, $LO_MASK:ident, $gen_ratio:ident, $div_rem:ident, $div_half:ident, $div_wide:ident) => {
@@ -45,17 +49,6 @@ macro_rules! impl_gen_ratio {
         }
     };
 }
-
-impl_gen_ratio!(
-    u8,
-    u16,
-    HALF_BITS_U8,
-    LO_MASK_U8,
-    gen_ratio_u8,
-    div_rem_u8,
-    div_half_u8,
-    div_wide_u8
-);
 
 impl_gen_ratio!(
     u16,

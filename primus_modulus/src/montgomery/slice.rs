@@ -5,7 +5,8 @@
 
 use primus_integer::UnsignedInteger;
 use primus_reduce::{
-    LazyReduceMulAdd, LazyReduceMulAddSlice, ReduceMulAdd, ReduceMulAddSlice, ReduceSubAssign,
+    LazyReduceMulAdd, LazyReduceMulAddSlice, ReduceMul, ReduceMulAdd, ReduceMulAddSlice,
+    ReduceSubAssign,
 };
 
 use super::MontgomeryModulus;
@@ -79,9 +80,10 @@ impl<T: UnsignedInteger> LazyReduceMulAddSlice<T> for MontgomeryModulus<T> {
     fn lazy_reduce_sub_mul_slice_assign(self, acc: &mut [T], a: &[T], b: &[T]) {
         debug_assert_eq!(acc.len(), a.len());
         debug_assert_eq!(acc.len(), b.len());
+        let m = self.value;
         acc.iter_mut().zip(a).zip(b).for_each(|((acc, &a), &b)| {
-            let prod = self.lazy_reduce_mul_add(a, b, T::ZERO);
-            self.reduce_sub_assign(acc, prod);
+            let prod = self.reduce_mul(a, b);
+            *acc = acc.wrapping_add(m - prod);
         });
     }
 

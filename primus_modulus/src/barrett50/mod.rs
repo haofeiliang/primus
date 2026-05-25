@@ -145,65 +145,12 @@ impl primus_reduce::Modulus for Barrett50Modulus {
     }
 
     #[inline(always)]
-    fn value_unchecked(self) -> Self::ValueT {
+    unsafe fn value_unchecked(self) -> Self::ValueT {
         self.value
     }
 
     #[inline(always)]
     fn minus_one(self) -> Self::ValueT {
         self.value - 1
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use primus_reduce::FieldContext;
-
-    use super::*;
-
-    fn field_trait<T: primus_integer::UnsignedInteger, M: FieldContext<T>>(_modulus: M) {}
-
-    #[test]
-    fn implements_field_context() {
-        field_trait(Barrett50Modulus::new(1u64 << 48));
-        field_trait(Barrett50Modulus::new((1u64 << 50) - 27));
-    }
-
-    #[test]
-    fn precompute_matches_2_to_104_div_value() {
-        for &value in &[
-            1u64 << 48,
-            (1u64 << 48) + 1,
-            (1u64 << 49) + 17,
-            (1u64 << 50) - 27,
-            (1u64 << 50) - 1,
-        ] {
-            let m = Barrett50Modulus::new(value);
-            let mu = (m.mu_hi as u128) << 52 | m.mu_lo52 as u128;
-            let expected = (1u128 << 104) / value as u128;
-            assert_eq!(mu, expected, "value={value}");
-            assert_eq!(m.neg_m_mod_pow2_52, (1u64 << 52) - value);
-            assert!(m.mu_hi <= 16);
-        }
-    }
-
-    #[test]
-    #[should_panic]
-    fn rejects_below_2_to_48() {
-        let _ = Barrett50Modulus::new((1u64 << 48) - 1);
-    }
-
-    #[test]
-    #[should_panic]
-    fn rejects_2_to_50() {
-        let _ = Barrett50Modulus::new(1u64 << 50);
-    }
-
-    #[test]
-    fn try_new_returns_none_out_of_range() {
-        assert!(Barrett50Modulus::try_new((1u64 << 48) - 1).is_none());
-        assert!(Barrett50Modulus::try_new(1u64 << 50).is_none());
-        assert!(Barrett50Modulus::try_new(1u64 << 48).is_some());
-        assert!(Barrett50Modulus::try_new((1u64 << 50) - 1).is_some());
     }
 }

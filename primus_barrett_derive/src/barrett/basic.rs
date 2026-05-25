@@ -33,7 +33,7 @@ pub(crate) fn basic(
             }
 
             #[inline(always)]
-            fn value_unchecked(self) -> Self::ValueT {
+            unsafe fn value_unchecked(self) -> Self::ValueT {
                 #modulus
             }
 

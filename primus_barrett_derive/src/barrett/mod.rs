@@ -29,7 +29,6 @@ fn impl_barrett(input: &BarrettModulusInput, modulus: Modulus) -> TokenStream {
     let ty = &input.ty;
 
     let ratio = match modulus {
-        Modulus::U8(m) => ratio::gen_ratio_u8(m).map(|v| v.into_token_stream()),
         Modulus::U16(m) => ratio::gen_ratio_u16(m).map(|v| v.into_token_stream()),
         Modulus::U32(m) => ratio::gen_ratio_u32(m).map(|v| v.into_token_stream()),
         Modulus::U64(m) => ratio::gen_ratio_u64(m).map(|v| v.into_token_stream()),

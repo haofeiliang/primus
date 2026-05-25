@@ -1,5 +1,4 @@
 use primus_integer::UnsignedInteger;
-
 use primus_reduce::prelude::*;
 
 use super::NativeModulus;
@@ -198,30 +197,5 @@ impl<T: UnsignedInteger> ReduceExpPowOf2<T> for NativeModulus<T> {
         }
 
         power
-    }
-}
-
-impl<T: UnsignedInteger> ReduceDotProduct<T> for NativeModulus<T> {
-    type Output = T;
-
-    #[inline]
-    fn reduce_dot_product(self, a: impl AsRef<[T]>, b: impl AsRef<[T]>) -> T {
-        let a = a.as_ref();
-        let b = b.as_ref();
-
-        assert_eq!(a.len(), b.len(), "reduce_dot_product: length mismatch");
-
-        a.iter()
-            .zip(b)
-            .fold(T::ZERO, |acc, (&x, &y)| x.wrapping_mul(y).wrapping_add(acc))
-    }
-
-    #[inline]
-    fn reduce_dot_product_iter(
-        self,
-        a: impl IntoIterator<Item = T>,
-        b: impl IntoIterator<Item = T>,
-    ) -> T {
-        std::iter::zip(a, b).fold(T::ZERO, |acc, (x, y)| x.wrapping_mul(y).wrapping_add(acc))
     }
 }

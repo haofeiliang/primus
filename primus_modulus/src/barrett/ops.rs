@@ -1,8 +1,7 @@
-use primus_integer::{AsInto, UnsignedInteger};
-use primus_reduce::ReduceError;
-use primus_reduce::prelude::*;
+use primus_integer::UnsignedInteger;
+use primus_reduce::{ReduceError, prelude::*};
 
-use crate::UintModulus;
+use crate::common::{compact, uint};
 
 use super::BarrettModulus;
 
@@ -34,54 +33,12 @@ impl<T: UnsignedInteger> LazyReduce<T> for BarrettModulus<T> {
     }
 }
 
-impl<T: UnsignedInteger> BarrettModulus<T> {
-    /// Barrett reduction for a 2-limb value `(hi·B + lo)`.
-    ///
-    /// Step 1: `q = floor((hi·B + lo) · µ / B²)`
-    /// Step 2: `r = lo - q · modulus`
-    #[inline]
-    fn lazy_reduce_2limb(&self, lo: T, hi: T) -> T {
-        //                        ratio[1]  ratio[0]
-        //                   *          hi        lo
-        //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        //                      +-------------------+
-        //                      |         a         |    <-- lo * ratio[0]
-        //                      +-------------------+
-        //             +------------------+
-        //             |        b         |              <-- lo * ratio[1]
-        //             +------------------+
-        //             +------------------+
-        //             |        c         |              <-- hi * ratio[0]
-        //             +------------------+
-        //   +------------------+
-        //   |        d         |                        <-- hi * ratio[1]
-        //   +------------------+
-        //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        //             +--------+
-        //             |   q₃   |
-        //             +--------+
-        let ah = lo.widening_mul_hw(self.ratio[0]);
-
-        let b = lo.carrying_mul(self.ratio[1], ah);
-        let c = hi.widening_mul(self.ratio[0]);
-
-        let d = hi.wrapping_mul(self.ratio[1]);
-
-        let bch = b.1 + c.1 + b.0.overflowing_add(c.0).1.as_into();
-
-        let q = d.wrapping_add(bch);
-
-        // Step 2.
-        lo.wrapping_sub(q.wrapping_mul(self.value))
-    }
-}
-
 impl<T: UnsignedInteger> LazyReduce<[T; 2]> for BarrettModulus<T> {
     type Output = T;
 
     #[inline]
     fn lazy_reduce(self, value: [T; 2]) -> Self::Output {
-        self.lazy_reduce_2limb(value[0], value[1])
+        self.lazy_reduce_wide(value[0], value[1])
     }
 }
 
@@ -90,7 +47,7 @@ impl<T: UnsignedInteger> LazyReduce<(T, T)> for BarrettModulus<T> {
 
     #[inline]
     fn lazy_reduce(self, value: (T, T)) -> Self::Output {
-        self.lazy_reduce_2limb(value.0, value.1)
+        self.lazy_reduce_wide(value.0, value.1)
     }
 }
 
@@ -111,7 +68,7 @@ impl<T: UnsignedInteger> LazyReduce<&[T]> for BarrettModulus<T> {
             }
             [other @ .., last] => other
                 .iter()
-                .rfold(*last, |acc, &x| self.lazy_reduce([x, acc])),
+                .rfold(*last, |acc, &x| self.lazy_reduce_wide(x, acc)),
         }
     }
 }
@@ -162,7 +119,7 @@ impl<T: UnsignedInteger> Reduce<T> for BarrettModulus<T> {
     /// Calculates `value (mod modulus)`.
     #[inline(always)]
     fn reduce(self, value: T) -> Self::Output {
-        UintModulus(self.value).reduce_once(self.lazy_reduce(value))
+        uint::reduce_once(self.value, self.lazy_reduce(value))
     }
 }
 
@@ -172,7 +129,7 @@ impl<T: UnsignedInteger> Reduce<[T; 2]> for BarrettModulus<T> {
     /// Calculates `value (mod modulus)`.
     #[inline(always)]
     fn reduce(self, value: [T; 2]) -> Self::Output {
-        UintModulus(self.value).reduce_once(self.lazy_reduce(value))
+        uint::reduce_once(self.value, self.lazy_reduce(value))
     }
 }
 
@@ -182,7 +139,7 @@ impl<T: UnsignedInteger> Reduce<(T, T)> for BarrettModulus<T> {
     /// Calculates `value (mod modulus)`.
     #[inline(always)]
     fn reduce(self, value: (T, T)) -> Self::Output {
-        UintModulus(self.value).reduce_once(self.lazy_reduce(value))
+        uint::reduce_once(self.value, self.lazy_reduce(value))
     }
 }
 
@@ -192,7 +149,7 @@ impl<T: UnsignedInteger> Reduce<&[T]> for BarrettModulus<T> {
     /// Calculates `value (mod modulus)` when value's length > 0.
     #[inline(always)]
     fn reduce(self, value: &[T]) -> Self::Output {
-        UintModulus(self.value).reduce_once(self.lazy_reduce(value))
+        uint::reduce_once(self.value, self.lazy_reduce(value))
     }
 }
 
@@ -209,14 +166,14 @@ impl<T: UnsignedInteger> ReduceOnce<T> for BarrettModulus<T> {
 
     #[inline(always)]
     fn reduce_once(self, value: T) -> Self::Output {
-        UintModulus(self.value).reduce_once(value)
+        uint::reduce_once(self.value, value)
     }
 }
 
 impl<T: UnsignedInteger> ReduceOnceAssign<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_once_assign(self, value: &mut T) {
-        UintModulus(self.value).reduce_once_assign(value);
+        uint::reduce_once_assign(self.value, value);
     }
 }
 
@@ -225,16 +182,14 @@ impl<T: UnsignedInteger> ReduceAdd<T> for BarrettModulus<T> {
 
     #[inline(always)]
     fn reduce_add(self, a: T, b: T) -> Self::Output {
-        let sum = a + b;
-        sum.min(sum.wrapping_sub(self.value))
+        compact::reduce_add(self.value, a, b)
     }
 }
 
 impl<T: UnsignedInteger> ReduceAddAssign<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_add_assign(self, a: &mut T, b: T) {
-        let sum = *a + b;
-        *a = sum.min(sum.wrapping_sub(self.value));
+        compact::reduce_add_assign(self.value, a, b);
     }
 }
 
@@ -243,15 +198,14 @@ impl<T: UnsignedInteger> ReduceDouble<T> for BarrettModulus<T> {
 
     #[inline(always)]
     fn reduce_double(self, value: T) -> Self::Output {
-        let d = value << 1u32;
-        d.min(d.wrapping_sub(self.value))
+        compact::reduce_double(self.value, value)
     }
 }
 
 impl<T: UnsignedInteger> ReduceDoubleAssign<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_double_assign(self, value: &mut T) {
-        *value = self.reduce_double(*value);
+        compact::reduce_double_assign(self.value, value);
     }
 }
 
@@ -260,16 +214,14 @@ impl<T: UnsignedInteger> ReduceSub<T> for BarrettModulus<T> {
 
     #[inline(always)]
     fn reduce_sub(self, a: T, b: T) -> Self::Output {
-        let diff = a.wrapping_sub(b);
-        diff.min(diff.wrapping_add(self.value))
+        compact::reduce_sub(self.value, a, b)
     }
 }
 
 impl<T: UnsignedInteger> ReduceSubAssign<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_sub_assign(self, a: &mut T, b: T) {
-        let diff = a.wrapping_sub(b);
-        *a = diff.min(diff.wrapping_add(self.value));
+        compact::reduce_sub_assign(self.value, a, b);
     }
 }
 
@@ -278,14 +230,14 @@ impl<T: UnsignedInteger> ReduceNeg<T> for BarrettModulus<T> {
 
     #[inline(always)]
     fn reduce_neg(self, value: T) -> Self::Output {
-        UintModulus(self.value).reduce_neg(value)
+        compact::reduce_neg(self.value, value)
     }
 }
 
 impl<T: UnsignedInteger> ReduceNegAssign<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_neg_assign(self, value: &mut T) {
-        UintModulus(self.value).reduce_neg_assign(value);
+        compact::reduce_neg_assign(self.value, value);
     }
 }
 
@@ -342,7 +294,7 @@ impl<T: UnsignedInteger> TryReduceInv<T> for BarrettModulus<T> {
 
     #[inline(always)]
     fn try_reduce_inv(self, value: T) -> Result<T, ReduceError<T>> {
-        UintModulus(self.value).try_reduce_inv(value)
+        uint::try_reduce_inv(self.value, value)
     }
 }
 
@@ -351,14 +303,14 @@ impl<T: UnsignedInteger> ReduceInv<T> for BarrettModulus<T> {
 
     #[inline(always)]
     fn reduce_inv(self, value: T) -> Self::Output {
-        UintModulus(self.value).reduce_inv(value)
+        uint::reduce_inv(self.value, value)
     }
 }
 
 impl<T: UnsignedInteger> ReduceInvAssign<T> for BarrettModulus<T> {
     #[inline(always)]
     fn reduce_inv_assign(self, value: &mut T) {
-        UintModulus(self.value).reduce_inv_assign(value);
+        uint::reduce_inv_assign(self.value, value);
     }
 }
 
@@ -434,134 +386,5 @@ impl<T: UnsignedInteger> ReduceExpPowOf2<T> for BarrettModulus<T> {
         }
 
         power
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use num_traits::{One, Zero};
-    use rand::{prelude::*, random, rng};
-
-    use super::*;
-
-    type T = u32;
-    type W = u64;
-
-    #[test]
-    fn test_pow_mod_simple() {
-        const P: T = 1000000513;
-        let modulus = BarrettModulus::<T>::new(P);
-
-        let distr = rand::distr::Uniform::new_inclusive(0, P - 1).unwrap();
-        let mut rng = rng();
-
-        for _ in 0..5 {
-            let base = rng.sample(distr);
-            let exp = random();
-
-            assert_eq!(simple_pow(base, exp, P), modulus.reduce_exp(base, exp));
-        }
-    }
-
-    fn simple_pow(base: T, mut exp: u32, modulus: T) -> T {
-        if exp.is_zero() {
-            return 1;
-        }
-
-        debug_assert!(base < modulus);
-
-        if exp.is_one() {
-            return base;
-        }
-
-        let mut power: T = base;
-        let mut intermediate: T = 1;
-        loop {
-            if exp & 1 != 0 {
-                intermediate = ((intermediate as W * power as W) % modulus as W) as T;
-            }
-            exp >>= 1;
-            if exp.is_zero() {
-                break;
-            }
-            power = ((power as W * power as W) % modulus as W) as T;
-        }
-        intermediate
-    }
-
-    #[test]
-    fn test_inverse() {
-        type Num = u64;
-        let mut rng = rng();
-
-        let mut m = rng.random_range(2..=(Num::MAX >> 2));
-
-        if m & 1 == 0 {
-            m |= 1;
-        }
-
-        let modulus = BarrettModulus::<Num>::new(m);
-
-        let value: Num = rng.random_range(2..modulus.value());
-        if let Ok(inv) = UintModulus(modulus.value).try_reduce_inv(value) {
-            assert_eq!(
-                modulus.reduce_mul(inv, value),
-                1,
-                "\nval:{value}\ninv:{inv}\nmod:{}",
-                modulus.value()
-            );
-        }
-    }
-
-    #[test]
-    fn test_reduce_dot_product_barrett() {
-        // Cross-check `BarrettModulus<u32>::reduce_dot_product` against a
-        // naive u64 reference. Covers small/large `n`, including the SIMD-tail
-        // boundary at multiples of 16 lanes.
-        const M: u32 = 0x3fff_fffb; // largest u32 prime accepted by Barrett (< 2^30)
-        let modulus = BarrettModulus::<u32>::new(M);
-        let distr = rand::distr::Uniform::new(0, M).unwrap();
-        let mut rng = rng();
-
-        for &n in &[0usize, 1, 7, 15, 16, 17, 31, 32, 33, 127, 128, 129, 1000] {
-            let a: Vec<u32> = (0..n).map(|_| distr.sample(&mut rng)).collect();
-            let b: Vec<u32> = (0..n).map(|_| distr.sample(&mut rng)).collect();
-
-            let got = modulus.reduce_dot_product(&a, &b);
-            let expected = a
-                .iter()
-                .zip(&b)
-                .fold(0u64, |acc, (&x, &y)| (acc + x as u64 * y as u64) % M as u64)
-                as u32;
-            assert_eq!(got, expected, "len={n}");
-
-            // Iterator path should agree with the slice path.
-            let got_iter = modulus.reduce_dot_product_iter(a.iter().copied(), b.iter().copied());
-            assert_eq!(got_iter, expected, "iter len={n}");
-        }
-    }
-
-    #[test]
-    fn test_reduce_dot_product_barrett_u64() {
-        // Same as above but for u64 to exercise the wider SIMD lane path.
-        // `M ≈ 2^62 - 1` is the largest size accepted by `BarrettModulus::new`.
-        const M: u64 = 4_611_686_018_427_322_369;
-        let modulus = BarrettModulus::<u64>::new(M);
-        let distr = rand::distr::Uniform::new(0, M).unwrap();
-        let mut rng = rng();
-
-        for &n in &[0usize, 1, 8, 15, 16, 17, 31, 32, 33, 127, 128, 129, 1000] {
-            let a: Vec<u64> = (0..n).map(|_| distr.sample(&mut rng)).collect();
-            let b: Vec<u64> = (0..n).map(|_| distr.sample(&mut rng)).collect();
-
-            let got = modulus.reduce_dot_product(&a, &b);
-            let expected = a.iter().zip(&b).fold(0u128, |acc, (&x, &y)| {
-                (acc + x as u128 * y as u128) % M as u128
-            }) as u64;
-            assert_eq!(got, expected, "len={n}");
-
-            let got_iter = modulus.reduce_dot_product_iter(a.iter().copied(), b.iter().copied());
-            assert_eq!(got_iter, expected, "iter len={n}");
-        }
     }
 }

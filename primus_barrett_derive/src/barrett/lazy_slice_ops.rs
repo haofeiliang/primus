@@ -122,14 +122,11 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
 
             #[inline]
             fn lazy_reduce_sub_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {
-                use ::primus_modulus::reduce::LazyReduceMul;
                 debug_assert_eq!(acc.len(), a.len());
                 debug_assert_eq!(acc.len(), b.len());
-                let two_m = #modulus << 1u32;
                 acc.iter_mut().zip(a).zip(b).for_each(|((acc, &a), &b)| {
-                    let prod_lazy = self.lazy_reduce_mul(a, b);
-                    let diff = acc.wrapping_sub(prod_lazy);
-                    *acc = if *acc < prod_lazy { diff.wrapping_add(two_m) } else { diff };
+                    let prod = self.reduce_mul(a, b);
+                    *acc = acc.wrapping_add(#modulus - prod);
                 });
             }
 

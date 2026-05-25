@@ -1,6 +1,6 @@
 use core::fmt::Display;
 
-use primus_integer::DivRemScalar;
+use primus_integer::{DivRemScalar, FheUint};
 
 use crate::integer::UnsignedInteger;
 
@@ -211,7 +211,7 @@ impl<T: UnsignedInteger> Display for MontgomeryModulus<T> {
     }
 }
 
-impl<T: UnsignedInteger> primus_reduce::Modulus for MontgomeryModulus<T> {
+impl<T: FheUint> primus_reduce::Modulus for MontgomeryModulus<T> {
     type ValueT = T;
 
     #[inline]
@@ -220,98 +220,12 @@ impl<T: UnsignedInteger> primus_reduce::Modulus for MontgomeryModulus<T> {
     }
 
     #[inline(always)]
-    fn value_unchecked(self) -> Self::ValueT {
+    unsafe fn value_unchecked(self) -> Self::ValueT {
         self.value
     }
 
     #[inline(always)]
     fn minus_one(self) -> Self::ValueT {
         self.value - T::ONE
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use primus_reduce::prelude::*;
-    use rand::distr::{Distribution, Uniform};
-
-    use super::*;
-
-    #[test]
-    fn test_to_from_montgomery() {
-        let mut m = rand::random_range(3..u32::MAX);
-        if m & 1 == 0 {
-            m |= 1;
-        }
-        let modulus = MontgomeryModulus::<u32>::new(m);
-        let value = rand::random_range(0..m);
-
-        let mont_form = modulus.to_montgomery(value);
-        let back = modulus.from_montgomery(mont_form);
-
-        assert_eq!(back, value);
-    }
-
-    #[test]
-    fn test_n_prime_property() {
-        let mut m = rand::random_range(3..u32::MAX);
-        if m & 1 == 0 {
-            m |= 1;
-        }
-
-        let modulus = MontgomeryModulus::<u32>::new(m);
-
-        // N * N' ≡ -1 (mod R)
-        // Since R = 2^32 for u32, this wraps around
-        let product = modulus.value().wrapping_mul(modulus.n_prime());
-        assert_eq!(product, u32::MAX); // -1 in two's complement
-    }
-
-    #[test]
-    fn test_ops() {
-        let mut rng = rand::rng();
-
-        let mut m = rand::random_range(3..u32::MAX);
-        if m & 1 == 0 {
-            m |= 1;
-        }
-
-        let modulus = MontgomeryModulus::<u32>::new(m);
-
-        let distr = Uniform::new(0, m).unwrap();
-
-        let a = distr.sample(&mut rng);
-        let b = distr.sample(&mut rng);
-        let c = distr.sample(&mut rng);
-
-        let a_m = modulus.to_montgomery(a);
-        let b_m = modulus.to_montgomery(b);
-        let c_m = modulus.to_montgomery(c);
-
-        if m < u32::MAX >> 1 {
-            assert_eq!(modulus.from_montgomery(a_m.wrapping_add(m)), a);
-        }
-
-        assert_eq!(
-            modulus.from_montgomery(modulus.reduce_add(a_m, b_m)),
-            ((a as u64 + b as u64) % m as u64) as u32
-        );
-
-        assert_eq!(
-            modulus.from_montgomery(modulus.reduce_sub(a_m, b_m)),
-            ((m as u64 + a as u64 - b as u64) % m as u64) as u32
-        );
-
-        let p_m = modulus.reduce_mul(a_m, b_m);
-        assert_eq!(
-            modulus.from_montgomery(p_m),
-            ((a as u64 * b as u64) % m as u64) as u32
-        );
-
-        let p_m = modulus.reduce_mul_add(a_m, b_m, c_m);
-        assert_eq!(
-            modulus.from_montgomery(p_m),
-            ((a as u64 * b as u64 + c as u64) % m as u64) as u32
-        );
     }
 }

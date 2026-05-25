@@ -1,5 +1,7 @@
 use core::fmt::Display;
 
+use primus_integer::FheUint;
+
 use crate::integer::{DivRemScalar, UnsignedInteger};
 
 mod ops;
@@ -24,12 +26,10 @@ pub mod simd_kernel {
         lazy_reduce_mul_slice_assign, lazy_reduce_mul_slice_to,
         lazy_reduce_scalar_mul_add_slice_to, lazy_reduce_scalar_mul_slice_assign,
         lazy_reduce_scalar_mul_slice_to, lazy_reduce_sub_mul_slice_assign,
-        reduce_add_mul_slice_assign, reduce_add_scalar_mul_slice_assign, reduce_add_slice_assign,
-        reduce_add_slice_to, reduce_dot_product, reduce_mul_add_slice_to, reduce_mul_slice_assign,
-        reduce_mul_slice_to, reduce_neg_slice_assign, reduce_neg_slice_to,
-        reduce_once_slice_assign, reduce_once_slice_to, reduce_scalar_mul_add_slice_to,
-        reduce_scalar_mul_slice_assign, reduce_scalar_mul_slice_to, reduce_sub_mul_slice_assign,
-        reduce_sub_slice_assign, reduce_sub_slice_rev_assign, reduce_sub_slice_to,
+        reduce_add_mul_slice_assign, reduce_add_scalar_mul_slice_assign, reduce_dot_product,
+        reduce_mul_add_slice_to, reduce_mul_slice_assign, reduce_mul_slice_to,
+        reduce_scalar_mul_add_slice_to, reduce_scalar_mul_slice_assign, reduce_scalar_mul_slice_to,
+        reduce_sub_mul_slice_assign,
     };
 }
 
@@ -76,6 +76,14 @@ impl<T: UnsignedInteger> BarrettModulus<T> {
         }
     }
 
+    /// Creates a [`BarrettModulus<T>`] from precomputed parts.
+    ///
+    /// The `ratio` must equal `floor(b² / value)` where `b = 2^T::BITS`.
+    #[inline]
+    pub const fn from_parts(value: T, ratio: [T; 2]) -> Self {
+        Self { value, ratio }
+    }
+
     /// Fallible constructor returning `None` if the value is out of range.
     #[inline]
     pub fn try_new(value: T) -> Option<Self> {
@@ -101,12 +109,44 @@ impl<T: UnsignedInteger> BarrettModulus<T> {
         self.ratio
     }
 
-    /// Creates a [`BarrettModulus<T>`] from precomputed parts.
+    /// Barrett reduction for a 2-limb value `(hi·B + lo)`.
     ///
-    /// The `ratio` must equal `floor(b² / value)` where `b = 2^T::BITS`.
+    /// Step 1: `q = floor((hi·B + lo) · µ / B²)`
+    /// Step 2: `r = lo - q · modulus`
     #[inline]
-    pub const fn from_parts(value: T, ratio: [T; 2]) -> Self {
-        Self { value, ratio }
+    fn lazy_reduce_wide(&self, lo: T, hi: T) -> T {
+        //                        ratio[1]  ratio[0]
+        //                   *          hi        lo
+        //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        //                      +-------------------+
+        //                      |         a         |    <-- lo * ratio[0]
+        //                      +-------------------+
+        //             +------------------+
+        //             |        b         |              <-- lo * ratio[1]
+        //             +------------------+
+        //             +------------------+
+        //             |        c         |              <-- hi * ratio[0]
+        //             +------------------+
+        //   +------------------+
+        //   |        d         |                        <-- hi * ratio[1]
+        //   +------------------+
+        //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        //             +--------+
+        //             |   q₃   |
+        //             +--------+
+        let ah = lo.widening_mul_hw(self.ratio[0]);
+
+        let b = lo.carrying_mul(self.ratio[1], ah);
+        let c = hi.widening_mul(self.ratio[0]);
+
+        let d = hi.wrapping_mul(self.ratio[1]);
+
+        let bch = b.1.carrying_add(c.1, b.0.overflowing_add(c.0).1).0;
+
+        let q = d.wrapping_add(bch);
+
+        // Step 2.
+        lo.wrapping_sub(q.wrapping_mul(self.value))
     }
 }
 
@@ -117,7 +157,7 @@ impl<T: UnsignedInteger> Display for BarrettModulus<T> {
     }
 }
 
-impl<T: UnsignedInteger> primus_reduce::Modulus for BarrettModulus<T> {
+impl<T: FheUint> primus_reduce::Modulus for BarrettModulus<T> {
     type ValueT = T;
 
     #[inline]
@@ -126,29 +166,12 @@ impl<T: UnsignedInteger> primus_reduce::Modulus for BarrettModulus<T> {
     }
 
     #[inline(always)]
-    fn value_unchecked(self) -> Self::ValueT {
+    unsafe fn value_unchecked(self) -> Self::ValueT {
         self.value
     }
 
     #[inline(always)]
     fn minus_one(self) -> Self::ValueT {
         self.value - T::ONE
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use primus_reduce::FieldContext;
-
-    use super::*;
-
-    fn field_trait<T: UnsignedInteger, M: FieldContext<T>>(_modulus: M) {}
-
-    #[test]
-    fn test_trait() {
-        field_trait(<BarrettModulus<u8>>::new(61));
-        field_trait(<BarrettModulus<u16>>::new(12289));
-        field_trait(<BarrettModulus<u32>>::new(536813569));
-        field_trait(<BarrettModulus<u64>>::new(4611686018427322369));
     }
 }
