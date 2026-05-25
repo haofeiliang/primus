@@ -1,13 +1,3 @@
-//! Step 9 验证 bench：`BarrettModulus<u64>` portable_simd 路径在 `N = 4 / 8 / 16`
-//! 三个 lane width 下的吞吐对比。
-//!
-//! plan.md Step 9 想问的问题：在 AVX-512 主机上，调用 simd_kernel 时把 lane
-//! width 从默认的 `lanes` (= 8 on AVX-512) 显式覆盖成 `16`，是否真能
-//! 给 NTT 大尺寸场景多 +10~15%。这里 bench 4 个 mul-class 算子来回答。
-//!
-//! 用 ~2^62 NTT-friendly prime（与 `barrett_slice.rs` 一致），所以走的是
-//! `BarrettModulus<u64>` 的 portable_simd 通路，**不是 Barrett50 IFMA**。
-
 use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};

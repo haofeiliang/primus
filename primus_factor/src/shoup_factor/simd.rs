@@ -3,7 +3,7 @@ use core::simd::{
     cmp::{SimdOrd, SimdPartialOrd},
 };
 
-use primus_integer::{DivRemScalar, SimdArray, SimdMaskArray, SimdUnsignedInteger, WideningMul};
+use primus_integer::{DivWide, SimdArray, SimdMaskArray, SimdUnsignedInteger, WideningMul};
 
 use crate::{FactorMul, LazyFactorMul};
 

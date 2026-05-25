@@ -279,3 +279,63 @@ macro_rules! impl_reduce_sub_slice_simd_with {
         }
     };
 }
+
+// ---------------------------------------------------------------------------
+// Pure-delegate `LazyReduce*Slice` impls.
+//
+// For modulus types whose lazy multiplication is identical to the canonical
+// reduction (e.g. `NativeModulus`, `PowOf2Modulus` — wrapping or mask
+// arithmetic where "lazy" gives no headroom), the lazy slice traits are 1:1
+// forwards to the non-lazy ones. This macro emits those forwards.
+//
+// Each method is `#[inline]` so monomorphisation collapses the call.
+// ---------------------------------------------------------------------------
+
+macro_rules! impl_lazy_mul_slice_delegates {
+    (impl LazyReduceMulSlice<$t:ty> for $ModType:ty) => {
+        impl LazyReduceMulSlice<$t> for $ModType {
+            #[inline]
+            fn lazy_reduce_mul_slice_assign(self, a: &mut [$t], b: &[$t]) {
+                self.reduce_mul_slice_assign(a, b);
+            }
+            #[inline]
+            fn lazy_reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
+                self.reduce_mul_slice_to(a, b, output);
+            }
+            #[inline]
+            fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) {
+                self.reduce_scalar_mul_slice_assign(a, scalar);
+            }
+            #[inline]
+            fn lazy_reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) {
+                self.reduce_scalar_mul_slice_to(a, scalar, output);
+            }
+        }
+    };
+    (impl LazyReduceMulAddSlice<$t:ty> for $ModType:ty) => {
+        impl LazyReduceMulAddSlice<$t> for $ModType {
+            #[inline]
+            fn lazy_reduce_add_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) {
+                self.reduce_add_mul_slice_assign(acc, a, b);
+            }
+            #[inline]
+            fn lazy_reduce_sub_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) {
+                self.reduce_sub_mul_slice_assign(acc, a, b);
+            }
+            #[inline]
+            fn lazy_reduce_mul_add_slice_to(self, a: &[$t], b: &[$t], c: &[$t], output: &mut [$t]) {
+                self.reduce_mul_add_slice_to(a, b, c, output);
+            }
+            #[inline]
+            fn lazy_reduce_scalar_mul_add_slice_to(
+                self,
+                scalar: $t,
+                b: &[$t],
+                c: &[$t],
+                output: &mut [$t],
+            ) {
+                self.reduce_scalar_mul_add_slice_to(scalar, b, c, output);
+            }
+        }
+    };
+}

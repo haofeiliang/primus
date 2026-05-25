@@ -292,7 +292,12 @@ impl_blanket_factor_slice_ops!(default);
 
 #[cfg(feature = "simd")]
 macro_rules! impl_shoup_factor_slice_ops_simd {
-    ($t:ty, $lanes:expr) => {
+    ($($t:ty),*)=>{
+        $(
+            impl_shoup_factor_slice_ops_simd!(@ $t, primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize));
+        )*
+    };
+    (@ $t:ty, $lanes:expr) => {
         impl LazyFactorSliceOps<$t> for ShoupFactor<$t> {
             fn lazy_factor_mul_slice_assign(self, values: &mut [$t], modulus: $t) {
                 simd::lazy_factor_mul_slice_assign::<$t, { $lanes }>(self, values, modulus);
@@ -323,17 +328,7 @@ macro_rules! impl_shoup_factor_slice_ops_simd {
 }
 
 #[cfg(feature = "simd")]
-impl_shoup_factor_slice_ops_simd!(u8, primus_integer::lanes::VECTOR_BITS / 8);
-#[cfg(feature = "simd")]
-impl_shoup_factor_slice_ops_simd!(u16, primus_integer::lanes::VECTOR_BITS / 16);
-#[cfg(feature = "simd")]
-impl_shoup_factor_slice_ops_simd!(u32, primus_integer::lanes::VECTOR_BITS / 32);
-#[cfg(feature = "simd")]
-impl_shoup_factor_slice_ops_simd!(u64, primus_integer::lanes::VECTOR_BITS / 64);
-#[cfg(all(feature = "simd", target_pointer_width = "64"))]
-impl_shoup_factor_slice_ops_simd!(usize, primus_integer::lanes::VECTOR_BITS / 64);
-#[cfg(all(feature = "simd", target_pointer_width = "32"))]
-impl_shoup_factor_slice_ops_simd!(usize, primus_integer::lanes::VECTOR_BITS / 32);
+impl_shoup_factor_slice_ops_simd!(u8, u16, u32, u64, usize);
 
 #[cfg(test)]
 mod tests {
