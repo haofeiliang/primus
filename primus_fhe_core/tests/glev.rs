@@ -9,6 +9,14 @@ use primus_modulus::BarrettModulus;
 use primus_ntt::{DcrtTable, UintCrtNttTable};
 use primus_poly::{BigUintPolynomial, CrtPolynomial, DcrtPolynomial, Polynomial};
 
+/// Test GLev–BigUint multiplication correctness.
+///
+/// Given two plaintexts m₁(X), m₂(X), the test verifies that:
+///   GLev(m₁) ⊡ CRT(δ·m₂)  decrypts to  m₁ · m₂ mod t
+///
+/// m₁ is encrypted as a GLev gadget (key-switching key format).
+/// m₂ is CRT-encoded with delta scaling and composed into a BigUint polynomial.
+/// The GLev–BigUint product is a single GLWE ciphertext encrypting the product.
 #[test]
 fn test_rns_glev() {
     type ValueT = u64;
@@ -17,7 +25,6 @@ fn test_rns_glev() {
     let poly_length: usize = 512;
     let log_n = poly_length.trailing_zeros();
 
-    // let t: ValueT = 1 << 15;
     let t: ValueT = 12289;
     let mod_t = <BarrettModulus<ValueT>>::new(t);
 
@@ -30,6 +37,7 @@ fn test_rns_glev() {
 
     let mut rng = rand::rng();
 
+    // ── Parameters ──────────────────────────────────────────────
     let glwe_params = CrtGlweParameters::new(
         dimension,
         poly_length,
@@ -54,12 +62,12 @@ fn test_rns_glev() {
     let rns_glev_len = glev_params.rns_glev_len();
 
     let mut decrypt_context = DcrtGlweDecryptContext::new(moduli_count, poly_length);
-
     let mut glev_context =
         DcrtGlevContext::new(poly_length, rns_poly_len, big_uint_poly_len, moduli_count);
 
     let mut dcrt_glev: DcrtGlev<Vec<ValueT>> = DcrtGlev::zero(rns_glev_len);
 
+    // ── Two random plaintexts and their expected product ────────
     let mut desired: Polynomial<Vec<ValueT>> = Polynomial::zero(poly_length);
 
     let input1: Polynomial<Vec<ValueT>> = Polynomial::random(poly_length, mod_t, &mut rng);
@@ -67,26 +75,10 @@ fn test_rns_glev() {
 
     input1.naive_mul_inplace(&input2, &mut desired, mod_t);
 
-    let mut msg2_big_uint_poly: BigUintPolynomial<Vec<ValueT>> =
-        BigUintPolynomial::zero(big_uint_poly_len);
-
+    // ── Build GLev gadget encrypting m₁ ─────────────────────────
+    // input1 is decomposed into CRT form and encrypted as a GLev structure.
     let mut msg1: CrtPolynomial<Vec<ValueT>> = CrtPolynomial::zero(rns_poly_len);
-    let mut msg2: CrtPolynomial<Vec<ValueT>> = CrtPolynomial::zero(rns_poly_len);
-
     base_q.wrapping_decompose_small_polynomial_inplace(&input1, &mut msg1, poly_length, t);
-
-    base_q.wrapping_decompose_small_polynomial_inplace(&input2, &mut msg2, poly_length, t);
-
-    msg2.mul_scalar_assign(glwe_params.delta_mod_q(), poly_length, &moduli);
-
-    base_q.compose_polynomial_inplace(
-        &msg2,
-        &mut msg2_big_uint_poly,
-        poly_length,
-        glev_context.compose_buffer_mut(),
-    );
-
-    let mut c1: DcrtGlwe<Vec<ValueT>> = DcrtGlwe::zero(rns_glwe_len);
 
     dcrt_sk.encrypt_crt_msg_to_dcrt_glev_inplace(
         &msg1,
@@ -95,6 +87,32 @@ fn test_rns_glev() {
         &table,
         &mut rng,
     );
+
+    // ── Build BigUint polynomial encoding m₂ ────────────────────
+    // m₂ is decomposed into CRT, then scaled by δ (so it represents
+    // δ·m₂ mod Q in the RNS basis), then composed into BigUint form.
+    let mut msg2_big_uint_poly: BigUintPolynomial<Vec<ValueT>> =
+        BigUintPolynomial::zero(big_uint_poly_len);
+
+    let mut msg2: CrtPolynomial<Vec<ValueT>> = CrtPolynomial::zero(rns_poly_len);
+
+    base_q.wrapping_decompose_small_polynomial_inplace(&input2, &mut msg2, poly_length, t);
+
+    msg2.mul_factor_assign(
+        glwe_params.delta_factor_mod_q(),
+        poly_length,
+        glwe_params.cipher_moduli_value(),
+    );
+
+    base_q.compose_polynomial_inplace(
+        &msg2,
+        &mut msg2_big_uint_poly,
+        poly_length,
+        glev_context.compose_buffer_mut(),
+    );
+
+    // ── GLev(m₁) ⊡ BigUint(δ·m₂) → GLWE(m₁·m₂) ────────────────
+    let mut c1: DcrtGlwe<Vec<ValueT>> = DcrtGlwe::zero(rns_glwe_len);
 
     dcrt_glev.mul_big_uint_poly_inplace(
         &msg2_big_uint_poly,
@@ -105,20 +123,17 @@ fn test_rns_glev() {
         &mut glev_context,
     );
 
-    // c1.add_dcrt_glev_mul_big_uint_poly_assign(
-    //     &dcrt_glev,
-    //     &msg2_big_uint_poly,
-    //     glev_params.basis(),
-    //     &table,
-    //     glwe_params.base_q(),
-    //     &mut glev_context,
-    // );
-
     let m_dec = dcrt_sk.decrypt(&c1, &glwe_params, &table, &mut decrypt_context);
 
     pretty_assertions::assert_eq!(m_dec, desired);
 }
 
+/// End-to-end key-switching correctness test.
+///
+/// Constructs a GLev encryption of the secret key (key-switching key format),
+/// then manually builds a ciphertext c = (a, b) where b already contains
+/// the inner product a·s. The GLev multiplications are then used to
+/// "re-encrypt" the inner product, and the result should decrypt to zero.
 #[test]
 fn test_key_switching() {
     type ValueT = u64;
@@ -127,7 +142,6 @@ fn test_key_switching() {
     let poly_length: usize = 512;
     let log_n = poly_length.trailing_zeros();
 
-    // let t: ValueT = 1 << 15;
     let t: ValueT = 12289;
     let mod_t = <BarrettModulus<ValueT>>::new(t);
 
@@ -140,6 +154,7 @@ fn test_key_switching() {
 
     let mut rng = rand::rng();
 
+    // ── Parameters ──────────────────────────────────────────────
     let glwe_params = CrtGlweParameters::new(
         dimension,
         poly_length,
@@ -164,6 +179,8 @@ fn test_key_switching() {
     let sk = CrtGlweSecretKey::generate(&glwe_params, &mut rng);
     let dcrt_sk = DcrtGlweSecretKey::from_coeff_secret_key(&sk, &table);
 
+    // ── Encrypt each CRT polynomial of sk as a GLev gadget ──────
+    // GLev(s_i) is the key-switching key component for the i-th dimension.
     let mut dcrt_glevs: Vec<DcrtGlev<Vec<ValueT>>> = (0..dimension)
         .map(|_| DcrtGlev::zero(rns_glev_len))
         .collect();
@@ -181,12 +198,16 @@ fn test_key_switching() {
             dcrt_sk.encrypt_crt_msg_to_dcrt_glev_inplace(msg, glev, &glev_params, &table, &mut rng);
         });
 
+    // ── Manually build ciphertext c = (a, b) where b = noise + a·s ──
+    // a: uniform random polynomials (NTT domain)
+    // b: Gaussian noise + sum(a_i · s_i), in NTT domain
     let mut cipher: Vec<DcrtPolynomial<Vec<ValueT>>> = (0..dimension)
         .map(|_| DcrtPolynomial::zero(rns_poly_len))
         .collect();
 
     let mut b: DcrtPolynomial<Vec<ValueT>> = DcrtPolynomial::zero(rns_poly_len);
 
+    // Sample noise into b
     primus_distr::sample_crt_gaussian_values_inplace(
         b.as_mut(),
         poly_length,
@@ -197,6 +218,7 @@ fn test_key_switching() {
 
     table.transform_slice(b.as_mut());
 
+    // Sample uniform a, then b += Σ a_i · s_i
     cipher.iter_mut().for_each(|ai| {
         primus_distr::sample_crt_uniform_values_inplace(
             ai.as_mut(),
@@ -213,11 +235,15 @@ fn test_key_switching() {
             b.add_mul_assign(ai, &si, poly_length, &moduli);
         });
 
+    // ── Convert a polynomials to coefficient domain ──────────────
     let cipher: Vec<_> = cipher
         .into_iter()
         .map(|a| table.inverse_transform_inplace(a))
         .collect();
 
+    // ── GLev(a_i) ⊡ GLev(s_i) → sum the results ────────────────
+    // Each GLev multiplication produces a GLWE ciphertext;
+    // we accumulate them and subtract from the original (a, b).
     let mut cs: Vec<DcrtGlwe<Vec<ValueT>>> = (0..dimension)
         .map(|_| DcrtGlwe::zero(rns_glwe_len))
         .collect();
@@ -235,6 +261,7 @@ fn test_key_switching() {
         );
     });
 
+    // ── result = (a, b) − Σ GLev(a_i) ⊡ GLev(s_i) ───────────────
     let mut res: DcrtGlwe<Vec<ValueT>> = DcrtGlwe::zero(rns_glwe_len);
 
     let (_, b_) = res.a_b_mut_slices(glev_params.rns_glwe_mid());
@@ -245,6 +272,7 @@ fn test_key_switching() {
         acc
     });
 
+    // ── Decrypt: should be zero (noise only) ────────────────────
     let mut decrypt_context = DcrtGlweDecryptContext::new(moduli_count, poly_length);
     let m_dec = dcrt_sk.decrypt(&result, &glwe_params, &table, &mut decrypt_context);
 

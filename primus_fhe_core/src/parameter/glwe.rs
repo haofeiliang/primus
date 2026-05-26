@@ -274,8 +274,6 @@ where
     /// BFV-style RNS codec for encoding/decoding plaintext.
     codec: RnsCoeffCodec<T, M>,
     delta_mod_q: Vec<T>,
-    inv_delta_mod_q: Vec<T>,
-    t_gamma_mod_q: Vec<T>,
     /// The distribution type of the secret key.
     secret_key_type: RingSecretKeyType,
     secret_key_distribution: Option<SignedDiscreteGaussian<<T as FheUint>::FheSignedInt>>,
@@ -314,16 +312,11 @@ where
 
         let codec = RnsCoeffCodec::new(plain_modulus, base_q, gamma_modulus);
 
-        let delta_mod_q: Vec<T> = codec.base_q().decompose(codec.delta());
-
-        let inv_delta_mod_q: Vec<T> = delta_mod_q
+        let delta_mod_q: Vec<T> = codec
+            .delta_factor_mod_q()
             .iter()
-            .zip(cipher_moduli)
-            .map(|(&v, modulus)| modulus.reduce_inv(v))
+            .map(|f| f.value())
             .collect();
-
-        let t_gamma_value = multiply_many_values(&[codec.t(), codec.gamma()]);
-        let t_gamma_mod_q: Vec<T> = codec.base_q().decompose(t_gamma_value.view());
 
         let cipher_moduli_uniform_distr = cipher_moduli
             .iter()
@@ -354,8 +347,6 @@ where
             cipher_moduli_uniform_distr,
             codec,
             delta_mod_q,
-            t_gamma_mod_q,
-            inv_delta_mod_q,
             secret_key_type,
             secret_key_distribution,
             noise_distribution,
@@ -457,13 +448,9 @@ where
         &self.delta_mod_q
     }
 
-    /// Returns a reference to the inverse delta residues of this [`CrtGlweParameters<T, M>`].
-    pub fn inv_delta_mod_q(&self) -> &[T] {
-        &self.inv_delta_mod_q
-    }
-
-    pub fn t_gamma_mod_q(&self) -> &[T] {
-        &self.t_gamma_mod_q
+    /// Returns a reference to the delta residues of this [`CrtGlweParameters<T, M>`].
+    pub fn delta_factor_mod_q(&self) -> &[ShoupFactor<T>] {
+        self.codec.delta_factor_mod_q()
     }
 
     pub fn converter(&self) -> &BaseConverter<T, M> {

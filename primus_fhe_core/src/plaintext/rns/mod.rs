@@ -1,3 +1,3 @@
 mod coeff_codec;
 
-pub use coeff_codec::{RnsCoeffCodec, RnsCoeffDecodeContext, RnsCoeffDecodeContextRefMut};
+pub use coeff_codec::RnsCoeffCodec;

@@ -28,38 +28,6 @@ use primus_poly::{CrtPolynomial, DcrtPolynomial, Polynomial};
 use primus_reduce::FieldContext;
 use primus_rns::{BaseConverter, RNSBase};
 
-pub struct RnsCoeffDecodeContext<T: FheUint> {
-    msg_mod_q: DcrtPolynomial<Vec<T>>,
-    fast_convert_buffer: Vec<T>,
-}
-
-pub struct RnsCoeffDecodeContextRefMut<'a, T: FheUint> {
-    pub msg_mod_q: &'a mut DcrtPolynomial<Vec<T>>,
-    pub fast_convert_buffer: &'a mut [T],
-}
-
-impl<T: FheUint> RnsCoeffDecodeContext<T> {
-    /// Creates a new [`RnsCoeffDecodeContext<T>`].
-    #[inline]
-    pub fn new(moduli_count: usize, poly_length: usize) -> Self {
-        let msg_mod_q: DcrtPolynomial<Vec<T>> = DcrtPolynomial::zero(moduli_count * poly_length);
-        let fast_convert_buffer = vec![T::ZERO; moduli_count * poly_length];
-
-        Self {
-            msg_mod_q,
-            fast_convert_buffer,
-        }
-    }
-
-    #[inline]
-    pub fn as_mut(&mut self) -> RnsCoeffDecodeContextRefMut<'_, T> {
-        RnsCoeffDecodeContextRefMut {
-            msg_mod_q: &mut self.msg_mod_q,
-            fast_convert_buffer: &mut self.fast_convert_buffer,
-        }
-    }
-}
-
 /// BFV-style RNS coefficient codec.
 ///
 /// Encodes `m ∈ Z_t` as RNS residues of `m · Δ mod Q` where `Δ = round(Q/t)`,
@@ -200,6 +168,10 @@ where
         &self.moduli_values
     }
 
+    pub fn delta_factor_mod_q(&self) -> &[ShoupFactor<T>] {
+        &self.delta_factor_mod_q
+    }
+
     pub fn delta(&self) -> BigUint<&[T]> {
         self.delta.view()
     }
@@ -257,6 +229,41 @@ where
             destination,
             poly_length,
             self.t,
+            &self.delta_factor_mod_q,
+        );
+    }
+
+    pub fn unsigned_encode_coeffs<A, B>(
+        &self,
+        message: &Polynomial<A>,
+        crt_message: &mut CrtPolynomial<B>,
+        poly_length: usize,
+    ) where
+        A: RawData<Elem = T> + Data,
+        B: RawData<Elem = T> + DataMut,
+    {
+        crt_message
+            .iter_each_modulus_mut(poly_length)
+            .for_each(|residues| {
+                residues.copy_from_slice(message.as_ref());
+            });
+
+        crt_message.mul_factor_assign(&self.delta_factor_mod_q, poly_length, &self.moduli_values);
+    }
+
+    pub fn add_unsigned_encode_coeffs_assign<A, B>(
+        &self,
+        message: &Polynomial<A>,
+        destination: &mut CrtPolynomial<B>,
+        poly_length: usize,
+    ) where
+        A: RawData<Elem = T> + Data,
+        B: RawData<Elem = T> + DataMut,
+    {
+        self.base_q.add_decompose_small_polynomial_scaled(
+            message,
+            destination,
+            poly_length,
             &self.delta_factor_mod_q,
         );
     }

@@ -463,6 +463,51 @@ where
         }
     }
 
+    /// Fused: decompose small (≤ modulus) values into RNS, scale by `factor`, and
+    /// accumulate into `destination`.
+    ///
+    /// Unlike [`add_wrapping_decompose_small_values_scaled`], this does **unsigned**
+    /// decomposition: each value is used as-is, without centered lifting.
+    pub fn add_decompose_small_values_scaled(
+        &self,
+        small_values: &[T],
+        destination: &mut [T],
+        value_count: usize,
+        factor: &[ShoupFactor<T>],
+    ) {
+        debug_assert_eq!(destination.len(), self.moduli_count() * value_count);
+        debug_assert_eq!(small_values.len(), value_count);
+        debug_assert_eq!(factor.len(), self.moduli_count());
+
+        izip!(
+            destination.chunks_exact_mut(value_count),
+            self.moduli().iter().map(|m| unsafe { m.value_unchecked() }),
+            factor,
+        )
+        .for_each(|(dest_chunk, modulus, &factor)| {
+            factor.add_factor_mul_slice_assign(dest_chunk, small_values, modulus);
+        });
+    }
+
+    #[inline]
+    pub fn add_decompose_small_polynomial_scaled<A, C>(
+        &self,
+        small_poly: &Polynomial<A>,
+        destination: &mut CrtPolynomial<C>,
+        poly_length: usize,
+        factor: &[ShoupFactor<T>],
+    ) where
+        A: RawData<Elem = T> + Data,
+        C: RawData<Elem = T> + DataMut,
+    {
+        self.add_decompose_small_values_scaled(
+            small_poly.as_ref(),
+            destination.as_mut(),
+            poly_length,
+            factor,
+        );
+    }
+
     pub fn decompose_big_uint_values_inplace(
         &self,
         big_uint_values: &[T],

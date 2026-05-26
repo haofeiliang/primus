@@ -9,14 +9,20 @@ use primus_fhe_core::{
 use primus_lattice::glwe::{CrtGlwe, DcrtGlwe};
 use primus_modulus::BarrettModulus;
 use primus_ntt::{DcrtTable, UintCrtNttTable};
-use primus_poly::{CrtPolynomial, Polynomial};
+use primus_poly::Polynomial;
 use rand::RngExt;
 
+/// Test GLWE automorphism in the coefficient (CRT) domain.
+///
+/// A GLWE ciphertext is encrypted, transformed by a random odd-degree
+/// automorphism k → k·α mod 2N, then decrypted. The result is checked
+/// against the same automorphism applied to the secret key and ciphertext
+/// in the coefficient domain.
 #[test]
 fn test_crt_glwe_auto() {
     type ValueT = u64;
 
-    let dimension = 2;
+    let dimension = 3;
     let poly_length: usize = 512;
     let log_n = poly_length.trailing_zeros();
 
@@ -24,16 +30,16 @@ fn test_crt_glwe_auto() {
     let t: ValueT = 12289;
     let mod_t = <BarrettModulus<ValueT>>::new(t);
 
-    // let gamma: ValueT = 2199023190017;
-    let gamma: ValueT = 2305843009213554689;
+    let gamma: ValueT = 2199023190017;
     let mod_gamma = <BarrettModulus<ValueT>>::new(gamma);
 
-    let moduli_values: [ValueT; 2] = [1125899906826241, 1125899906629633];
+    let moduli_values: [ValueT; _] = [1125899906826241, 1125899906629633];
     let moduli = moduli_values.map(<BarrettModulus<ValueT>>::new);
     let table = UintCrtNttTable::new(log_n, &moduli).unwrap();
 
     let mut rng = rand::rng();
 
+    // ── Parameters ──────────────────────────────────────────────
     let glwe_params = CrtGlweParameters::new(
         dimension,
         poly_length,
@@ -53,12 +59,13 @@ fn test_crt_glwe_auto() {
     let sk = CrtGlweSecretKey::generate(&glwe_params, &mut rng);
     let dcrt_sk = DcrtGlweSecretKey::from_coeff_secret_key(&sk, &table);
 
+    // ── Auto key: KSK for an odd-degree automorphism ────────────
     let basis = BigUintApproxSignedBasis::new(glwe_params.cipher_modulus(), 20, None, base_q);
     let glev_params = CrtGlevParameters::with_glwe_params(&glwe_params, basis);
 
     let mut auto_degree = rng.random_range(0..poly_length * 2);
     if auto_degree & 1 == 0 {
-        auto_degree |= 1;
+        auto_degree |= 1; // automorphism degree must be odd (coprime to 2N)
     }
 
     let auto_key = CrtGlweAutoKey::new(
@@ -71,11 +78,11 @@ fn test_crt_glwe_auto() {
     );
     let table = auto_key.table();
 
+    // ── Encrypt random plaintext ────────────────────────────────
     let input1: Polynomial<Vec<ValueT>> = Polynomial::random(poly_length, mod_t, &mut rng);
-    let mut msg1: CrtPolynomial<Vec<ValueT>> = CrtPolynomial::zero(crt_poly_length);
     let mut c1: DcrtGlwe<Vec<ValueT>> = DcrtGlweCiphertext::zero(rns_glwe_len);
     let mut auto_c1: CrtGlwe<Vec<ValueT>> = CrtGlwe::zero(rns_glwe_len);
-    let mut c3: CrtGlwe<Vec<ValueT>> = CrtGlwe::zero(rns_glwe_len);
+    let mut c2: CrtGlwe<Vec<ValueT>> = CrtGlwe::zero(rns_glwe_len);
     let mut auto_context = CrtGlweAutoContext::new(
         poly_length,
         crt_poly_length,
@@ -84,13 +91,16 @@ fn test_crt_glwe_auto() {
     );
     let mut decrypt_context = DcrtGlweDecryptContext::new(moduli_count, poly_length);
 
-    base_q.wrapping_decompose_small_polynomial_inplace(&input1, &mut msg1, poly_length, t);
+    dcrt_sk.encrypt_plaintext_inplace(&input1, &mut c1, &glwe_params, table, &mut rng);
 
-    dcrt_sk.encrypt_inplace(&msg1, &mut c1, &glwe_params, table, &mut rng);
-
+    // Sanity: decrypt original
     let m_dec = dcrt_sk.decrypt(&c1, &glwe_params, table, &mut decrypt_context);
     assert_eq!(m_dec, input1);
 
+    // ── Manual automorphism in coefficient domain ───────────────
+    // Apply the coefficient permutation to each polynomial of the ciphertext
+    // and to the secret key, producing a transformed ciphertext c1' and key sk'.
+    // Decrypting c1' under dcrt_sk' should yield the same plaintext.
     let c1 = c1.into_coeff_form(table);
 
     c1.iter_crt_poly(crt_poly_length)
@@ -107,11 +117,11 @@ fn test_crt_glwe_auto() {
 
     let mut auto_sk = CrtGlweSecretKey::zero(dimension, crt_poly_length, sk.distr());
     sk.iter_crt_poly()
-        .zip(auto_sk.key_mut().chunks_exact_mut(crt_poly_length))
+        .zip(auto_sk.iter_crt_poly_mut())
         .for_each(|(in_crt_poly, auto_crt_poly)| {
             crt_poly_auto_inplace(
                 in_crt_poly.0,
-                auto_crt_poly,
+                auto_crt_poly.0,
                 auto_key.auto_helper(),
                 poly_length,
                 &moduli,
@@ -122,35 +132,46 @@ fn test_crt_glwe_auto() {
     let auto_c1 = auto_c1.into_ntt_form(table);
     let auto_msg_1 = dcrt_auto_sk.decrypt(&auto_c1, &glwe_params, table, &mut decrypt_context);
 
-    auto_key.automorphism_inplace(&c1, &mut c3, &glev_params, base_q, &mut auto_context);
+    // ── Key-switched automorphism ───────────────────────────────
+    auto_key.automorphism_inplace(&c1, &mut c2, &glev_params, base_q, &mut auto_context);
 
-    let c3 = c3.into_ntt_form(table);
+    let c2 = c2.into_ntt_form(table);
 
-    let auto_msg_2 = dcrt_sk.decrypt(&c3, &glwe_params, table, &mut decrypt_context);
+    let auto_msg_2 = dcrt_sk.decrypt(&c2, &glwe_params, table, &mut decrypt_context);
 
+    // Both approaches should agree on the transformed plaintext.
     assert_eq!(auto_msg_1.as_ref(), auto_msg_2.as_ref());
 }
 
+/// Test GLWE automorphism in the NTT (DCRT) domain.
+///
+/// Same as [`test_crt_glwe_auto`] but the automorphism is applied via
+/// NTT-native index permutation instead of coefficient-domain permutation.
+/// The ciphertext stays in the NTT domain throughout the operation.
 #[test]
 fn test_dcrt_glwe_auto() {
     type ValueT = u64;
 
-    let dimension = 2;
+    let dimension = 3;
     let poly_length: usize = 512;
     let log_n = poly_length.trailing_zeros();
 
+    // let t: ValueT = 1 << 15;
     let t: ValueT = 12289;
     let mod_t = <BarrettModulus<ValueT>>::new(t);
 
-    let gamma: ValueT = 2305843009213554689;
+    // let gamma: ValueT = 2199023190017;
+    // let gamma: ValueT = 2305843009213554689;
+    let gamma: ValueT = 2199023190017;
     let mod_gamma = <BarrettModulus<ValueT>>::new(gamma);
 
-    let moduli_values: [ValueT; 2] = [1125899906826241, 1125899906629633];
+    let moduli_values: [ValueT; _] = [1125899906826241, 1125899906629633];
     let moduli = moduli_values.map(<BarrettModulus<ValueT>>::new);
     let table = UintCrtNttTable::new(log_n, &moduli).unwrap();
 
     let mut rng = rand::rng();
 
+    // ── Parameters ──────────────────────────────────────────────
     let glwe_params = CrtGlweParameters::new(
         dimension,
         poly_length,
@@ -187,11 +208,11 @@ fn test_dcrt_glwe_auto() {
     );
     let table = auto_key.table();
 
+    // ── Encrypt ─────────────────────────────────────────────────
     let input1: Polynomial<Vec<ValueT>> = Polynomial::random(poly_length, mod_t, &mut rng);
-    let mut msg1: CrtPolynomial<Vec<ValueT>> = CrtPolynomial::zero(crt_poly_length);
     let mut c1: DcrtGlweCiphertext<Vec<ValueT>> = DcrtGlweCiphertext::zero(rns_glwe_len);
     let mut auto_c1: DcrtGlweCiphertext<Vec<ValueT>> = DcrtGlweCiphertext::zero(rns_glwe_len);
-    let mut c3: DcrtGlweCiphertext<Vec<ValueT>> = DcrtGlweCiphertext::zero(rns_glwe_len);
+    let mut c2: DcrtGlweCiphertext<Vec<ValueT>> = DcrtGlweCiphertext::zero(rns_glwe_len);
     let mut auto_context = CrtGlweAutoContext::new(
         poly_length,
         crt_poly_length,
@@ -200,14 +221,13 @@ fn test_dcrt_glwe_auto() {
     );
     let mut decrypt_context = DcrtGlweDecryptContext::new(moduli_count, poly_length);
 
-    base_q.wrapping_decompose_small_polynomial_inplace(&input1, &mut msg1, poly_length, t);
-
-    dcrt_sk.encrypt_inplace(&msg1, &mut c1, &glwe_params, table, &mut rng);
+    dcrt_sk.encrypt_plaintext_inplace(&input1, &mut c1, &glwe_params, table, &mut rng);
 
     let m_dec = dcrt_sk.decrypt(&c1, &glwe_params, table, &mut decrypt_context);
     assert_eq!(m_dec, input1);
 
-    // Manually apply NTT automorphism to each polynomial of ciphertext
+    // ── Manual NTT automorphism ─────────────────────────────────
+    // Permute NTT indices of each polynomial in the ciphertext and secret key.
     c1.iter_dcrt_poly(crt_poly_length)
         .zip(auto_c1.iter_dcrt_poly_mut(crt_poly_length))
         .for_each(|(in_dcrt_poly, auto_dcrt_poly)| {
@@ -234,9 +254,10 @@ fn test_dcrt_glwe_auto() {
 
     let auto_msg_1 = dcrt_auto_sk.decrypt(&auto_c1, &glwe_params, table, &mut decrypt_context);
 
-    auto_key.automorphism_inplace(&c1, &mut c3, &glev_params, base_q, &mut auto_context);
+    // ── Key-switched automorphism ───────────────────────────────
+    auto_key.automorphism_inplace(&c1, &mut c2, &glev_params, base_q, &mut auto_context);
 
-    let auto_msg_2 = dcrt_sk.decrypt(&c3, &glwe_params, table, &mut decrypt_context);
+    let auto_msg_2 = dcrt_sk.decrypt(&c2, &glwe_params, table, &mut decrypt_context);
 
     assert_eq!(auto_msg_1.as_ref(), auto_msg_2.as_ref());
 }
