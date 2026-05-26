@@ -8,7 +8,7 @@ use primus_integer::{
     multiply_many_values_except_inplace,
 };
 use primus_modulo::prelude::*;
-use primus_modulus::UintModulus;
+use primus_modulus::CompactModulus;
 use primus_poly::{BigUintPolynomial, CrtPolynomial, Polynomial};
 use primus_reduce::{FieldContext, ReduceAddAssign};
 
@@ -43,7 +43,7 @@ where
 // ===========================================================================
 // Wrapping decompose dispatch trait – scalar / SIMD.
 //
-// Pattern: same as `UintModulus` slice traits — always provide a scalar
+// Pattern: same as `CompactModulus` slice traits — always provide a scalar
 // blanket impl, then override with concrete SIMD impls under `cfg(simd)`.
 // ===========================================================================
 
@@ -83,7 +83,7 @@ fn decompose_chunk_scaled_scalar<T: FheUint>(
 ) {
     for (d, &value) in dest.iter_mut().zip(small_values) {
         let centered = if value < half { value } else { temp + value };
-        UintModulus(modulus).reduce_add_assign(d, factor.factor_mul_modulo(centered, modulus));
+        CompactModulus(modulus).reduce_add_assign(d, factor.factor_mul_modulo(centered, modulus));
     }
 }
 

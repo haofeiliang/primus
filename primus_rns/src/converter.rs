@@ -3,7 +3,7 @@ use primus_integer::AsInto;
 use primus_integer::{FheUint, izip};
 use primus_modulo::Modulo;
 use primus_modulo::MulModulo;
-use primus_modulus::UintModulus;
+use primus_modulus::CompactModulus;
 use primus_reduce::FieldContext;
 
 use crate::RNSBase;
@@ -257,7 +257,7 @@ impl<T: FheUint, M: FieldContext<T>> BaseConverter<T, M> {
                         // Multiply coefficient of in with ibase_.inv_punctured_prod_mod_base_array_ element
                         *ele = x.mul_modulo(
                             inv_punctured_product_mod_modulus,
-                            UintModulus(unsafe { modulus.value_unchecked() }),
+                            CompactModulus(unsafe { modulus.value_unchecked() }),
                         );
                         let dividend: f64 = (*ele).as_into();
                         *fele = dividend / divisor;

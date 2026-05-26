@@ -1,13 +1,12 @@
 use primus_decompose::{big_integer::BigUintApproxSignedBasis, primitive::ApproxSignedBasis};
 use primus_distr::{DiscreteGaussian, SignedDiscreteGaussian};
 use primus_factor::ShoupFactor;
-use primus_integer::{BigUint, DivRemScalar, FheUint, multiply_many_values};
-use primus_modulo::*;
+use primus_integer::{BigUint, FheUint, multiply_many_values};
 use primus_reduce::FieldContext;
 use primus_rns::{BaseConverter, RNSBase};
 use rand::distr::Uniform;
 
-use crate::{PlaintextCodec, RingSecretKeyType};
+use crate::{PlaintextCodec, RingSecretKeyType, RnsCoeffCodec};
 
 /// Glwe Parameters.
 #[derive(Clone)]
@@ -265,31 +264,18 @@ where
 {
     common_size: RNSGlweCommonSize,
     /// The message modulus, refers to **t** in the paper.
-    plain_modulus_value: T,
-    /// The message modulus, refers to **t** in the paper.
     plain_modulus: M,
     /// The cipher modulus minus one, refers to **Q-1**.
     cipher_modulus_minus_one: BigUint<Vec<T>>,
-    /// The moduli, refers to *Q1, Q2, ...* in the paper.
-    cipher_moduli: Vec<M>,
-    /// The moduli, refers to *Q1, Q2, ...* in the paper.
-    cipher_moduli_value: Vec<T>,
     /// Refers to `Q1-1`, `Q2-1` ...
     cipher_moduli_minus_one: Vec<T>,
     /// The uniform distribution to sample values over `Q1`, `Q2` ...
     cipher_moduli_uniform_distr: Vec<Uniform<T>>,
-    /// Residue Number System for *Q*.
-    base_q: RNSBase<T, M>,
-    /// Refers to `Q/t`.
-    delta: BigUint<Vec<T>>,
+    /// BFV-style RNS codec for encoding/decoding plaintext.
+    codec: RnsCoeffCodec<T, M>,
     delta_mod_q: Vec<T>,
     inv_delta_mod_q: Vec<T>,
-    gamma: T,
-    base_t_gamma: RNSBase<T, M>,
     t_gamma_mod_q: Vec<T>,
-    minus_inv_q_mod_t_gamma: Vec<T>,
-    inv_gamma_mod_t: ShoupFactor<T>,
-    converter: BaseConverter<T, M>,
     /// The distribution type of the secret key.
     secret_key_type: RingSecretKeyType,
     secret_key_distribution: Option<SignedDiscreteGaussian<<T as FheUint>::FheSignedInt>>,
@@ -312,14 +298,10 @@ where
         secret_key_type: RingSecretKeyType,
         noise_standard_deviation: f64,
     ) -> Self {
-        let t = unsafe { plain_modulus.value_unchecked() };
-        let gamma = unsafe { gamma_modulus.value_unchecked() };
-
         let cipher_moduli_value: Vec<T> = cipher_moduli
             .iter()
             .map(|qi| unsafe { qi.value_unchecked() })
             .collect();
-        Self::validate_crt_moduli(t, gamma, &cipher_moduli_value);
 
         let cipher_moduli_minus_one = cipher_moduli_value.iter().map(|&qi| qi - T::ONE).collect();
         let base_q = RNSBase::new(cipher_moduli).unwrap();
@@ -330,21 +312,9 @@ where
             temp
         };
 
-        let cipher_moduli_uniform_distr = cipher_moduli
-            .iter()
-            .map(|qi| qi.uniform_distribution())
-            .collect();
+        let codec = RnsCoeffCodec::new(plain_modulus, base_q, gamma_modulus);
 
-        let noise_distribution = SignedDiscreteGaussian::new(noise_standard_deviation).unwrap();
-
-        let mut delta = BigUint(vec![T::ZERO; cipher_modulus.len()]);
-
-        let rem = DivRemScalar::div_rem_scalar(cipher_modulus.digits(), t, delta.digits_mut());
-        if rem * T::TWO >= t {
-            let _ = delta.add_value_assign(T::ONE);
-        }
-
-        let delta_mod_q: Vec<T> = base_q.decompose(delta.view());
+        let delta_mod_q: Vec<T> = codec.base_q().decompose(codec.delta());
 
         let inv_delta_mod_q: Vec<T> = delta_mod_q
             .iter()
@@ -352,26 +322,21 @@ where
             .map(|(&v, modulus)| modulus.reduce_inv(v))
             .collect();
 
-        let t_gamma = [plain_modulus, gamma_modulus];
-        let base_t_gamma = RNSBase::new(&t_gamma).unwrap();
-        let q_mod_t_gamma = base_t_gamma.decompose(cipher_modulus.view());
-        let minus_inv_q_mod_t_gamma: Vec<T> = q_mod_t_gamma
-            .iter()
-            .zip(&t_gamma)
-            .map(|(&x, modulus)| modulus.reduce_neg(modulus.reduce_inv(x)))
-            .collect();
-        let inv_gamma_mod_t =
-            ShoupFactor::new(gamma.modulo(plain_modulus).inv_modulo(plain_modulus), t);
-        let t_gamma_value = multiply_many_values(&[t, gamma]);
-        let t_gamma_mod_q: Vec<T> = base_q.decompose(t_gamma_value.view());
+        let t_gamma_value = multiply_many_values(&[codec.t(), codec.gamma()]);
+        let t_gamma_mod_q: Vec<T> = codec.base_q().decompose(t_gamma_value.view());
 
-        let converter = BaseConverter::new(&base_q, &base_t_gamma);
+        let cipher_moduli_uniform_distr = cipher_moduli
+            .iter()
+            .map(|qi| qi.uniform_distribution())
+            .collect();
+
+        let noise_distribution = SignedDiscreteGaussian::new(noise_standard_deviation).unwrap();
 
         let common_size = RNSGlweCommonSize::new(
             dimension,
             poly_length,
-            base_q.moduli_count(),
-            base_q.big_uint_value_len(),
+            codec.moduli_count(),
+            codec.base_q().big_uint_value_len(),
         );
 
         let secret_key_distribution =
@@ -383,48 +348,17 @@ where
 
         Self {
             common_size,
-            plain_modulus_value: t,
             plain_modulus,
             cipher_modulus_minus_one,
-            cipher_moduli: cipher_moduli.to_vec(),
-            cipher_moduli_value,
             cipher_moduli_minus_one,
             cipher_moduli_uniform_distr,
-            delta,
+            codec,
             delta_mod_q,
-            inv_delta_mod_q,
-            gamma,
             t_gamma_mod_q,
-            minus_inv_q_mod_t_gamma,
-            inv_gamma_mod_t,
-            base_q,
-            base_t_gamma,
-            converter,
+            inv_delta_mod_q,
             secret_key_type,
             secret_key_distribution,
             noise_distribution,
-        }
-    }
-
-    fn validate_crt_moduli(t: T, gamma: T, cipher_moduli: &[T]) {
-        assert!(
-            gamma > t,
-            "gamma modulus must be greater than the plain modulus"
-        );
-        assert!(
-            t.is_coprime(gamma),
-            "plain modulus and gamma modulus must be coprime"
-        );
-
-        for &qi in cipher_moduli {
-            assert!(
-                qi.is_coprime(t),
-                "cipher moduli must be coprime with the plain modulus"
-            );
-            assert!(
-                qi.is_coprime(gamma),
-                "cipher moduli must be coprime with the gamma modulus"
-            );
         }
     }
 
@@ -442,7 +376,7 @@ where
 
     /// Returns the plain modulus value of this [`CrtGlweParameters<T, M>`].
     pub fn plain_modulus_value(&self) -> T {
-        self.plain_modulus_value
+        self.codec.t()
     }
 
     pub fn plain_modulus(&self) -> M {
@@ -451,7 +385,7 @@ where
 
     /// Returns a reference to the cipher modulus of this [`CrtGlweParameters<T, M>`].
     pub fn cipher_modulus(&self) -> BigUint<&[T]> {
-        self.base_q.moduli_product()
+        self.codec.base_q().moduli_product()
     }
 
     /// Returns a reference to the modulus minus one of this [`CrtGlweParameters<T, M>`].
@@ -462,12 +396,12 @@ where
     /// Returns a reference to the moduli of this [`CrtGlweParameters<T, M>`].
     #[inline]
     pub fn cipher_moduli(&self) -> &[M] {
-        &self.cipher_moduli
+        self.codec.base_q().moduli()
     }
 
     /// Returns a reference to the cipher moduli value of this [`CrtGlweParameters<T, M>`].
     pub fn cipher_moduli_value(&self) -> &[T] {
-        &self.cipher_moduli_value
+        self.codec.moduli_values()
     }
 
     /// Returns a reference to the cipher moduli minus one of this [`CrtGlweParameters<T, M>`].
@@ -477,7 +411,7 @@ where
 
     /// Returns the moduli count of this [`CrtGlweParameters<T, M>`].
     pub fn cipher_moduli_count(&self) -> usize {
-        self.cipher_moduli.len()
+        self.codec.moduli_count()
     }
 
     /// Returns a reference to the cipher moduli uniform distr of this [`CrtGlweParameters<T, M>`].
@@ -488,7 +422,7 @@ where
     /// Returns the big uint value len of this [`CrtGlweParameters<T, M>`].
     #[inline]
     pub fn big_uint_value_len(&self) -> usize {
-        self.base_q.big_uint_value_len()
+        self.codec.base_q().big_uint_value_len()
     }
 
     /// Returns the secret key type of this [`CrtGlweParameters<T, M>`].
@@ -515,7 +449,7 @@ where
 
     /// Returns a reference to the delta of this [`CrtGlweParameters<T, M>`].
     pub fn delta(&self) -> BigUint<&[T]> {
-        self.delta.view()
+        self.codec.delta()
     }
 
     /// Returns a reference to the delta residues of this [`CrtGlweParameters<T, M>`].
@@ -533,27 +467,31 @@ where
     }
 
     pub fn converter(&self) -> &BaseConverter<T, M> {
-        &self.converter
+        self.codec.converter()
     }
 
     pub fn minus_inv_q_mod_t_gamma(&self) -> &[T] {
-        &self.minus_inv_q_mod_t_gamma
+        self.codec.minus_inv_q_mod_t_gamma()
     }
 
     pub fn t_gamma(&self) -> &[M] {
-        self.base_t_gamma.moduli()
+        self.codec.base_t_gamma().moduli()
     }
 
     pub fn gamma(&self) -> T {
-        self.gamma
+        self.codec.gamma()
     }
 
     pub fn inv_gamma_mod_t(&self) -> ShoupFactor<T> {
-        self.inv_gamma_mod_t
+        self.codec.inv_gamma_mod_t()
     }
 
     pub fn base_q(&self) -> &RNSBase<T, M> {
-        &self.base_q
+        self.codec.base_q()
+    }
+
+    pub fn codec(&self) -> &RnsCoeffCodec<T, M> {
+        &self.codec
     }
 
     pub fn common_size(&self) -> RNSGlweCommonSize {

@@ -75,11 +75,11 @@ where
     base_q: RNSBase<T, M>,
     moduli_values: Vec<T>,
 
-    // Encode 用：Δ = round(Q / t)（BigUint），分解为 Q 各素数下的 Shoup 因子
+    // For encoding: Δ = round(Q / t) as BigUint, pre-decomposed into Shoup factors mod each q_i
     delta: BigUint<Vec<T>>,
     delta_factor_mod_q: Vec<ShoupFactor<T>>,
 
-    // Decode 用：HPS γ-trick，输出 m mod t
+    // For decoding: HPS γ-trick, produces m mod t
     gamma: T,
     base_t_gamma: RNSBase<T, M>,               // {t, γ}
     t_gamma_factor_mod_q: Vec<ShoupFactor<T>>, // [(t·γ) mod q_i]
@@ -196,12 +196,32 @@ where
         self.base_q.moduli_count()
     }
 
+    pub fn moduli_values(&self) -> &[T] {
+        &self.moduli_values
+    }
+
     pub fn delta(&self) -> BigUint<&[T]> {
         self.delta.view()
     }
 
     pub fn gamma(&self) -> T {
         self.gamma
+    }
+
+    pub fn minus_inv_q_mod_t_gamma(&self) -> &[T] {
+        &self.minus_inv_q_mod_t_gamma
+    }
+
+    pub fn base_t_gamma(&self) -> &RNSBase<T, M> {
+        &self.base_t_gamma
+    }
+
+    pub fn inv_gamma_mod_t(&self) -> ShoupFactor<T> {
+        self.inv_gamma_mod_t
+    }
+
+    pub fn converter(&self) -> &BaseConverter<T, M> {
+        &self.converter_q_to_t_gamma
     }
 
     pub fn centered_encode_coeffs<A, B>(

@@ -1,6 +1,5 @@
 use primus_data::{Data, DataMut, RawData};
-use primus_factor::FactorSliceOps;
-use primus_integer::{FheUint, izip};
+use primus_integer::FheUint;
 use primus_lattice::glev::DcrtGlev;
 use primus_ntt::{DcrtTable, NttTable};
 use primus_poly::{
@@ -490,8 +489,58 @@ impl<T: FheUint> DcrtGlweSecretKey<T> {
         A: RawData<Elem = T> + Data,
         B: RawData<Elem = T> + DataMut,
     {
-        let msg = Self::decompose_plaintext(msg, params, embedding);
-        self.encrypt_inplace(&msg, result, params, table, rng);
+        match embedding {
+            PlaintextEmbedding::Centered => {
+                self.encrypt_centered_inplace(msg, result, params, table, rng);
+            }
+            PlaintextEmbedding::Unsigned => {
+                let msg = Self::decompose_plaintext(msg, params, embedding);
+                self.encrypt_inplace(&msg, result, params, table, rng);
+            }
+        }
+    }
+
+    fn encrypt_centered_inplace<R, M, Table, A, B>(
+        &self,
+        msg: &Polynomial<A>,
+        result: &mut DcrtGlweCiphertext<B>,
+        params: &CrtGlweParameters<T, M>,
+        table: &Table,
+        rng: &mut R,
+    ) where
+        R: rand::Rng + rand::CryptoRng,
+        M: FieldContext<T>,
+        Table: DcrtTable<ValueT = T>,
+        A: RawData<Elem = T> + Data,
+        B: RawData<Elem = T> + DataMut,
+    {
+        let poly_length = params.poly_length();
+        let rns_glwe_mid = params.rns_glwe_mid();
+        let moduli = params.cipher_moduli();
+        let uniform_distrs = params.cipher_moduli_uniform_distr();
+
+        let (a, mut b) = result.a_b_mut(rns_glwe_mid);
+
+        primus_distr::sample_crt_gaussian_values_inplace(
+            b.0,
+            poly_length,
+            params.cipher_moduli_value(),
+            params.noise_distribution(),
+            rng,
+        );
+
+        params.codec().add_centered_encode_coeffs_assign(
+            msg,
+            &mut CrtPolynomial(&mut *b.0),
+            poly_length,
+        );
+
+        table.transform_slice(b.0);
+
+        self.iter_dcrt_poly().zip(a).for_each(|(si, ai)| {
+            primus_distr::sample_crt_uniform_values_inplace(ai.0, poly_length, uniform_distrs, rng);
+            b.add_mul_assign(&ai, &si, poly_length, moduli);
+        });
     }
 
     fn decompose_plaintext<M, A>(
@@ -794,14 +843,9 @@ impl<T: FheUint> DcrtGlweSecretKey<T> {
         B: RawData<Elem = T> + DataMut,
     {
         let poly_length = params.poly_length();
-        let q = params.cipher_moduli();
-        let t = params.plain_modulus_value();
-        let gamma = params.gamma();
-        let inv_gamma_mod_t = params.inv_gamma_mod_t();
 
         let DcrtGlweDecryptContextRefMut {
             msg_mod_q,
-            msg_mod_t_gamma,
             fast_convert_buffer,
         } = context.as_mut();
 
@@ -809,43 +853,19 @@ impl<T: FheUint> DcrtGlweSecretKey<T> {
 
         table.inverse_transform_slice(msg_mod_q.as_mut());
 
-        msg_mod_q.mul_scalar_assign(params.t_gamma_mod_q(), poly_length, q);
-
-        params.converter().fast_convert_array(
-            msg_mod_q.as_ref(),
-            msg_mod_t_gamma.as_mut(),
-            poly_length,
-            fast_convert_buffer,
-        );
-
-        msg_mod_t_gamma.mul_scalar_assign(
-            params.minus_inv_q_mod_t_gamma(),
-            poly_length,
-            params.t_gamma(),
-        );
-
-        let (y_t_slices, y_gamma_slices) = msg_mod_t_gamma.as_ref().split_at(poly_length);
-
-        izip!(msg.iter_mut(), y_t_slices, y_gamma_slices).for_each(|(res, &y_t, &y_gamma)| {
-            let mut temp = gamma - y_gamma + y_t;
-            if temp >= gamma {
-                temp -= gamma;
-            }
-            *res = temp;
-        });
-        inv_gamma_mod_t.factor_mul_slice_assign(msg.as_mut(), t);
+        params
+            .codec()
+            .decode_coeffs(msg_mod_q, msg, poly_length, fast_convert_buffer);
     }
 }
 
 pub struct DcrtGlweDecryptContext<T: FheUint> {
     msg_mod_q: DcrtPolynomial<Vec<T>>,
-    msg_mod_t_gamma: CrtPolynomial<Vec<T>>,
     fast_convert_buffer: Vec<T>,
 }
 
 pub struct DcrtGlweDecryptContextRefMut<'a, T: FheUint> {
     msg_mod_q: &'a mut DcrtPolynomial<Vec<T>>,
-    msg_mod_t_gamma: &'a mut CrtPolynomial<Vec<T>>,
     fast_convert_buffer: &'a mut [T],
 }
 
@@ -854,12 +874,10 @@ impl<T: FheUint> DcrtGlweDecryptContext<T> {
     #[inline]
     pub fn new(moduli_count: usize, poly_length: usize) -> Self {
         let msg_mod_q: DcrtPolynomial<Vec<T>> = DcrtPolynomial::zero(moduli_count * poly_length);
-        let msg_mod_t_gamma: CrtPolynomial<Vec<T>> = CrtPolynomial::zero(2 * poly_length);
         let fast_convert_buffer = vec![T::ZERO; moduli_count * poly_length];
 
         Self {
             msg_mod_q,
-            msg_mod_t_gamma,
             fast_convert_buffer,
         }
     }
@@ -868,7 +886,6 @@ impl<T: FheUint> DcrtGlweDecryptContext<T> {
     pub fn as_mut(&mut self) -> DcrtGlweDecryptContextRefMut<'_, T> {
         DcrtGlweDecryptContextRefMut {
             msg_mod_q: &mut self.msg_mod_q,
-            msg_mod_t_gamma: &mut self.msg_mod_t_gamma,
             fast_convert_buffer: &mut self.fast_convert_buffer,
         }
     }

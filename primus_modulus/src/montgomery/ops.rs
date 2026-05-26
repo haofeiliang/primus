@@ -2,7 +2,7 @@ use primus_integer::UnsignedInteger;
 use primus_reduce::ReduceError;
 use primus_reduce::prelude::*;
 
-use crate::UintModulus;
+use crate::common::uint;
 
 use super::MontgomeryModulus;
 
@@ -117,7 +117,7 @@ impl<T: UnsignedInteger> ReduceOnceAssign<T> for MontgomeryModulus<T> {
 }
 
 // ---------------------------------------------------------------------------
-// Basic arithmetic — inlined instead of delegating to UintModulus
+// Basic arithmetic
 // ---------------------------------------------------------------------------
 
 impl<T: UnsignedInteger> ReduceAdd<T> for MontgomeryModulus<T> {
@@ -125,19 +125,14 @@ impl<T: UnsignedInteger> ReduceAdd<T> for MontgomeryModulus<T> {
 
     #[inline(always)]
     fn reduce_add(self, a: T, b: T) -> Self::Output {
-        let sum = a.wrapping_add(b);
-        if sum < a || sum >= self.value {
-            sum.wrapping_sub(self.value)
-        } else {
-            sum
-        }
+        uint::reduce_add(self.value, a, b)
     }
 }
 
 impl<T: UnsignedInteger> ReduceAddAssign<T> for MontgomeryModulus<T> {
     #[inline(always)]
     fn reduce_add_assign(self, a: &mut T, b: T) {
-        *a = self.reduce_add(*a, b);
+        uint::reduce_add_assign(self.value, a, b)
     }
 }
 
@@ -146,19 +141,14 @@ impl<T: UnsignedInteger> ReduceDouble<T> for MontgomeryModulus<T> {
 
     #[inline(always)]
     fn reduce_double(self, value: T) -> Self::Output {
-        let d = value.wrapping_shl(1);
-        if d < value || d >= self.value {
-            d.wrapping_sub(self.value)
-        } else {
-            d
-        }
+        uint::reduce_double(self.value, value)
     }
 }
 
 impl<T: UnsignedInteger> ReduceDoubleAssign<T> for MontgomeryModulus<T> {
     #[inline(always)]
     fn reduce_double_assign(self, value: &mut T) {
-        *value = self.reduce_double(*value);
+        uint::reduce_double_assign(self.value, value)
     }
 }
 
@@ -167,18 +157,14 @@ impl<T: UnsignedInteger> ReduceSub<T> for MontgomeryModulus<T> {
 
     #[inline(always)]
     fn reduce_sub(self, a: T, b: T) -> Self::Output {
-        if a >= b {
-            a - b
-        } else {
-            a.wrapping_add(self.value - b)
-        }
+        uint::reduce_sub(self.value, a, b)
     }
 }
 
 impl<T: UnsignedInteger> ReduceSubAssign<T> for MontgomeryModulus<T> {
     #[inline(always)]
     fn reduce_sub_assign(self, a: &mut T, b: T) {
-        *a = self.reduce_sub(*a, b);
+        uint::reduce_sub_assign(self.value, a, b)
     }
 }
 
@@ -187,18 +173,14 @@ impl<T: UnsignedInteger> ReduceNeg<T> for MontgomeryModulus<T> {
 
     #[inline(always)]
     fn reduce_neg(self, value: T) -> Self::Output {
-        if value.is_zero() {
-            T::ZERO
-        } else {
-            self.value - value
-        }
+        uint::reduce_neg(self.value, value)
     }
 }
 
 impl<T: UnsignedInteger> ReduceNegAssign<T> for MontgomeryModulus<T> {
     #[inline(always)]
     fn reduce_neg_assign(self, value: &mut T) {
-        *value = self.reduce_neg(*value);
+        uint::reduce_neg_assign(self.value, value)
     }
 }
 
@@ -342,9 +324,7 @@ impl<T: UnsignedInteger> TryReduceInv<T> for MontgomeryModulus<T> {
     #[inline]
     fn try_reduce_inv(self, value: T) -> Result<T, ReduceError<T>> {
         let std_val = self.from_montgomery(value);
-        UintModulus(self.value)
-            .try_reduce_inv(std_val)
-            .map(|inv| self.to_montgomery(inv))
+        uint::try_reduce_inv(self.value, std_val).map(|inv| self.to_montgomery(inv))
     }
 }
 
@@ -354,7 +334,7 @@ impl<T: UnsignedInteger> ReduceInv<T> for MontgomeryModulus<T> {
     #[inline]
     fn reduce_inv(self, value: T) -> Self::Output {
         let std_val = self.from_montgomery(value);
-        let inv = UintModulus(self.value).reduce_inv(std_val);
+        let inv = uint::reduce_inv(self.value, std_val);
         self.to_montgomery(inv)
     }
 }

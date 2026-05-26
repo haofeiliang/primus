@@ -2,7 +2,7 @@ use primus_data::{DataMut, RawData};
 use primus_factor::{FactorMul, LazyFactorMul, ShoupFactor};
 use primus_integer::FheUint;
 use primus_modulo::{AddModulo, ModuloOnce, ModuloOnceAssign};
-use primus_modulus::UintModulus;
+use primus_modulus::CompactModulus;
 use primus_poly::{NttPolynomial, Polynomial};
 use primus_reduce::FieldContext;
 use primus_reduce::prelude::*;
@@ -167,7 +167,7 @@ impl<T: FheUint> NttTable for UintNttTable<T> {
             return Err(NttError::DegreeTooLarge { degree: n, modulus });
         }
 
-        let inv_n = to_root_type(UintModulus(modulus).reduce_inv(n_cast));
+        let inv_n = to_root_type(CompactModulus(modulus).reduce_inv(n_cast));
 
         // let pool = Pool::new_with(2, || vec![ConstZero::ZERO; n]);
 
@@ -224,7 +224,7 @@ impl<T: FheUint> NttTable for UintNttTable<T> {
                 let root = root_iter.next().unwrap();
                 let (v0, v1) = vc.split_at_mut(gap);
                 for (i, j) in core::iter::zip(v0, v1) {
-                    let u = (*i).modulo_once(UintModulus(twice_modulus));
+                    let u = (*i).modulo_once(CompactModulus(twice_modulus));
                     let v = root.lazy_factor_mul_modulo(*j, modulus);
                     *i = u + v;
                     *j = u + twice_modulus - v;
@@ -240,8 +240,8 @@ impl<T: FheUint> NttTable for UintNttTable<T> {
         let twice_modulus = modulus << 1u32;
         poly.iter_mut().for_each(|v| {
             *v = (*v)
-                .modulo_once(UintModulus(twice_modulus))
-                .modulo_once(UintModulus(modulus));
+                .modulo_once(CompactModulus(twice_modulus))
+                .modulo_once(CompactModulus(modulus));
         });
     }
 
@@ -263,7 +263,7 @@ impl<T: FheUint> NttTable for UintNttTable<T> {
                 for (i, j) in core::iter::zip(v0, v1) {
                     let u = *i;
                     let v = *j;
-                    *i = u.add_modulo(v, UintModulus(twice_modulus));
+                    *i = u.add_modulo(v, CompactModulus(twice_modulus));
                     *j = root.lazy_factor_mul_modulo(u + twice_modulus - v, modulus);
                 }
             }
@@ -292,8 +292,7 @@ impl<T: FheUint> NttTable for UintNttTable<T> {
 
         let modulus = self.modulus();
         values.iter_mut().for_each(|v| {
-            v.modulo_once_assign(UintModulus(modulus));
-            // UintModulus(modulus).reduce_once_assign(v);
+            v.modulo_once_assign(CompactModulus(modulus));
         });
     }
 

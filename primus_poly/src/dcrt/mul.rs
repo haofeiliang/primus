@@ -1,7 +1,7 @@
 use primus_data::{Data, DataMut, RawData};
 use primus_factor::{FactorMul, FactorSliceOps, ShoupFactor};
 use primus_integer::{FheUint, izip};
-use primus_modulus::UintModulus;
+use primus_modulus::CompactModulus;
 use primus_reduce::{ReduceAddAssign, ReduceMulAddSlice, ReduceMulSlice, ReduceSub};
 
 #[cfg(feature = "simd")]
@@ -41,8 +41,8 @@ macro_rules! impl_butterfly_blanket {
             ) {
                 izip!(lhs, rhs, w, result).for_each(|(a, &s, &w, b)| {
                     let a_orig = *a;
-                    UintModulus(modulus).reduce_add_assign(a, s);
-                    let diff = UintModulus(modulus).reduce_sub(a_orig, s);
+                    CompactModulus(modulus).reduce_add_assign(a, s);
+                    let diff = CompactModulus(modulus).reduce_sub(a_orig, s);
                     *b = w.factor_mul_modulo(diff, modulus);
                 });
             }
@@ -96,7 +96,7 @@ macro_rules! impl_butterfly_simd {
                 }
 
                 // scalar remainder
-                let m_ctx = UintModulus(modulus);
+                let m_ctx = CompactModulus(modulus);
                 for (((a, &s), &w), b) in lhs_rem.iter_mut().zip(rhs_rem).zip(w_rem).zip(res_rem) {
                     let a_orig = *a;
                     m_ctx.reduce_add_assign(a, s);
