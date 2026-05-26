@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::FheUint;
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial, PolynomialIter, PolynomialIterMut};
 use primus_reduce::FieldContext;
@@ -16,7 +17,7 @@ use super::NttGlwe;
 pub struct Glwe<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(Glwe<S>);
 impl_bytes_conversion!(Glwe<S>);
@@ -29,7 +30,7 @@ impl_ntt!(Glwe<S>, NttGlwe);
 impl<S, T> Glwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs a multiplication on the `self` [`Glwe<S>`] with another `ntt_poly` [`NttPolynomial<A>`],
     /// store the result into `result` [`NttGlwe<B>`].

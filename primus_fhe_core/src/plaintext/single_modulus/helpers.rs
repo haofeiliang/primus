@@ -1,10 +1,10 @@
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 
 /// Computes `round(lhs * rhs / divisor)`.
 #[inline]
 pub(super) fn div_round<T>(lhs: T, rhs: T, divisor: T) -> T
 where
-    T: UnsignedInteger,
+    T: FheUint,
 {
     let (lo, hi) = lhs.carrying_mul(rhs, divisor >> 1u32);
     T::div_wide(lo, hi, divisor)
@@ -14,7 +14,7 @@ where
 #[inline]
 pub(super) fn div_round_narrow<T>(lhs: T, rhs: T, divisor: T) -> T
 where
-    T: UnsignedInteger,
+    T: FheUint,
 {
     let product = lhs * rhs;
     let (mut quotient, rem) = product.div_rem(divisor);
@@ -35,14 +35,14 @@ where
 }
 
 #[inline]
-pub(super) fn centered_half<T: UnsignedInteger>(t: T) -> T {
+pub(super) fn centered_half<T: FheUint>(t: T) -> T {
     (t >> 1u32) + (t & T::ONE)
 }
 
 #[inline]
 pub(super) fn checked_message<M, T>(message: M) -> T
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: TryInto<T>,
 {
     message
@@ -54,7 +54,7 @@ where
 #[inline]
 pub(super) fn lift_centered<T>(message: T, t: T) -> (T, bool)
 where
-    T: UnsignedInteger,
+    T: FheUint,
 {
     let half = centered_half(t);
 
@@ -66,7 +66,7 @@ where
 }
 
 #[inline]
-pub(super) fn lift_centered_from_raw<T: UnsignedInteger>(message: T, t: T, half: T) -> (T, bool) {
+pub(super) fn lift_centered_from_raw<T: FheUint>(message: T, t: T, half: T) -> (T, bool) {
     if message < half {
         (message, false)
     } else {

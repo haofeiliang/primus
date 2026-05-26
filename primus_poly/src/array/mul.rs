@@ -1,5 +1,6 @@
+use primus_data::{Data, DataMut, RawData};
 use primus_factor::FactorSliceOps;
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
+use primus_integer::{FheUint, izip};
 use primus_reduce::{ReduceAdd, ReduceMul, ReduceMulAddSlice, ReduceMulSlice, ReduceSub};
 
 use super::ArrayBase;
@@ -7,7 +8,7 @@ use super::ArrayBase;
 impl<S, T> ArrayBase<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `self *= scalar` according to `modulus`.
     #[inline]
@@ -84,7 +85,7 @@ where
 impl<S, T> ArrayBase<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs element wise modular multiplication operation `result = self * rhs` according to `modulus`.
     #[inline]

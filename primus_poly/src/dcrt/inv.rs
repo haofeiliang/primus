@@ -1,4 +1,5 @@
-use primus_integer::{DataMut, RawData, UnsignedInteger, izip};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::{FheUint, izip};
 use primus_reduce::{ReduceInv, ReduceMul};
 
 use super::DcrtPolynomial;
@@ -6,7 +7,7 @@ use super::DcrtPolynomial;
 #[inline]
 unsafe fn invert_slice_unchecked<T, M>(values: &mut [T], modulus: M, scratch: &mut [T])
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: Copy + ReduceMul<T, Output = T> + ReduceInv<T, Output = T>,
 {
     if values.is_empty() {
@@ -37,7 +38,7 @@ where
 impl<S, T> DcrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs the point-wise inverse for each modulus component.
     ///

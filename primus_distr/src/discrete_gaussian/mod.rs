@@ -1,4 +1,4 @@
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 use rand::{Rng, distr::Distribution};
 
 mod cdt;
@@ -15,14 +15,14 @@ use crate::DistrErr;
 
 /// The gaussian distribution `N(mean, std_dev**2)`.
 #[derive(Clone)]
-pub enum DiscreteGaussian<T: UnsignedInteger> {
+pub enum DiscreteGaussian<T: FheUint> {
     /// CDTSampler
     Cdt(CDTSampler<T>),
     /// DiscreteZiggurat
     Ziggurat(DiscreteZiggurat<T>),
 }
 
-impl<T: UnsignedInteger> DiscreteGaussian<T> {
+impl<T: FheUint> DiscreteGaussian<T> {
     /// Construct, from mean and standard deviation
     ///
     /// Parameters:
@@ -81,7 +81,7 @@ impl<T: UnsignedInteger> DiscreteGaussian<T> {
     }
 }
 
-impl<T: UnsignedInteger> Distribution<T> for DiscreteGaussian<T> {
+impl<T: FheUint> Distribution<T> for DiscreteGaussian<T> {
     #[inline]
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> T {
         match self {

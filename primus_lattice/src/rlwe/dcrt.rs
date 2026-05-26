@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger, izip};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::{FheUint, izip};
 use primus_ntt::DcrtTable;
 use primus_poly::{ArrayBase, DcrtPolynomial, DcrtPolynomialIter, DcrtPolynomialIterMut};
 use primus_reduce::FieldContext;
@@ -18,7 +19,7 @@ pub type DcrtRlweOwned<T> = DcrtRlwe<Vec<T>>;
 pub struct DcrtRlwe<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(DcrtRlwe<S>);
 impl_bytes_conversion!(DcrtRlwe<S>);
@@ -31,7 +32,7 @@ impl_crt_intt!(DcrtRlwe<S>, CrtRlwe);
 impl<S, T> DcrtRlwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs a multiplication on the `self` [`DcrtRlwe<S>`] with another `dcrt_poly` [`DcrtPolynomial<A>`],
     /// store the result into `result` [`DcrtRlwe<B>`].

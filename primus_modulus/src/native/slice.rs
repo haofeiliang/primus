@@ -1,5 +1,8 @@
 use primus_reduce::prelude::*;
 
+#[cfg(feature = "simd")]
+use primus_integer::SimdUnsignedInteger;
+
 use super::NativeModulus;
 
 // ===========================================================================
@@ -61,7 +64,7 @@ macro_rules! impl_basic_slice_simd {
 #[cfg(feature = "simd")]
 macro_rules! native_simd {
     ($($t:ty),*) => {
-        $( impl_basic_slice_simd!(NativeModulus<$t>, $t, primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize); )*
+        $( impl_basic_slice_simd!(NativeModulus<$t>, $t, <$t>::LANE_COUNT); )*
     };
 }
 
@@ -218,54 +221,54 @@ macro_rules! native_ext_simd {
             impl ReduceMulSlice<$t> for NativeModulus<$t> {
                 #[inline]
                 fn reduce_mul_slice_assign(self, a: &mut [$t], b: &[$t]) {
-                    super::simd::reduce_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(a, b)
+                    super::simd::reduce_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(a, b)
                 }
                 #[inline]
                 fn reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
-                    super::simd::reduce_mul_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(a, b, output)
+                    super::simd::reduce_mul_slice_to::<$t, { <$t>::LANE_COUNT }>(a, b, output)
                 }
                 #[inline]
                 fn reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) {
-                    super::simd::reduce_scalar_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(a, scalar)
+                    super::simd::reduce_scalar_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(a, scalar)
                 }
                 #[inline]
                 fn reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) {
-                    super::simd::reduce_scalar_mul_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(a, scalar, output)
+                    super::simd::reduce_scalar_mul_slice_to::<$t, { <$t>::LANE_COUNT }>(a, scalar, output)
                 }
             }
             impl ReduceMulAddSlice<$t> for NativeModulus<$t> {
                 #[inline]
                 fn reduce_add_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) {
-                    super::simd::reduce_add_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(acc, a, b)
+                    super::simd::reduce_add_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(acc, a, b)
                 }
                 #[inline]
                 fn reduce_sub_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) {
-                    super::simd::reduce_sub_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(acc, a, b)
+                    super::simd::reduce_sub_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(acc, a, b)
                 }
                 #[inline]
                 fn reduce_add_scalar_mul_slice_assign(
                     self, acc: &mut [$t], scalar: $t, b: &[$t],
                 ) {
-                    super::simd::reduce_add_scalar_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(acc, scalar, b)
+                    super::simd::reduce_add_scalar_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(acc, scalar, b)
                 }
                 #[inline]
                 fn reduce_mul_add_slice_to(
                     self, a: &[$t], b: &[$t], c: &[$t], output: &mut [$t],
                 ) {
-                    super::simd::reduce_mul_add_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(a, b, c, output)
+                    super::simd::reduce_mul_add_slice_to::<$t, { <$t>::LANE_COUNT }>(a, b, c, output)
                 }
                 #[inline]
                 fn reduce_scalar_mul_add_slice_to(
                     self, scalar: $t, b: &[$t], c: &[$t], output: &mut [$t],
                 ) {
-                    super::simd::reduce_scalar_mul_add_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(scalar, b, c, output)
+                    super::simd::reduce_scalar_mul_add_slice_to::<$t, { <$t>::LANE_COUNT }>(scalar, b, c, output)
                 }
             }
             impl ReduceDotProduct<$t> for NativeModulus<$t> {
                 type Output = $t;
                 #[inline]
                 fn reduce_dot_product(self, a: impl AsRef<[$t]>, b: impl AsRef<[$t]>) -> $t {
-                    super::simd::reduce_dot_product::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(a.as_ref(), b.as_ref())
+                    super::simd::reduce_dot_product::<$t, { <$t>::LANE_COUNT }>(a.as_ref(), b.as_ref())
                 }
                 #[inline]
                 fn reduce_dot_product_iter(

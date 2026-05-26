@@ -1,6 +1,6 @@
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 
-pub struct DcrtGlevContext<T: UnsignedInteger> {
+pub struct DcrtGlevContext<T: FheUint> {
     adjust_big_uint_values: Vec<T>,
     decomposed_unsigned_values: Vec<T>,
     carries: Vec<bool>,
@@ -8,7 +8,7 @@ pub struct DcrtGlevContext<T: UnsignedInteger> {
     compose_buffer: Vec<T>,
 }
 
-pub struct DcrtGlevContextRefMut<'a, T: UnsignedInteger> {
+pub struct DcrtGlevContextRefMut<'a, T: FheUint> {
     pub adjust_big_uint_values: &'a mut [T],
     pub decomposed_unsigned_values: &'a mut [T],
     pub carries: &'a mut [bool],
@@ -16,7 +16,7 @@ pub struct DcrtGlevContextRefMut<'a, T: UnsignedInteger> {
     pub compose_buffer: &'a mut [T],
 }
 
-impl<T: UnsignedInteger> DcrtGlevContext<T> {
+impl<T: FheUint> DcrtGlevContext<T> {
     pub fn new(
         poly_length: usize,
         crt_poly_len: usize,

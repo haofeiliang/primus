@@ -1,4 +1,4 @@
-use primus_integer::{DataMut, RawData};
+use primus_data::{DataMut, RawData};
 use primus_poly::{NttPolynomial, Polynomial};
 use primus_reduce::FieldContext;
 

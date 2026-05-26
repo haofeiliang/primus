@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger, izip};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::{FheUint, izip};
 use primus_ntt::DcrtTable;
 use primus_poly::ArrayBase;
 use primus_reduce::FieldContext;
@@ -18,7 +19,7 @@ use super::CrtGgsw;
 pub struct DcrtGgsw<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(DcrtGgsw<S>);
 impl_bytes_conversion!(DcrtGgsw<S>);

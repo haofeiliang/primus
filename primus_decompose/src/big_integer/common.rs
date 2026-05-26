@@ -1,18 +1,18 @@
 use std::iter::FusedIterator;
 
-use primus_integer::{BigUint, UnsignedInteger, izip};
+use primus_integer::{BigUint, FheUint, izip};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(bound(deserialize = "T: UnsignedInteger"))]
-pub struct ValueMask<T: UnsignedInteger> {
+#[serde(bound(deserialize = "T: FheUint"))]
+pub struct ValueMask<T: FheUint> {
     index: usize,
     mask: [T; 2],
     shr_bits: u32,
     shl_bits: u32,
 }
 
-impl<T: UnsignedInteger> ValueMask<T> {
+impl<T: FheUint> ValueMask<T> {
     #[inline]
     pub fn new(basis_minus_one: T, drop_bits: u32) -> Self {
         let index = (drop_bits / T::BITS) as usize;
@@ -63,14 +63,14 @@ impl<T: UnsignedInteger> ValueMask<T> {
     }
 }
 
-pub struct BigUintSignedDecomposerIter<'a, T: UnsignedInteger> {
+pub struct BigUintSignedDecomposerIter<'a, T: FheUint> {
     pub(super) value_masks: std::slice::Iter<'a, ValueMask<T>>,
     pub(super) carry_mask: T,
     pub(super) basis_minus_one: T,
     pub(super) modulus_minus_basis: &'a [T],
 }
 
-impl<'a, T: UnsignedInteger> Iterator for BigUintSignedDecomposerIter<'a, T> {
+impl<'a, T: FheUint> Iterator for BigUintSignedDecomposerIter<'a, T> {
     type Item = OnceBigUintSignedDecomposer<'a, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -85,17 +85,17 @@ impl<'a, T: UnsignedInteger> Iterator for BigUintSignedDecomposerIter<'a, T> {
     }
 }
 
-impl<'a, T: UnsignedInteger> FusedIterator for BigUintSignedDecomposerIter<'a, T> {}
+impl<'a, T: FheUint> FusedIterator for BigUintSignedDecomposerIter<'a, T> {}
 
 /// The signed decomposition operator which can execute once decomposition.
-pub struct OnceBigUintSignedDecomposer<'a, T: UnsignedInteger> {
+pub struct OnceBigUintSignedDecomposer<'a, T: FheUint> {
     pub(super) value_mask: ValueMask<T>,
     pub(super) carry_mask: T,
     pub(super) basis_minus_one: T,
     pub(super) modulus_minus_basis: BigUint<&'a [T]>,
 }
 
-impl<'a, T: UnsignedInteger> OnceBigUintSignedDecomposer<'a, T> {
+impl<'a, T: FheUint> OnceBigUintSignedDecomposer<'a, T> {
     /// Execute once decomposition and return the decomposed value and carry for next decomposition.
     #[inline]
     pub fn decompose(&self, value: &[T], carry: bool) -> (Vec<T>, bool) {

@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::FheUint;
 use primus_reduce::ReduceNegSlice;
 
 use super::ArrayBase;
@@ -6,7 +7,7 @@ use super::ArrayBase;
 impl<S, T> ArrayBase<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs the unary `-` operation.
     #[inline]
@@ -31,7 +32,7 @@ where
 impl<S, T> ArrayBase<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs the unary `-` operation.
     #[inline]

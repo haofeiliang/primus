@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::FheUint;
 use primus_lattice::rlwe::NttRlwe;
 use primus_ntt::NttTable;
 use primus_poly::{NttPolynomial, Polynomial};
@@ -10,7 +11,7 @@ use crate::{NttRlweCiphertext, NttRlweSecretKey, RlweParameters};
 pub struct NttRlwePublicKey<S>
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger,
+    <S as RawData>::Elem: FheUint,
 {
     key: NttRlwe<S>,
 }
@@ -18,7 +19,7 @@ where
 impl<S, T> AsRef<[T]> for NttRlwePublicKey<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn as_ref(&self) -> &[T] {
@@ -29,7 +30,7 @@ where
 impl<S, T> AsMut<[T]> for NttRlwePublicKey<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn as_mut(&mut self) -> &mut [T] {
@@ -40,7 +41,7 @@ where
 impl<S, T> From<NttRlwe<S>> for NttRlwePublicKey<S>
 where
     S: RawData<Elem = T>,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn from(key: NttRlwe<S>) -> Self {
@@ -48,7 +49,7 @@ where
     }
 }
 
-impl<T: UnsignedInteger> NttRlwePublicKey<Vec<T>> {
+impl<T: FheUint> NttRlwePublicKey<Vec<T>> {
     pub fn new<M, Table, R>(
         secret_key: &NttRlweSecretKey<T>,
         params: &RlweParameters<T, M>,
@@ -90,7 +91,7 @@ impl<T: UnsignedInteger> NttRlwePublicKey<Vec<T>> {
 impl<S, T> NttRlwePublicKey<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`NttRlwePublicKey<T>`] from bytes `data`.
     #[inline]
@@ -104,7 +105,7 @@ where
 impl<S, T> NttRlwePublicKey<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`NttRlwePublicKey<T>`] from bytes `data`.
     #[inline]
@@ -121,7 +122,7 @@ where
 impl<S, T> NttRlwePublicKey<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Converts [`NttRlwePublicKey<T>`] into bytes.
     #[inline]

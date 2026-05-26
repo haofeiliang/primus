@@ -1,16 +1,23 @@
 //! Tests for the `#[derive(Barrett)]` proc macro — verifies that the generated
 //! zero-sized modulus type compiles and produces correct results.
 
+use primus_modulus::Barrett;
+
+#[derive(Barrett)]
+#[modulus(ty = u32, value = 536813569)]
+struct Modulus;
+
+#[derive(Barrett)]
+#[modulus(ty = u32, value = 132120577)]
+struct _ModulusCheck;
+
 #[cfg(all(test, feature = "derive"))]
 mod u32tests {
-    use primus_modulus::Barrett;
     use primus_reduce::FieldContext;
     use primus_reduce::prelude::*;
     use rand::{distr::Uniform, prelude::*};
 
-    #[derive(Barrett)]
-    #[modulus(ty = u32, value = 536813569)]
-    struct Modulus;
+    use super::Modulus;
 
     type ValueT = u32;
     // type WideT = u64;

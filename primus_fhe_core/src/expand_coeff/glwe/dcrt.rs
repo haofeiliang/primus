@@ -1,7 +1,8 @@
 use std::sync::{Arc, Mutex};
 
+use primus_data::{Data, DataMut, RawData};
 use primus_factor::ShoupFactor;
-use primus_integer::{AsInto, BigUint, Data, DataMut, RawData, UnsignedInteger};
+use primus_integer::{AsInto, BigUint, FheUint};
 use primus_ntt::DcrtTable;
 use primus_reduce::FieldContext;
 use primus_rns::RNSBase;
@@ -17,7 +18,7 @@ pub type DcrtGlweExpandCoeffContext<T> = DcrtGlweTraceContext<T>;
 ///
 /// Contexts are lazily allocated on demand and reused via `acquire`/`release`.
 /// The pool grows up to the number of concurrent worker threads.
-pub struct DcrtGlweExpandCoeffSyncPool<T: UnsignedInteger> {
+pub struct DcrtGlweExpandCoeffSyncPool<T: FheUint> {
     contexts: Mutex<Vec<DcrtGlweExpandCoeffContext<T>>>,
     dimension: usize,
     poly_length: usize,
@@ -26,7 +27,7 @@ pub struct DcrtGlweExpandCoeffSyncPool<T: UnsignedInteger> {
     big_uint_poly_len: usize,
 }
 
-impl<T: UnsignedInteger> DcrtGlweExpandCoeffSyncPool<T> {
+impl<T: FheUint> DcrtGlweExpandCoeffSyncPool<T> {
     /// Creates an empty pool. Contexts are allocated lazily on first [`Self::acquire`].
     pub fn new(
         dimension: usize,
@@ -109,12 +110,12 @@ impl<T: UnsignedInteger> DcrtGlweExpandCoeffSyncPool<T> {
 ///
 /// Each rayon worker thread holds one guard (via `for_each_init`), so the total
 /// number of mutex lock operations per level is O(threads) instead of O(pairs).
-struct PoolGuard<'a, T: UnsignedInteger> {
+struct PoolGuard<'a, T: FheUint> {
     ctx: Option<DcrtGlweExpandCoeffContext<T>>,
     pool: &'a DcrtGlweExpandCoeffSyncPool<T>,
 }
 
-impl<T: UnsignedInteger> PoolGuard<'_, T> {
+impl<T: FheUint> PoolGuard<'_, T> {
     fn as_mut(
         &mut self,
     ) -> (
@@ -125,7 +126,7 @@ impl<T: UnsignedInteger> PoolGuard<'_, T> {
     }
 }
 
-impl<T: UnsignedInteger> Drop for PoolGuard<'_, T> {
+impl<T: FheUint> Drop for PoolGuard<'_, T> {
     fn drop(&mut self) {
         if let Some(ctx) = self.ctx.take() {
             self.pool.release(ctx);
@@ -134,7 +135,7 @@ impl<T: UnsignedInteger> Drop for PoolGuard<'_, T> {
 }
 
 #[derive(Clone)]
-pub struct DcrtGlweExpandCoeffKey<T: UnsignedInteger, Table>
+pub struct DcrtGlweExpandCoeffKey<T: FheUint, Table>
 where
     Table: DcrtTable<ValueT = T>,
 {
@@ -144,7 +145,7 @@ where
     table: Arc<Table>,
 }
 
-impl<T: UnsignedInteger, Table> DcrtGlweExpandCoeffKey<T, Table>
+impl<T: FheUint, Table> DcrtGlweExpandCoeffKey<T, Table>
 where
     Table: DcrtTable<ValueT = T>,
 {
@@ -231,7 +232,9 @@ where
                 n_residue
                     .iter()
                     .zip(rns_base.moduli())
-                    .map(|(&n, m)| ShoupFactor::new(m.reduce_inv(n), m.value_unchecked()))
+                    .map(|(&n, m)| {
+                        ShoupFactor::new(m.reduce_inv(n), unsafe { m.value_unchecked() })
+                    })
                     .collect()
             })
             .collect()

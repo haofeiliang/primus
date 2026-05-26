@@ -1,6 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::FheUint;
 
 mod basic;
 mod random;
@@ -20,12 +21,12 @@ pub type ArrayMut<'a, T> = ArrayBase<&'a mut [T]>;
 pub struct ArrayBase<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl<S> ArrayBase<S>
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger,
+    <S as RawData>::Elem: FheUint,
 {
     /// Creates a new [`ArrayBase<S>`].
     #[inline]
@@ -37,7 +38,7 @@ where
 impl<S, T> ArrayBase<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     pub fn from_slice(data: &[T]) -> Self {
@@ -53,7 +54,7 @@ where
 impl<S, T> ArrayBase<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     pub fn copy_from_slice(&mut self, src: &[T]) {
@@ -68,7 +69,7 @@ where
 impl<S, T> ArrayBase<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Returns the number of elements.
     #[inline]
@@ -92,7 +93,7 @@ where
 impl<S, T> FromIterator<T> for ArrayBase<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
@@ -103,7 +104,7 @@ where
 impl<S, T> Deref for ArrayBase<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     type Target = S;
 
@@ -116,7 +117,7 @@ where
 impl<S, T> DerefMut for ArrayBase<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {

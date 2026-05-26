@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, Size, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::{FheUint, Size};
 use primus_reduce::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -11,12 +12,12 @@ use super::Lwe;
 pub struct MultiMsgLwe<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl<S, T> MultiMsgLwe<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`MultiMsgLwe<S, T>`] from bytes `data`.
     #[inline]
@@ -42,7 +43,7 @@ where
 impl<S, T> MultiMsgLwe<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`MultiMsgLwe<S, T>`] from bytes `data`.
     #[inline]
@@ -144,7 +145,7 @@ where
 impl<S, T> MultiMsgLwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Converts [`MultiMsgLwe<S, T>`] into bytes.
     #[inline]
@@ -225,7 +226,7 @@ where
     }
 }
 
-impl<T: UnsignedInteger> MultiMsgLwe<Vec<T>> {
+impl<T: FheUint> MultiMsgLwe<Vec<T>> {
     /// Sample extract [`Lwe<Vec<T>>`].
     #[inline]
     pub fn extract_rlwe_mode<M>(&self, dimension: usize, index: usize, modulus: M) -> Lwe<Vec<T>>
@@ -272,7 +273,7 @@ impl<T: UnsignedInteger> MultiMsgLwe<Vec<T>> {
 impl<S, T> Size for MultiMsgLwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn byte_count(&self) -> usize {

@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
-use primus_integer::{Data, RawData, UnsignedInteger};
+use primus_data::{Data, RawData};
+use primus_integer::FheUint;
 use primus_ntt::NttTable;
 use primus_poly::{NttPolynomial, NttPolynomialOwned, PolynomialOwned};
 use primus_reduce::FieldContext;
@@ -10,21 +11,21 @@ use crate::{NttNtruCiphertext, RingSecretKeyType};
 
 /// Represents a secret key for the NTRU cryptographic scheme.
 #[derive(Clone)]
-pub struct NtruSecretKey<T: UnsignedInteger> {
+pub struct NtruSecretKey<T: FheUint> {
     key: PolynomialOwned<T>,
     distr: RingSecretKeyType,
 }
 
-impl<T: UnsignedInteger> Zeroize for NtruSecretKey<T> {
+impl<T: FheUint> Zeroize for NtruSecretKey<T> {
     #[inline]
     fn zeroize(&mut self) {
         self.key.0.zeroize();
     }
 }
 
-impl<T: UnsignedInteger> ZeroizeOnDrop for NtruSecretKey<T> {}
+impl<T: FheUint> ZeroizeOnDrop for NtruSecretKey<T> {}
 
-impl<T: UnsignedInteger> Deref for NtruSecretKey<T> {
+impl<T: FheUint> Deref for NtruSecretKey<T> {
     type Target = PolynomialOwned<T>;
 
     #[inline]
@@ -33,7 +34,7 @@ impl<T: UnsignedInteger> Deref for NtruSecretKey<T> {
     }
 }
 
-impl<T: UnsignedInteger> NtruSecretKey<T> {
+impl<T: FheUint> NtruSecretKey<T> {
     /// Creates a new [`NtruSecretKey<T>`].
     pub fn new(key: PolynomialOwned<T>, distr: RingSecretKeyType) -> Self {
         Self { key, distr }
@@ -47,13 +48,13 @@ impl<T: UnsignedInteger> NtruSecretKey<T> {
 
 /// Represents a secret key for the (NTT) NTRU cryptographic scheme.
 #[derive(Clone)]
-pub struct NttNtruSecretKey<T: UnsignedInteger> {
+pub struct NttNtruSecretKey<T: FheUint> {
     key: NttPolynomialOwned<T>,
     inv_key: NttPolynomialOwned<T>,
     distr: RingSecretKeyType,
 }
 
-impl<T: UnsignedInteger> Zeroize for NttNtruSecretKey<T> {
+impl<T: FheUint> Zeroize for NttNtruSecretKey<T> {
     #[inline]
     fn zeroize(&mut self) {
         self.key.0.zeroize();
@@ -61,9 +62,9 @@ impl<T: UnsignedInteger> Zeroize for NttNtruSecretKey<T> {
     }
 }
 
-impl<T: UnsignedInteger> ZeroizeOnDrop for NttNtruSecretKey<T> {}
+impl<T: FheUint> ZeroizeOnDrop for NttNtruSecretKey<T> {}
 
-impl<T: UnsignedInteger> NttNtruSecretKey<T> {
+impl<T: FheUint> NttNtruSecretKey<T> {
     /// Creates a new [`NttNtruSecretKey<T>`].
     pub fn new(
         key: NttPolynomialOwned<T>,

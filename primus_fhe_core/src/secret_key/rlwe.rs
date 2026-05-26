@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::FheUint;
 use primus_lattice::rlwe::TruncatedRlwe;
 use primus_ntt::NttTable;
 use primus_poly::{NttPolynomial, NttPolynomialOwned, Polynomial, PolynomialOwned};
@@ -13,21 +14,21 @@ use super::{LweSecretKey, LweSecretKeyType, RingSecretKeyType};
 
 /// Represents a secret key for the Ring Learning with Errors (RLWE) cryptographic scheme.
 #[derive(Clone)]
-pub struct RlweSecretKey<T: UnsignedInteger> {
+pub struct RlweSecretKey<T: FheUint> {
     key: PolynomialOwned<T>,
     distr: RingSecretKeyType,
 }
 
-impl<T: UnsignedInteger> Zeroize for RlweSecretKey<T> {
+impl<T: FheUint> Zeroize for RlweSecretKey<T> {
     #[inline]
     fn zeroize(&mut self) {
         self.key.0.zeroize();
     }
 }
 
-impl<T: UnsignedInteger> ZeroizeOnDrop for RlweSecretKey<T> {}
+impl<T: FheUint> ZeroizeOnDrop for RlweSecretKey<T> {}
 
-impl<T: UnsignedInteger> Deref for RlweSecretKey<T> {
+impl<T: FheUint> Deref for RlweSecretKey<T> {
     type Target = PolynomialOwned<T>;
 
     #[inline]
@@ -36,7 +37,7 @@ impl<T: UnsignedInteger> Deref for RlweSecretKey<T> {
     }
 }
 
-impl<T: UnsignedInteger> RlweSecretKey<T> {
+impl<T: FheUint> RlweSecretKey<T> {
     /// Creates a new [`RlweSecretKey<T>`].
     #[inline]
     pub fn new(key: PolynomialOwned<T>, distr: RingSecretKeyType) -> Self {
@@ -76,7 +77,7 @@ impl<T: UnsignedInteger> RlweSecretKey<T> {
     }
 
     #[inline]
-    pub fn from_lwe_secret_key<C: UnsignedInteger>(
+    pub fn from_lwe_secret_key<C: FheUint>(
         lwe_secret_key: &LweSecretKey<C>,
         modulus_minus_one: T,
     ) -> Self {
@@ -103,21 +104,21 @@ impl<T: UnsignedInteger> RlweSecretKey<T> {
 
 /// Represents a secret key for the (NTT) Ring Learning with Errors (RLWE) cryptographic scheme.
 #[derive(Clone)]
-pub struct NttRlweSecretKey<T: UnsignedInteger> {
+pub struct NttRlweSecretKey<T: FheUint> {
     key: NttPolynomialOwned<T>,
     distr: RingSecretKeyType,
 }
 
-impl<T: UnsignedInteger> Zeroize for NttRlweSecretKey<T> {
+impl<T: FheUint> Zeroize for NttRlweSecretKey<T> {
     #[inline]
     fn zeroize(&mut self) {
         self.key.0.zeroize();
     }
 }
 
-impl<T: UnsignedInteger> ZeroizeOnDrop for NttRlweSecretKey<T> {}
+impl<T: FheUint> ZeroizeOnDrop for NttRlweSecretKey<T> {}
 
-impl<T: UnsignedInteger> Deref for NttRlweSecretKey<T> {
+impl<T: FheUint> Deref for NttRlweSecretKey<T> {
     type Target = NttPolynomialOwned<T>;
 
     #[inline]
@@ -126,7 +127,7 @@ impl<T: UnsignedInteger> Deref for NttRlweSecretKey<T> {
     }
 }
 
-impl<T: UnsignedInteger> NttRlweSecretKey<T> {
+impl<T: FheUint> NttRlweSecretKey<T> {
     /// Creates a new [`NttRlweSecretKey<T>`].
     #[inline]
     pub fn new(key: NttPolynomialOwned<T>, distr: RingSecretKeyType) -> Self {

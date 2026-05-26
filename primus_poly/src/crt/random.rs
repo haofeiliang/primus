@@ -1,10 +1,11 @@
+use primus_data::{DataMut, RawData};
 use primus_distr::SignedDiscreteGaussian;
-use primus_integer::{DataMut, RawData, UnsignedInteger};
+use primus_integer::FheUint;
 use rand::distr::Uniform;
 
 use super::CrtPolynomial;
 
-impl<T: UnsignedInteger> CrtPolynomial<Vec<T>> {
+impl<T: FheUint> CrtPolynomial<Vec<T>> {
     /// Generate a random binary [`CrtPolynomial<Vec<T>, T>`].
     #[inline]
     pub fn random_binary<R>(poly_length: usize, moduli_count: usize, rng: &mut R) -> Self
@@ -49,7 +50,7 @@ impl<T: UnsignedInteger> CrtPolynomial<Vec<T>> {
     pub fn random_gaussian<R>(
         length: usize,
         moduli_value: &[T],
-        gaussian: &SignedDiscreteGaussian<<T as UnsignedInteger>::SignedInteger>,
+        gaussian: &SignedDiscreteGaussian<<T as FheUint>::FheSignedInt>,
         rng: &mut R,
     ) -> Self
     where
@@ -67,7 +68,7 @@ impl<T: UnsignedInteger> CrtPolynomial<Vec<T>> {
 impl<S, T> CrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     pub fn random_binary_assign<R>(&mut self, length: usize, rng: &mut R)
@@ -107,7 +108,7 @@ where
         &mut self,
         length: usize,
         moduli_value: &[T],
-        gaussian: &SignedDiscreteGaussian<<T as UnsignedInteger>::SignedInteger>,
+        gaussian: &SignedDiscreteGaussian<<T as FheUint>::FheSignedInt>,
         rng: &mut R,
     ) where
         R: rand::Rng + rand::CryptoRng,

@@ -1,7 +1,7 @@
 use primus_decompose::{big_integer::BigUintApproxSignedBasis, primitive::ApproxSignedBasis};
 use primus_distr::{DiscreteGaussian, SignedDiscreteGaussian};
 use primus_factor::ShoupFactor;
-use primus_integer::{BigUint, DivRemScalar, UnsignedInteger, multiply_many_values};
+use primus_integer::{BigUint, DivRemScalar, FheUint, multiply_many_values};
 use primus_modulo::*;
 use primus_reduce::FieldContext;
 use primus_rns::{BaseConverter, RNSBase};
@@ -13,7 +13,7 @@ use crate::{PlaintextCodec, RingSecretKeyType};
 #[derive(Clone)]
 pub struct GlweParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     /// The dimension, refers to **k** in the paper.
@@ -39,7 +39,7 @@ where
 
 impl<T, M> GlweParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     /// Creates a new [`GlweParameters<T, M>`].
@@ -59,14 +59,16 @@ where
         let cipher_modulus_uniform_distr = cipher_modulus.uniform_distribution();
         let plaintext_codec = PlaintextCodec::new(plain_modulus_value, cipher_modulus.value());
 
-        let (mut delta, rem) = cipher_modulus
-            .value_unchecked()
-            .div_rem(plain_modulus_value);
+        let (mut delta, rem) = unsafe {
+            cipher_modulus
+                .value_unchecked()
+                .div_rem(plain_modulus_value)
+        };
         if rem > (plain_modulus_value - T::ONE) / T::TWO {
             delta += T::ONE;
         }
 
-        let delta_factor = ShoupFactor::new(delta, cipher_modulus.value_unchecked());
+        let delta_factor = ShoupFactor::new(delta, unsafe { cipher_modulus.value_unchecked() });
 
         let secret_key_distribution =
             if let RingSecretKeyType::Gaussian(standard_deviation) = secret_key_type {
@@ -122,7 +124,7 @@ where
     /// Returns the cipher modulus of this [`GlweParameters<T, M>`].
     #[inline]
     pub fn cipher_modulus_value(&self) -> T {
-        self.cipher_modulus.value_unchecked()
+        unsafe { self.cipher_modulus.value_unchecked() }
     }
 
     /// Returns the cipher modulus minus one of this [`GlweParameters<T, M>`].
@@ -258,7 +260,7 @@ impl RNSGlweCommonSize {
 #[derive(Clone)]
 pub struct CrtGlweParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     common_size: RNSGlweCommonSize,
@@ -290,14 +292,14 @@ where
     converter: BaseConverter<T, M>,
     /// The distribution type of the secret key.
     secret_key_type: RingSecretKeyType,
-    secret_key_distribution: Option<SignedDiscreteGaussian<T::SignedInteger>>,
+    secret_key_distribution: Option<SignedDiscreteGaussian<<T as FheUint>::FheSignedInt>>,
     /// The noise distribution
-    noise_distribution: SignedDiscreteGaussian<T::SignedInteger>,
+    noise_distribution: SignedDiscreteGaussian<<T as FheUint>::FheSignedInt>,
 }
 
 impl<T, M> CrtGlweParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     /// Creates a new [`CrtGlweParameters<T, M>`].
@@ -310,12 +312,12 @@ where
         secret_key_type: RingSecretKeyType,
         noise_standard_deviation: f64,
     ) -> Self {
-        let t = plain_modulus.value_unchecked();
-        let gamma = gamma_modulus.value_unchecked();
+        let t = unsafe { plain_modulus.value_unchecked() };
+        let gamma = unsafe { gamma_modulus.value_unchecked() };
 
         let cipher_moduli_value: Vec<T> = cipher_moduli
             .iter()
-            .map(|qi| qi.value_unchecked())
+            .map(|qi| unsafe { qi.value_unchecked() })
             .collect();
         Self::validate_crt_moduli(t, gamma, &cipher_moduli_value);
 
@@ -497,12 +499,12 @@ where
     /// Returns the secret key distribution of this [`CrtGlweParameters<T, M>`].
     pub fn secret_key_distribution(
         &self,
-    ) -> Option<&SignedDiscreteGaussian<<T as UnsignedInteger>::SignedInteger>> {
+    ) -> Option<&SignedDiscreteGaussian<<T as FheUint>::FheSignedInt>> {
         self.secret_key_distribution.as_ref()
     }
 
     /// Returns a reference to the noise distribution of this [`CrtGlweParameters<T, M>`].
-    pub fn noise_distribution(&self) -> &SignedDiscreteGaussian<T::SignedInteger> {
+    pub fn noise_distribution(&self) -> &SignedDiscreteGaussian<<T as FheUint>::FheSignedInt> {
         &self.noise_distribution
     }
 
@@ -587,7 +589,7 @@ where
 #[derive(Clone)]
 pub struct GlevParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     /// The dimension, refers to **k** in the paper.
@@ -608,7 +610,7 @@ where
 
 impl<T, M> GlevParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     /// Creates a new [`GlevParameters<T, M>`].
@@ -759,7 +761,7 @@ impl RNSGlevCommonSize {
 #[derive(Clone)]
 pub struct CrtGlevParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     common_size: RNSGlevCommonSize,
@@ -778,14 +780,14 @@ where
     /// The distribution type of the secret key.
     secret_key_type: RingSecretKeyType,
     /// The noise's distribution.
-    noise_distribution: SignedDiscreteGaussian<<T as UnsignedInteger>::SignedInteger>,
+    noise_distribution: SignedDiscreteGaussian<<T as FheUint>::FheSignedInt>,
     /// Decompose basis for `Q`.
     basis: BigUintApproxSignedBasis<T>,
 }
 
 impl<T, M> CrtGlevParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     /// Creates a new [`CrtGlevParameters<T, M>`].
@@ -800,7 +802,7 @@ where
     ) -> Self {
         let cipher_moduli_value: Vec<T> = cipher_moduli
             .iter()
-            .map(|qi| qi.value_unchecked())
+            .map(|qi| unsafe { qi.value_unchecked() })
             .collect();
         let cipher_moduli_minus_one = cipher_moduli_value.iter().map(|&qi| qi - T::ONE).collect();
         let cipher_modulus = multiply_many_values(&cipher_moduli_value);
@@ -923,7 +925,7 @@ where
 
     /// Returns a reference to the noise distribution of this [`CrtGlevParameters<T, M>`].
     #[inline]
-    pub fn noise_distribution(&self) -> &SignedDiscreteGaussian<T::SignedInteger> {
+    pub fn noise_distribution(&self) -> &SignedDiscreteGaussian<<T as FheUint>::FheSignedInt> {
         &self.noise_distribution
     }
 

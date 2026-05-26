@@ -1,5 +1,6 @@
+use primus_data::{Data, DataMut, RawData};
 use primus_decompose::big_integer::BigUintApproxSignedBasis;
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_integer::FheUint;
 use primus_lattice::{
     context::DcrtGlevContext,
     glev::{DcrtGlevIter, DcrtGlevIterMut},
@@ -14,7 +15,7 @@ use crate::{
     DcrtGlweSecretKey,
 };
 
-pub struct CrtGlweKeySwitchingKey<T: UnsignedInteger> {
+pub struct CrtGlweKeySwitchingKey<T: FheUint> {
     key: Vec<T>,
     poly_length: usize,
     rns_poly_len: usize,
@@ -23,7 +24,7 @@ pub struct CrtGlweKeySwitchingKey<T: UnsignedInteger> {
     output_rns_glwe_mid: usize,
 }
 
-impl<T: UnsignedInteger> CrtGlweKeySwitchingKey<T> {
+impl<T: FheUint> CrtGlweKeySwitchingKey<T> {
     pub fn new<R, M, Table>(
         input_sk: &CrtGlweSecretKey<T>,
         input_params: &CrtGlweParameters<T, M>,
@@ -128,13 +129,13 @@ impl<T: UnsignedInteger> CrtGlweKeySwitchingKey<T> {
     }
 }
 
-pub struct CrtGlweKeySwitchingContext<T: UnsignedInteger> {
+pub struct CrtGlweKeySwitchingContext<T: FheUint> {
     big_uint_poly: BigUintPolynomial<Vec<T>>,
     crt_poly: CrtPolynomial<Vec<T>>,
     glev_context: DcrtGlevContext<T>,
 }
 
-impl<T: UnsignedInteger> CrtGlweKeySwitchingContext<T> {
+impl<T: FheUint> CrtGlweKeySwitchingContext<T> {
     pub fn new(
         poly_length: usize,
         crt_poly_len: usize,

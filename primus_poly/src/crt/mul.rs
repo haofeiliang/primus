@@ -1,5 +1,6 @@
+use primus_data::{Data, DataMut, RawData};
 use primus_factor::FactorSliceOps;
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
+use primus_integer::{FheUint, izip};
 use primus_reduce::{ReduceMulAddSlice, ReduceMulSlice, ReduceNegAssign};
 
 use crate::ArrayBase;
@@ -9,7 +10,7 @@ use super::CrtPolynomial;
 impl<S, T> CrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `self * scalar` according to `moduli`.
     #[inline]
@@ -134,7 +135,7 @@ where
 impl<S, T> CrtPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `result = self * scalar` according to `moduli`.
     #[inline]

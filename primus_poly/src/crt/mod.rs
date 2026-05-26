@@ -1,5 +1,6 @@
 use num_traits::Zero;
-use primus_integer::{ByteCount, Data, DataMut, DataOwned, RawData, Size, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::{ByteCount, FheUint, Size};
 
 mod add;
 mod mul;
@@ -19,14 +20,14 @@ mod sub;
 pub struct CrtPolynomial<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_iters!(CrtPolynomial, crt_poly);
 
 impl<S, T> CrtPolynomial<S>
 where
     S: RawData<Elem = T>,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`CrtPolynomial<T>`].
     #[inline]
@@ -38,7 +39,7 @@ where
 impl<S, T> CrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a [`CrtPolynomial<T>`] with all coefficients equal to zero.
     #[inline]
@@ -55,7 +56,7 @@ where
 impl<S, T> CrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Returns an iterator that allows modifying each value or coefficient of the polynomial.
     #[inline]
@@ -85,7 +86,7 @@ where
 impl<S, T> CrtPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Returns an iterator that allows reading each value or coefficient of the polynomial.
     #[inline]
@@ -108,7 +109,7 @@ where
 impl<S, T> Size for CrtPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn byte_count(&self) -> usize {
@@ -119,7 +120,7 @@ where
 impl<S, T> AsRef<[T]> for CrtPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn as_ref(&self) -> &[T] {
@@ -130,7 +131,7 @@ where
 impl<S, T> AsMut<[T]> for CrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn as_mut(&mut self) -> &mut [T] {

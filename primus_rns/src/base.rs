@@ -1,10 +1,11 @@
 use std::slice::Iter;
 
 use itertools::Itertools;
+use primus_data::{Data, DataMut, RawData};
 use primus_factor::{FactorMul, FactorSliceOps, ShoupFactor};
 use primus_integer::{
-    BigUint, BigUintIter, BigUintIterMut, Data, DataMut, RawData, UnsignedInteger, izip,
-    multiply_many_values, multiply_many_values_except_inplace,
+    BigUint, BigUintIter, BigUintIterMut, FheUint, izip, multiply_many_values,
+    multiply_many_values_except_inplace,
 };
 use primus_modulo::prelude::*;
 use primus_modulus::UintModulus;
@@ -30,7 +31,7 @@ use crate::RNSError;
 #[derive(Clone)]
 pub struct RNSBase<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     moduli: Vec<M>,
@@ -47,7 +48,7 @@ where
 // ===========================================================================
 
 /// Dispatch trait dispatching wrapping-decompose inner loops to scalar or SIMD.
-trait WrappingDecomposeDispatch: UnsignedInteger {
+trait WrappingDecomposeDispatch: FheUint {
     /// `residues[i] = if small_values[i] < half { small_values[i] } else { temp + small_values[i] }`
     fn decompose_chunk(residues: &mut [Self], small_values: &[Self], half: Self, temp: Self);
 
@@ -65,19 +66,14 @@ trait WrappingDecomposeDispatch: UnsignedInteger {
 // ---- scalar helpers ------------------------------------------------------
 
 #[inline]
-fn decompose_chunk_scalar<T: UnsignedInteger>(
-    residues: &mut [T],
-    small_values: &[T],
-    half: T,
-    temp: T,
-) {
+fn decompose_chunk_scalar<T: FheUint>(residues: &mut [T], small_values: &[T], half: T, temp: T) {
     for (residue, &value) in residues.iter_mut().zip(small_values) {
         *residue = if value < half { value } else { temp + value };
     }
 }
 
 #[inline]
-fn decompose_chunk_scaled_scalar<T: UnsignedInteger>(
+fn decompose_chunk_scaled_scalar<T: FheUint>(
     dest: &mut [T],
     small_values: &[T],
     half: T,
@@ -98,7 +94,7 @@ use primus_factor::SimdShoupFactor;
 
 #[cfg(feature = "simd")]
 #[inline]
-fn decompose_chunk_simd<T: SimdUnsignedInteger, const N: usize>(
+fn decompose_chunk_simd<T: FheUint, const N: usize>(
     residues: &mut [T],
     small_values: &[T],
     half: T,
@@ -120,7 +116,7 @@ fn decompose_chunk_simd<T: SimdUnsignedInteger, const N: usize>(
 
 #[cfg(feature = "simd")]
 #[inline]
-fn decompose_chunk_scaled_simd<T: SimdUnsignedInteger, const N: usize>(
+fn decompose_chunk_scaled_simd<T: FheUint, const N: usize>(
     dest: &mut [T],
     small_values: &[T],
     half: T,
@@ -158,7 +154,7 @@ fn decompose_chunk_scaled_simd<T: SimdUnsignedInteger, const N: usize>(
 
 macro_rules! impl_decompose_blanket {
     ($($default_kw:ident)?) => {
-        impl<T: UnsignedInteger> WrappingDecomposeDispatch for T {
+        impl<T: FheUint> WrappingDecomposeDispatch for T {
             $($default_kw)? fn decompose_chunk(residues: &mut [Self], small_values: &[Self], half: Self, temp: Self) {
                 decompose_chunk_scalar(residues, small_values, half, temp);
             }
@@ -218,21 +214,15 @@ macro_rules! impl_decompose_simd {
 }
 
 #[cfg(feature = "simd")]
-impl_decompose_simd!(u8, primus_integer::lanes::VECTOR_BITS / 8);
+impl_decompose_simd!(u16, u16::LANE_COUNT);
 #[cfg(feature = "simd")]
-impl_decompose_simd!(u16, primus_integer::lanes::VECTOR_BITS / 16);
+impl_decompose_simd!(u32, u32::LANE_COUNT);
 #[cfg(feature = "simd")]
-impl_decompose_simd!(u32, primus_integer::lanes::VECTOR_BITS / 32);
-#[cfg(feature = "simd")]
-impl_decompose_simd!(u64, primus_integer::lanes::VECTOR_BITS / 64);
-#[cfg(all(feature = "simd", target_pointer_width = "64"))]
-impl_decompose_simd!(usize, primus_integer::lanes::VECTOR_BITS / 64);
-#[cfg(all(feature = "simd", target_pointer_width = "32"))]
-impl_decompose_simd!(usize, primus_integer::lanes::VECTOR_BITS / 32);
+impl_decompose_simd!(u64, u64::LANE_COUNT);
 
 impl<T, M> RNSBase<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     /// Creates a new [`RNSBase<T, M>`].
@@ -248,7 +238,7 @@ where
     pub fn new(moduli: &[M]) -> Result<Self, RNSError> {
         let moduli_values = moduli
             .iter()
-            .map(|m| m.value_unchecked())
+            .map(|m| unsafe { m.value_unchecked() })
             .collect::<Vec<_>>();
 
         if moduli_values
@@ -275,7 +265,7 @@ where
             .zip(moduli)
             .map(|(p, &modulus)| {
                 let inv = p.modulo(modulus).try_inv_modulo(modulus).unwrap();
-                ShoupFactor::new(inv, modulus.value_unchecked())
+                ShoupFactor::new(inv, unsafe { modulus.value_unchecked() })
             })
             .collect::<Vec<ShoupFactor<T>>>();
 
@@ -341,7 +331,9 @@ where
     pub fn decompose_to_rns_factor(&self, BigUint(value): BigUint<&[T]>) -> Vec<ShoupFactor<T>> {
         self.moduli
             .iter()
-            .map(|&modulus| ShoupFactor::new(value.modulo(modulus), modulus.value_unchecked()))
+            .map(|&modulus| {
+                ShoupFactor::new(value.modulo(modulus), unsafe { modulus.value_unchecked() })
+            })
             .collect()
     }
 
@@ -350,7 +342,7 @@ where
             let half = (small_value_modulus + T::ONE) / T::TWO;
             self.moduli
                 .iter()
-                .map(|m| m.value_unchecked())
+                .map(|m| unsafe { m.value_unchecked() })
                 .map(|modulus| {
                     if value < half {
                         value
@@ -381,7 +373,7 @@ where
             let half = (small_value_modulus + T::ONE) / T::TWO;
             self.moduli
                 .iter()
-                .map(|m| m.value_unchecked())
+                .map(|m| unsafe { m.value_unchecked() })
                 .zip(residues)
                 .map(|(modulus, residue)| {
                     *residue = if value < half {
@@ -408,13 +400,13 @@ where
         debug_assert!(
             self.moduli
                 .iter()
-                .all(|m| m.value_unchecked() > small_values_modulus)
+                .all(|m| unsafe { m.value_unchecked() } > small_values_modulus)
         );
         if small_values_modulus != T::TWO {
             let half = (small_values_modulus + T::ONE) / T::TWO;
             for (residues, modulus) in multi_residues
                 .chunks_exact_mut(value_count)
-                .zip(self.moduli().iter().map(|m| m.value_unchecked()))
+                .zip(self.moduli().iter().map(|m| unsafe { m.value_unchecked() }))
             {
                 let temp = modulus - small_values_modulus;
                 T::decompose_chunk(residues, small_values, half, temp);
@@ -445,14 +437,14 @@ where
         debug_assert!(
             self.moduli
                 .iter()
-                .all(|m| m.value_unchecked() > small_values_modulus)
+                .all(|m| unsafe { m.value_unchecked() } > small_values_modulus)
         );
 
         if small_values_modulus != T::TWO {
             let half = (small_values_modulus + T::ONE) / T::TWO;
             izip!(
                 destination.chunks_exact_mut(value_count),
-                self.moduli().iter().map(|m| m.value_unchecked()),
+                self.moduli().iter().map(|m| unsafe { m.value_unchecked() }),
                 factor,
             )
             .for_each(|(dest_chunk, modulus, &factor)| {
@@ -462,7 +454,7 @@ where
         } else {
             izip!(
                 destination.chunks_exact_mut(value_count),
-                self.moduli().iter().map(|m| m.value_unchecked()),
+                self.moduli().iter().map(|m| unsafe { m.value_unchecked() }),
                 factor,
             )
             .for_each(|(dest_chunk, _modulus, &factor)| {
@@ -571,7 +563,7 @@ where
         )
         .for_each(
             |(&ri, &inv_mi, mi, &modulus): (&T, &ShoupFactor<T>, BigUint<&[T]>, &M)| {
-                let product = inv_mi.factor_mul_modulo(ri, modulus.value_unchecked());
+                let product = inv_mi.factor_mul_modulo(ri, unsafe { modulus.value_unchecked() });
                 let carry = mi.mul_value_add_inplace(product, &mut value);
                 if !carry.is_zero() || value.cmp(moduli_product).is_ge() {
                     let _ = value.sub_assign(moduli_product);
@@ -599,7 +591,7 @@ where
         )
         .for_each(
             |(&ri, &inv_mi, mi, &modulus): (&T, &ShoupFactor<T>, BigUint<&[T]>, &M)| {
-                let product = inv_mi.factor_mul_modulo(ri, modulus.value_unchecked());
+                let product = inv_mi.factor_mul_modulo(ri, unsafe { modulus.value_unchecked() });
                 let carry = mi.mul_value_add_inplace(product, value);
                 if !carry.is_zero() || value.cmp(moduli_product).is_ge() {
                     let _ = value.sub_assign(moduli_product);

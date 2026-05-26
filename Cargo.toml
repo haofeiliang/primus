@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "primus_data",
     "primus_gcd",
     "primus_integer",
     "primus_reduce",

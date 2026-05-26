@@ -1,5 +1,6 @@
 use num_traits::Zero;
-use primus_integer::{ByteCount, Data, DataMut, DataOwned, RawData, Size, UnsignedInteger, izip};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::{ByteCount, FheUint, Size, izip};
 use primus_reduce::{ReduceAdd, ReduceMul, ReduceMulAddSlice, ReduceSub};
 
 use crate::ArrayBase;
@@ -27,14 +28,14 @@ mod sub;
 pub struct DcrtPolynomial<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_iters!(DcrtPolynomial, dcrt_poly);
 
 impl<S, T> DcrtPolynomial<S>
 where
     S: RawData<Elem = T>,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`DcrtPolynomial<T>`].
     #[inline]
@@ -46,7 +47,7 @@ where
 impl<S, T> DcrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a [`DcrtPolynomial<T>`] with all coefficients equal to zero.
     #[inline]
@@ -63,7 +64,7 @@ where
 impl<S, T> DcrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Returns an iterator that allows modifying each value or coefficient of the polynomial.
     #[inline]
@@ -149,7 +150,7 @@ where
 impl<S, T> DcrtPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Returns an iterator that allows reading each value or coefficient of the polynomial.
     #[inline]
@@ -172,7 +173,7 @@ where
 impl<S, T> Size for DcrtPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn byte_count(&self) -> usize {
@@ -183,7 +184,7 @@ where
 impl<S, T> AsRef<[T]> for DcrtPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn as_ref(&self) -> &[T] {
@@ -194,7 +195,7 @@ where
 impl<S, T> AsMut<[T]> for DcrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn as_mut(&mut self) -> &mut [T] {

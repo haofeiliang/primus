@@ -46,28 +46,18 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
         impl ::primus_modulus::reduce::LazyReduceMulSlice<#ty> for #name {
             #[inline]
             fn lazy_reduce_mul_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
-                ::primus_modulus::barrett_simd_kernel::lazy_reduce_mul_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_mul_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     b,
                 )
             }
             #[inline]
             fn lazy_reduce_mul_slice_to(self, a: &[#ty], b: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::barrett_simd_kernel::lazy_reduce_mul_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_mul_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     b,
                     output,
@@ -75,13 +65,9 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
             }
             #[inline]
             fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [#ty], scalar: #ty) {
-                ::primus_modulus::barrett_simd_kernel::lazy_reduce_scalar_mul_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_scalar_mul_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     scalar,
                 )
@@ -90,13 +76,9 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
             fn lazy_reduce_scalar_mul_slice_to(
                 self, a: &[#ty], scalar: #ty, output: &mut [#ty],
             ) {
-                ::primus_modulus::barrett_simd_kernel::lazy_reduce_scalar_mul_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_scalar_mul_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     scalar,
                     output,
@@ -122,6 +104,7 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
 
             #[inline]
             fn lazy_reduce_sub_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {
+                use ::primus_modulus::reduce::ReduceMul;
                 debug_assert_eq!(acc.len(), a.len());
                 debug_assert_eq!(acc.len(), b.len());
                 acc.iter_mut().zip(a).zip(b).for_each(|((acc, &a), &b)| {
@@ -168,14 +151,9 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
         impl ::primus_modulus::reduce::LazyReduceMulAddSlice<#ty> for #name {
             #[inline]
             fn lazy_reduce_add_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {
-                ::primus_modulus::barrett_simd_kernel::lazy_reduce_add_mul_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_add_mul_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     acc,
                     a,
                     b,
@@ -184,14 +162,9 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
 
             #[inline]
             fn lazy_reduce_sub_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {
-                ::primus_modulus::barrett_simd_kernel::lazy_reduce_sub_mul_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_sub_mul_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     acc,
                     a,
                     b,
@@ -206,14 +179,9 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
                 c: &[#ty],
                 output: &mut [#ty],
             ) {
-                ::primus_modulus::barrett_simd_kernel::lazy_reduce_mul_add_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_mul_add_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     b,
                     c,
@@ -229,14 +197,9 @@ pub(crate) fn impl_lazy_reduce_slice_ops(
                 c: &[#ty],
                 output: &mut [#ty],
             ) {
-                ::primus_modulus::barrett_simd_kernel::lazy_reduce_scalar_mul_add_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::lazy_reduce_scalar_mul_add_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     scalar,
                     b,
                     c,

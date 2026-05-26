@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::FheUint;
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial, NttPolynomialIter, NttPolynomialIterMut};
 use primus_reduce::FieldContext;
@@ -18,7 +19,7 @@ pub type NttRlweOwned<T> = NttRlwe<Vec<T>>;
 pub struct NttRlwe<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(NttRlwe<S>);
 impl_bytes_conversion!(NttRlwe<S>);
@@ -31,7 +32,7 @@ impl_intt!(NttRlwe<S>, Rlwe);
 impl<S, T> NttRlwe<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`NttRlwe<S>`] with reference of [`NttPolynomial<A>`].
     #[inline]
@@ -47,7 +48,7 @@ where
 impl<S, T> NttRlwe<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts mutable slice of `a` and `b` of this [`NttRlwe<S>`].
     #[inline]
@@ -108,7 +109,7 @@ where
 impl<S, T> NttRlwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts slice of `a` and `b` of this [`NttRlwe<S>`].
     #[inline]

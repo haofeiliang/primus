@@ -1,5 +1,6 @@
 use num_traits::ConstOne;
-use primus_integer::{BigUint, BigUintIter, BigUintIterMut, Data, DivRem, UnsignedInteger};
+use primus_data::Data;
+use primus_integer::{BigUint, BigUintIter, BigUintIterMut, DivRem, FheUint};
 use primus_reduce::FieldContext;
 use primus_rns::RNSBase;
 use serde::{Deserialize, Serialize};
@@ -10,8 +11,8 @@ use super::ValueMask;
 
 /// The basis for approximate signed decomposition.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(bound(deserialize = "T: UnsignedInteger"))]
-pub struct BigUintApproxSignedBasis<T: UnsignedInteger> {
+#[serde(bound(deserialize = "T: FheUint"))]
+pub struct BigUintApproxSignedBasis<T: FheUint> {
     modulus: Vec<T>,
     basis: T,
     basis_minus_one: T,
@@ -29,7 +30,7 @@ pub struct BigUintApproxSignedBasis<T: UnsignedInteger> {
     value_masks: Vec<ValueMask<T>>,
 }
 
-impl<T: UnsignedInteger> BigUintApproxSignedBasis<T> {
+impl<T: FheUint> BigUintApproxSignedBasis<T> {
     #[inline]
     pub fn new<M>(
         modulus: BigUint<&[T]>,

@@ -1,6 +1,7 @@
+use primus_data::{Data, DataMut, DataOwned, RawData};
 use primus_decompose::big_integer::BigUintApproxSignedBasis;
 use primus_factor::{FactorSliceOps, ShoupFactor};
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger, izip};
+use primus_integer::{FheUint, izip};
 use primus_ntt::DcrtTable;
 use primus_poly::{
     ArrayBase, BigUintPolynomial, CrtPolynomial, DcrtPolynomial, DcrtPolynomialIter,
@@ -27,7 +28,7 @@ use super::CrtGlwe;
 pub struct DcrtGlwe<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(DcrtGlwe<S>);
 impl_bytes_conversion!(DcrtGlwe<S>);
@@ -40,7 +41,7 @@ impl_crt_intt!(DcrtGlwe<S>, CrtGlwe);
 impl<S, T> DcrtGlwe<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts mutable slice of `a` and `b` of this [`DcrtGlwe<S>`].
     #[inline]
@@ -330,7 +331,7 @@ where
 impl<S, T> DcrtGlwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts slice of `a` and `b` of this [`DcrtGlwe<S, T>`].
     #[inline]

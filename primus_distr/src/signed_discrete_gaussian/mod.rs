@@ -1,4 +1,4 @@
-use primus_integer::Integer;
+use primus_integer::FheInt;
 use rand::distr::Distribution;
 
 use crate::DistrErr;
@@ -15,14 +15,14 @@ pub use ziggurat::SignedDiscreteZiggurat;
 
 /// The gaussian distribution `N(mean, std_dev**2)`.
 #[derive(Clone)]
-pub enum SignedDiscreteGaussian<T: Integer> {
+pub enum SignedDiscreteGaussian<T: FheInt> {
     /// CDTSampler
     Cdt(SignedCDTSampler<T>),
     /// DiscreteZiggurat
     Ziggurat(SignedDiscreteZiggurat<T>),
 }
 
-impl<T: Integer> SignedDiscreteGaussian<T> {
+impl<T: FheInt> SignedDiscreteGaussian<T> {
     /// Construct, from mean and standard deviation
     ///
     /// Parameters:
@@ -71,7 +71,7 @@ impl<T: Integer> SignedDiscreteGaussian<T> {
     }
 }
 
-impl<T: Integer> Distribution<T> for SignedDiscreteGaussian<T> {
+impl<T: FheInt> Distribution<T> for SignedDiscreteGaussian<T> {
     #[inline]
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> T {
         match self {

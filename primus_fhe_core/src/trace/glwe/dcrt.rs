@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::FheUint;
 use primus_ntt::DcrtTable;
 use primus_reduce::FieldContext;
 use primus_rns::RNSBase;
@@ -9,12 +10,12 @@ use crate::{
     CrtGlevParameters, CrtGlweAutoContext, DcrtGlweAutoKey, DcrtGlweCiphertext, DcrtGlweSecretKey,
 };
 
-pub struct DcrtGlweTraceContext<T: UnsignedInteger> {
+pub struct DcrtGlweTraceContext<T: FheUint> {
     dcrt_glwe: DcrtGlweCiphertext<Vec<T>>,
     auto_context: CrtGlweAutoContext<T>,
 }
 
-impl<T: UnsignedInteger> DcrtGlweTraceContext<T> {
+impl<T: FheUint> DcrtGlweTraceContext<T> {
     pub fn new(
         dimension: usize,
         poly_length: usize,
@@ -46,7 +47,7 @@ impl<T: UnsignedInteger> DcrtGlweTraceContext<T> {
 }
 
 #[derive(Clone)]
-pub struct DcrtGlweTraceKey<T: UnsignedInteger, Table>
+pub struct DcrtGlweTraceKey<T: FheUint, Table>
 where
     Table: DcrtTable<ValueT = T>,
 {
@@ -54,7 +55,7 @@ where
     table: Arc<Table>,
 }
 
-impl<T: UnsignedInteger, Table> DcrtGlweTraceKey<T, Table>
+impl<T: FheUint, Table> DcrtGlweTraceKey<T, Table>
 where
     Table: DcrtTable<ValueT = T>,
 {

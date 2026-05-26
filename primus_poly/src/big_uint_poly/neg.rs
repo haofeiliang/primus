@@ -1,11 +1,12 @@
-use primus_integer::{BigUint, Data, DataMut, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::{BigUint, FheUint};
 
 use super::BigUintPolynomial;
 
 impl<S, T> BigUintPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs the unary `-` operation.
     #[inline]
@@ -32,7 +33,7 @@ where
 impl<S, T> BigUintPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs the unary `-` operation.
     #[inline]

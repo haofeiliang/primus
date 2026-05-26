@@ -2,7 +2,7 @@
 pub mod prime32 {
 
     use concrete_ntt::prime32::Plan;
-    use primus_integer::{DataMut, RawData};
+    use primus_data::{DataMut, RawData};
     use primus_poly::{NttPolynomial, Polynomial};
     use primus_reduce::FieldContext;
 
@@ -37,7 +37,7 @@ pub mod prime32 {
         where
             M: FieldContext<Self::ValueT>,
         {
-            let modulus = modulus.value_unchecked();
+            let modulus = unsafe { modulus.value_unchecked() };
             let plan = Plan::try_new(1 << log_n, modulus).ok_or(NttError::NttTableErr)?;
             let root = plan.root();
 
@@ -126,7 +126,7 @@ pub mod prime32 {
 /// ntt for 64bits
 pub mod prime64 {
     use concrete_ntt::prime64::Plan;
-    use primus_integer::{DataMut, RawData};
+    use primus_data::{DataMut, RawData};
     use primus_poly::{NttPolynomial, Polynomial};
 
     use crate::{NttError, NttTable};
@@ -160,7 +160,7 @@ pub mod prime64 {
         where
             M: primus_reduce::FieldContext<Self::ValueT>,
         {
-            let modulus = modulus.value_unchecked();
+            let modulus = unsafe { modulus.value_unchecked() };
             let plan = Plan::try_new(1 << log_n, modulus).ok_or(NttError::NttTableErr)?;
             let root = plan.root();
 

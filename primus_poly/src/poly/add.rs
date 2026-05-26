@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::FheUint;
 use primus_reduce::ReduceAddSlice;
 
 use super::Polynomial;
@@ -6,7 +7,7 @@ use super::Polynomial;
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `self + rhs` according to `modulus`.
     #[inline]
@@ -32,7 +33,7 @@ where
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `result = self + rhs` according to `modulus`.
     #[inline]

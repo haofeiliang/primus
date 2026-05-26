@@ -1,8 +1,9 @@
 use std::mem::MaybeUninit;
 
+use primus_data::{Data, DataMut, DataOwned, RawData};
 use primus_distr::DiscreteGaussian;
 use primus_factor::FactorSliceOps;
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_integer::FheUint;
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial, Polynomial, PolynomialIter, PolynomialIterMut};
 use primus_reduce::{FieldContext, ReduceNeg, ReduceNegAssign, ReduceNegSlice};
@@ -24,7 +25,7 @@ pub type RlweOwned<T> = Rlwe<Vec<T>>;
 pub struct Rlwe<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(Rlwe<S>);
 impl_bytes_conversion!(Rlwe<S>);
@@ -37,7 +38,7 @@ impl_ntt!(Rlwe<S>, NttRlwe);
 impl<S, T> Rlwe<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`Rlwe<S>`] with reference of [`Polynomial<A>`].
     #[inline]
@@ -50,7 +51,7 @@ where
     }
 }
 
-impl<T: UnsignedInteger> Rlwe<Vec<T>> {
+impl<T: FheUint> Rlwe<Vec<T>> {
     /// Extract an LWE sample from RLWE.
     #[inline]
     pub fn extract_lwe_locally<M>(self, modulus: M) -> Lwe<Vec<T>>
@@ -122,7 +123,7 @@ impl<T: UnsignedInteger> Rlwe<Vec<T>> {
 impl<S, T> Rlwe<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts mutable slice of `a` and `b` of this [`Rlwe<S>`].
     #[inline]
@@ -151,7 +152,7 @@ where
 impl<S, T> Rlwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts slice of `a` and `b` of this [`Rlwe<S>`].
     #[inline]

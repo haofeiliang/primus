@@ -1,5 +1,6 @@
+use primus_data::{Data, DataMut, RawData};
 use primus_factor::FactorSliceOps;
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_integer::FheUint;
 use primus_reduce::{
     ReduceMul, ReduceMulAdd, ReduceMulAddSlice, ReduceMulSlice, ReduceNegAssign, ReduceSubAssign,
 };
@@ -9,7 +10,7 @@ use super::Polynomial;
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `self * scalar` according to `modulus`.
     #[inline]
@@ -103,7 +104,7 @@ where
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// A naive multiplication over polynomial.
     pub fn naive_mul_inplace<M, A, B>(

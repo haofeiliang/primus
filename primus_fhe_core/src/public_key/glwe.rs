@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::{FheUint, izip};
 use primus_lattice::{ggsw::DcrtGgsw, glev::DcrtGlev, glwe::DcrtGlwe};
 use primus_ntt::DcrtTable;
 use primus_poly::{CrtPolynomial, DcrtPolynomial};
@@ -7,11 +8,11 @@ use primus_reduce::FieldContext;
 use crate::{CrtGgswParameters, CrtGlevParameters, CrtGlweParameters, DcrtGlweSecretKey};
 
 #[derive(Clone)]
-pub struct DcrtGlwePublicKey<T: UnsignedInteger> {
+pub struct DcrtGlwePublicKey<T: FheUint> {
     key: DcrtGlwe<Vec<T>>,
 }
 
-impl<T: UnsignedInteger> DcrtGlwePublicKey<T> {
+impl<T: FheUint> DcrtGlwePublicKey<T> {
     /// Creates a new [`DcrtGlwePublicKey<T>`] from bytes `data`.
     #[inline]
     pub fn from_bytes_assign(&mut self, data: &[u8]) {

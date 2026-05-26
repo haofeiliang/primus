@@ -1,7 +1,7 @@
 use indicatif::{ProgressIterator, ProgressStyle};
 use itertools::izip;
 use primus_factor::{FactorMul, ShoupFactor};
-use primus_integer::{BigUint, BigUintIterMut, Data, DivRemScalar, multiply_many_values};
+use primus_integer::{BigUint, BigUintIterMut, DivRemScalar, multiply_many_values};
 use primus_modulo::{InvModulo, Modulo};
 use primus_modulus::BarrettModulus;
 use primus_poly::CrtPolynomial;

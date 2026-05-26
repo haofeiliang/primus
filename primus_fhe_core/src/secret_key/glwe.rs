@@ -1,5 +1,6 @@
+use primus_data::{Data, DataMut, RawData};
 use primus_factor::FactorSliceOps;
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
+use primus_integer::{FheUint, izip};
 use primus_lattice::glev::DcrtGlev;
 use primus_ntt::{DcrtTable, NttTable};
 use primus_poly::{
@@ -18,23 +19,23 @@ use super::RingSecretKeyType;
 
 /// Represents a secret key for the Module Learning with Errors (MLWE) cryptographic scheme.
 #[derive(Clone)]
-pub struct GlweSecretKey<T: UnsignedInteger> {
+pub struct GlweSecretKey<T: FheUint> {
     key: Vec<T>,
     dimension: usize,
     poly_length: usize,
     distr: RingSecretKeyType,
 }
 
-impl<T: UnsignedInteger> Zeroize for GlweSecretKey<T> {
+impl<T: FheUint> Zeroize for GlweSecretKey<T> {
     #[inline]
     fn zeroize(&mut self) {
         self.key.zeroize();
     }
 }
 
-impl<T: UnsignedInteger> ZeroizeOnDrop for GlweSecretKey<T> {}
+impl<T: FheUint> ZeroizeOnDrop for GlweSecretKey<T> {}
 
-impl<T: UnsignedInteger> GlweSecretKey<T> {
+impl<T: FheUint> GlweSecretKey<T> {
     /// Creates a new [`GlweSecretKey<T>`].
     #[inline]
     pub fn new(
@@ -104,23 +105,23 @@ impl<T: UnsignedInteger> GlweSecretKey<T> {
 
 /// Represents a secret key for the (NTT) Ring Learning with Errors (RLWE) cryptographic scheme.
 #[derive(Clone)]
-pub struct NttGlweSecretKey<T: UnsignedInteger> {
+pub struct NttGlweSecretKey<T: FheUint> {
     key: Vec<T>,
     poly_length: usize,
     dimension: usize,
     distr: RingSecretKeyType,
 }
 
-impl<T: UnsignedInteger> Zeroize for NttGlweSecretKey<T> {
+impl<T: FheUint> Zeroize for NttGlweSecretKey<T> {
     #[inline]
     fn zeroize(&mut self) {
         self.key.zeroize();
     }
 }
 
-impl<T: UnsignedInteger> ZeroizeOnDrop for NttGlweSecretKey<T> {}
+impl<T: FheUint> ZeroizeOnDrop for NttGlweSecretKey<T> {}
 
-impl<T: UnsignedInteger> NttGlweSecretKey<T> {
+impl<T: FheUint> NttGlweSecretKey<T> {
     /// Creates a new [`NttGlweSecretKey<T>`].
     #[inline]
     pub fn new(
@@ -211,22 +212,22 @@ impl<T: UnsignedInteger> NttGlweSecretKey<T> {
 }
 
 #[derive(Clone)]
-pub struct CrtGlweSecretKey<T: UnsignedInteger> {
+pub struct CrtGlweSecretKey<T: FheUint> {
     key: Vec<T>,
     distr: RingSecretKeyType,
     rns_poly_len: usize,
 }
 
-impl<T: UnsignedInteger> Zeroize for CrtGlweSecretKey<T> {
+impl<T: FheUint> Zeroize for CrtGlweSecretKey<T> {
     #[inline]
     fn zeroize(&mut self) {
         self.key.zeroize();
     }
 }
 
-impl<T: UnsignedInteger> ZeroizeOnDrop for CrtGlweSecretKey<T> {}
+impl<T: FheUint> ZeroizeOnDrop for CrtGlweSecretKey<T> {}
 
-impl<T: UnsignedInteger> CrtGlweSecretKey<T> {
+impl<T: FheUint> CrtGlweSecretKey<T> {
     /// Creates a new [`CrtGlweSecretKey<T>`].
     #[inline]
     pub fn new(key: Vec<T>, distr: RingSecretKeyType, rns_poly_len: usize) -> Self {
@@ -321,22 +322,22 @@ impl<T: UnsignedInteger> CrtGlweSecretKey<T> {
 }
 
 #[derive(Clone)]
-pub struct DcrtGlweSecretKey<T: UnsignedInteger> {
+pub struct DcrtGlweSecretKey<T: FheUint> {
     key: Vec<T>,
     distr: RingSecretKeyType,
     rns_poly_len: usize,
 }
 
-impl<T: UnsignedInteger> Zeroize for DcrtGlweSecretKey<T> {
+impl<T: FheUint> Zeroize for DcrtGlweSecretKey<T> {
     #[inline]
     fn zeroize(&mut self) {
         self.key.zeroize();
     }
 }
 
-impl<T: UnsignedInteger> ZeroizeOnDrop for DcrtGlweSecretKey<T> {}
+impl<T: FheUint> ZeroizeOnDrop for DcrtGlweSecretKey<T> {}
 
-impl<T: UnsignedInteger> DcrtGlweSecretKey<T> {
+impl<T: FheUint> DcrtGlweSecretKey<T> {
     pub fn zero(dimension: usize, crt_poly_len: usize, distr: RingSecretKeyType) -> Self {
         Self {
             key: vec![T::ZERO; dimension * crt_poly_len],
@@ -836,19 +837,19 @@ impl<T: UnsignedInteger> DcrtGlweSecretKey<T> {
     }
 }
 
-pub struct DcrtGlweDecryptContext<T: UnsignedInteger> {
+pub struct DcrtGlweDecryptContext<T: FheUint> {
     msg_mod_q: DcrtPolynomial<Vec<T>>,
     msg_mod_t_gamma: CrtPolynomial<Vec<T>>,
     fast_convert_buffer: Vec<T>,
 }
 
-pub struct DcrtGlweDecryptContextRefMut<'a, T: UnsignedInteger> {
+pub struct DcrtGlweDecryptContextRefMut<'a, T: FheUint> {
     msg_mod_q: &'a mut DcrtPolynomial<Vec<T>>,
     msg_mod_t_gamma: &'a mut CrtPolynomial<Vec<T>>,
     fast_convert_buffer: &'a mut [T],
 }
 
-impl<T: UnsignedInteger> DcrtGlweDecryptContext<T> {
+impl<T: FheUint> DcrtGlweDecryptContext<T> {
     /// Creates a new [`DcrtGlweDecryptContext<T>`].
     #[inline]
     pub fn new(moduli_count: usize, poly_length: usize) -> Self {

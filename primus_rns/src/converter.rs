@@ -1,6 +1,6 @@
 use primus_factor::FactorMul;
 use primus_integer::AsInto;
-use primus_integer::{UnsignedInteger, izip};
+use primus_integer::{FheUint, izip};
 use primus_modulo::Modulo;
 use primus_modulo::MulModulo;
 use primus_modulus::UintModulus;
@@ -9,7 +9,7 @@ use primus_reduce::FieldContext;
 use crate::RNSBase;
 
 #[derive(Clone)]
-pub struct BaseConverter<T: UnsignedInteger, M: FieldContext<T>> {
+pub struct BaseConverter<T: FheUint, M: FieldContext<T>> {
     /// The base convert from.
     ibase: RNSBase<T, M>,
     /// The base convert into.
@@ -18,7 +18,7 @@ pub struct BaseConverter<T: UnsignedInteger, M: FieldContext<T>> {
     base_change_matrix: Vec<T>,
 }
 
-impl<T: UnsignedInteger, M: FieldContext<T>> BaseConverter<T, M> {
+impl<T: FheUint, M: FieldContext<T>> BaseConverter<T, M> {
     pub fn new(ibase: &RNSBase<T, M>, obase: &RNSBase<T, M>) -> Self {
         let ibase_moduli_count = ibase.moduli_count();
         let obase_moduli_count = obase.moduli_count();
@@ -85,7 +85,7 @@ impl<T: UnsignedInteger, M: FieldContext<T>> BaseConverter<T, M> {
             fast_convert_buffer.iter_mut()
         )
         .for_each(|(&value, &inv, modulus, result)| {
-            *result = inv.factor_mul_modulo(value, modulus.value_unchecked());
+            *result = inv.factor_mul_modulo(value, unsafe { modulus.value_unchecked() });
         });
 
         let buf = &*fast_convert_buffer;
@@ -128,7 +128,7 @@ impl<T: UnsignedInteger, M: FieldContext<T>> BaseConverter<T, M> {
                         *ele = x.modulo(modulus);
                     });
                 } else {
-                    let modulus = modulus.value_unchecked();
+                    let modulus = unsafe { modulus.value_unchecked() };
                     izip!(
                         poly,
                         fast_convert_buffer
@@ -232,7 +232,7 @@ impl<T: UnsignedInteger, M: FieldContext<T>> BaseConverter<T, M> {
         .enumerate()
         .for_each(
             |(i, (poly, &inv_punctured_product_mod_modulus, &modulus))| {
-                let divisor: f64 = modulus.value_unchecked().as_into();
+                let divisor: f64 = unsafe { modulus.value_unchecked().as_into() };
                 if inv_punctured_product_mod_modulus.value().is_one() {
                     // No multiplication needed
                     izip!(
@@ -257,7 +257,7 @@ impl<T: UnsignedInteger, M: FieldContext<T>> BaseConverter<T, M> {
                         // Multiply coefficient of in with ibase_.inv_punctured_prod_mod_base_array_ element
                         *ele = x.mul_modulo(
                             inv_punctured_product_mod_modulus,
-                            UintModulus(modulus.value_unchecked()),
+                            UintModulus(unsafe { modulus.value_unchecked() }),
                         );
                         let dividend: f64 = (*ele).as_into();
                         *fele = dividend / divisor;

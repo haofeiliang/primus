@@ -1,5 +1,6 @@
+use primus_data::{DataMut, DataOwned, RawData};
 use primus_distr::DiscreteGaussian;
-use primus_integer::{DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_integer::FheUint;
 use primus_reduce::{Modulus, ReduceAddAssign};
 use rand::distr::Distribution;
 
@@ -10,7 +11,7 @@ use super::Polynomial;
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Generate a random [`Polynomial<S>`].
     #[inline]
@@ -52,7 +53,7 @@ where
     }
 }
 
-impl<T: UnsignedInteger> PolynomialOwned<T> {
+impl<T: FheUint> PolynomialOwned<T> {
     /// Generate a random binary [`PolynomialOwned<T>`].
     #[inline]
     pub fn random_binary<R>(poly_length: usize, rng: &mut R) -> Self
@@ -79,7 +80,7 @@ impl<T: UnsignedInteger> PolynomialOwned<T> {
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Generate a random [`Polynomial<S>`].
     #[inline]
@@ -111,7 +112,7 @@ where
     where
         R: rand::Rng + rand::CryptoRng,
     {
-        primus_distr::sample_binary_values_inplace(self.as_mut(), rng)
+        primus_distr::sample_binary_values_to(self.as_mut(), rng)
     }
 
     /// Generate a random ternary [`Polynomial<S>`].

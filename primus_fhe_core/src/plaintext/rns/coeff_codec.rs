@@ -20,26 +20,25 @@
 //!     ▼
 //!   recovered m: `Polynomial<T>`
 
+use primus_data::{Data, DataMut, RawData};
 use primus_factor::{FactorSliceOps, ShoupFactor};
-use primus_integer::{
-    BigUint, Data, DataMut, DivRemScalar, RawData, UnsignedInteger, multiply_many_values,
-};
+use primus_integer::{BigUint, DivRemScalar, FheUint, multiply_many_values};
 use primus_modulo::*;
 use primus_poly::{CrtPolynomial, DcrtPolynomial, Polynomial};
 use primus_reduce::FieldContext;
 use primus_rns::{BaseConverter, RNSBase};
 
-pub struct RnsCoeffDecodeContext<T: UnsignedInteger> {
+pub struct RnsCoeffDecodeContext<T: FheUint> {
     msg_mod_q: DcrtPolynomial<Vec<T>>,
     fast_convert_buffer: Vec<T>,
 }
 
-pub struct RnsCoeffDecodeContextRefMut<'a, T: UnsignedInteger> {
+pub struct RnsCoeffDecodeContextRefMut<'a, T: FheUint> {
     pub msg_mod_q: &'a mut DcrtPolynomial<Vec<T>>,
     pub fast_convert_buffer: &'a mut [T],
 }
 
-impl<T: UnsignedInteger> RnsCoeffDecodeContext<T> {
+impl<T: FheUint> RnsCoeffDecodeContext<T> {
     /// Creates a new [`RnsCoeffDecodeContext<T>`].
     #[inline]
     pub fn new(moduli_count: usize, poly_length: usize) -> Self {
@@ -68,7 +67,7 @@ impl<T: UnsignedInteger> RnsCoeffDecodeContext<T> {
 #[derive(Clone)]
 pub struct RnsCoeffCodec<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     // Plaintext / ciphertext bases
@@ -91,7 +90,7 @@ where
 
 impl<T, M> RnsCoeffCodec<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     /// Builds a BFV-style RNS codec.
@@ -100,13 +99,13 @@ where
     /// - `t` not coprime with `gamma` or any `q_i`
     /// - `gamma <= t` (HPS requires that γ > t)
     pub fn new(t_modulus: M, base_q: RNSBase<T, M>, gamma_modulus: M) -> Self {
-        let t = t_modulus.value_unchecked();
-        let gamma = gamma_modulus.value_unchecked();
+        let t = unsafe { t_modulus.value_unchecked() };
+        let gamma = unsafe { gamma_modulus.value_unchecked() };
 
         let moduli_values: Vec<T> = base_q
             .moduli()
             .iter()
-            .map(|m| m.value_unchecked())
+            .map(|m| unsafe { m.value_unchecked() })
             .collect();
 
         Self::validate_moduli(t, &moduli_values, gamma);

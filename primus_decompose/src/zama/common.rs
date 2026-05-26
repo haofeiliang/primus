@@ -1,18 +1,18 @@
 use std::iter::FusedIterator;
 
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 
 use crate::primitive::ValueMask;
 
 /// An iterator over the signed decomposition operators.
-pub struct SignedDecomposeIter<'a, T: UnsignedInteger> {
+pub struct SignedDecomposeIter<'a, T: FheUint> {
     pub(super) value_masks: std::slice::Iter<'a, ValueMask<T>>,
     pub(super) log_basis: u32,
     pub(super) basis: T,
     pub(super) modulus: T,
 }
 
-impl<'a, T: UnsignedInteger> Iterator for SignedDecomposeIter<'a, T> {
+impl<'a, T: FheUint> Iterator for SignedDecomposeIter<'a, T> {
     type Item = OnceSignedDecompose<T>;
 
     #[inline]
@@ -28,17 +28,17 @@ impl<'a, T: UnsignedInteger> Iterator for SignedDecomposeIter<'a, T> {
     }
 }
 
-impl<'a, T: UnsignedInteger> FusedIterator for SignedDecomposeIter<'a, T> {}
+impl<'a, T: FheUint> FusedIterator for SignedDecomposeIter<'a, T> {}
 
 /// The signed decomposition operator which can execute once decomposition.
-pub struct OnceSignedDecompose<T: UnsignedInteger> {
+pub struct OnceSignedDecompose<T: FheUint> {
     value_mask: ValueMask<T>,
     log_basis: u32,
     basis: T,
     modulus: T,
 }
 
-impl<T: UnsignedInteger> OnceSignedDecompose<T> {
+impl<T: FheUint> OnceSignedDecompose<T> {
     /// Execute once decomposition and return the decomposed value and carry for next decomposition.
     #[inline]
     pub fn decompose(&self, value: T, sign: bool, carry: bool) -> (T, bool) {

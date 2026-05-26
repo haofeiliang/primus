@@ -1,18 +1,18 @@
 use primus_factor::ShoupFactor;
 use primus_fhe_core::{PlaintextCodec, PlaintextEmbedding, RnsCoeffCodec};
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 use primus_modulus::BarrettModulus;
 use primus_poly::{CrtPolynomial, DcrtPolynomial, Polynomial};
 use primus_rns::RNSBase;
 use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};
 
-fn message_values<T: UnsignedInteger>(t: T) -> Vec<T> {
+fn message_values<T: FheUint>(t: T) -> Vec<T> {
     let len: usize = t.try_into().unwrap();
     (0..len).map(|value| T::try_from(value).unwrap()).collect()
 }
 
-fn assert_codec_roundtrip<T: UnsignedInteger>(codec: PlaintextCodec<T>, t: T) {
+fn assert_codec_roundtrip<T: FheUint>(codec: PlaintextCodec<T>, t: T) {
     let messages = message_values(t);
 
     for embedding in [PlaintextEmbedding::Unsigned, PlaintextEmbedding::Centered] {
@@ -59,7 +59,7 @@ fn seeded_rng(seed: u64) -> StdRng {
     StdRng::seed_from_u64(seed)
 }
 
-fn random_non_power_of_two<T: UnsignedInteger>(rng: &mut StdRng, min: T, max: T) -> T {
+fn random_non_power_of_two<T: FheUint>(rng: &mut StdRng, min: T, max: T) -> T {
     loop {
         let value = rng.random_range(min..=max);
         if !value.is_power_of_two() {
@@ -68,7 +68,7 @@ fn random_non_power_of_two<T: UnsignedInteger>(rng: &mut StdRng, min: T, max: T)
     }
 }
 
-fn random_scaled_narrow<T: UnsignedInteger>(rng: &mut StdRng, min_t: T, max_t: T) -> (T, T) {
+fn random_scaled_narrow<T: FheUint>(rng: &mut StdRng, min_t: T, max_t: T) -> (T, T) {
     loop {
         let t = random_non_power_of_two(rng, min_t, max_t);
         let Some(min_q) = t
@@ -88,7 +88,7 @@ fn random_scaled_narrow<T: UnsignedInteger>(rng: &mut StdRng, min_t: T, max_t: T
     }
 }
 
-fn random_scaled_wide<T: UnsignedInteger>(rng: &mut StdRng, min_t: T, max_t: T) -> (T, T) {
+fn random_scaled_wide<T: FheUint>(rng: &mut StdRng, min_t: T, max_t: T) -> (T, T) {
     loop {
         let t = random_non_power_of_two(rng, min_t, max_t);
         let q = random_non_power_of_two(rng, T::MAX / T::TWO, T::MAX - T::ONE);
@@ -245,21 +245,6 @@ macro_rules! plain_codec_tests {
 }
 
 plain_codec_tests!(
-    u8,
-    u8_native_pow2_encode_decode,
-    u8_native_scaled_encode_decode,
-    u8_explicit_pow2_encode_decode,
-    u8_explicit_scaled_narrow_encode_decode,
-    u8_explicit_scaled_wide_encode_decode,
-    16,
-    3,
-    7,
-    7,
-    3,
-    0x08
-);
-
-plain_codec_tests!(
     u16,
     u16_native_pow2_encode_decode,
     u16_native_scaled_encode_decode,
@@ -302,19 +287,4 @@ plain_codec_tests!(
     63,
     8,
     0x64
-);
-
-plain_codec_tests!(
-    u128,
-    u128_native_pow2_encode_decode,
-    u128_native_scaled_encode_decode,
-    u128_explicit_pow2_encode_decode,
-    u128_explicit_scaled_narrow_encode_decode,
-    u128_explicit_scaled_wide_encode_decode,
-    256,
-    5,
-    251,
-    127,
-    8,
-    0x128
 );

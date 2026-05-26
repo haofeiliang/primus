@@ -1,5 +1,5 @@
 use primus_factor::{FactorMul, ShoupFactor};
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 use primus_modulo::*;
 use primus_reduce::FieldContext;
 use rand::{distr::Uniform, prelude::*};
@@ -8,7 +8,7 @@ use crate::NttError;
 
 pub trait PrimitiveRoot
 where
-    Self: UnsignedInteger,
+    Self: FheUint,
 {
     fn is_primitive_root<M>(self, log_degree: u32, modulus: M) -> bool
     where
@@ -23,12 +23,12 @@ where
         M: FieldContext<Self>;
 }
 
-impl<T: UnsignedInteger> PrimitiveRoot for T {
+impl<T: FheUint> PrimitiveRoot for T {
     fn is_primitive_root<M>(self, log_degree: u32, modulus: M) -> bool
     where
         M: FieldContext<Self>,
     {
-        let modulus_value = modulus.value_unchecked();
+        let modulus_value = unsafe { modulus.value_unchecked() };
 
         debug_assert!(self < modulus_value);
         debug_assert!(
@@ -49,7 +49,7 @@ impl<T: UnsignedInteger> PrimitiveRoot for T {
     {
         assert!(log_degree < T::BITS);
 
-        let modulus_value = modulus.value_unchecked();
+        let modulus_value = unsafe { modulus.value_unchecked() };
 
         // p-1
         let modulus_minus_one = modulus.minus_one();
@@ -92,7 +92,7 @@ impl<T: UnsignedInteger> PrimitiveRoot for T {
     {
         let mut root = T::try_primitive_root(log_degree, modulus)?;
 
-        let modulus_value = modulus.value_unchecked();
+        let modulus_value = unsafe { modulus.value_unchecked() };
 
         let generator_sq = root.square_modulo(modulus);
         let generator_sq = ShoupFactor::new(generator_sq, modulus_value);

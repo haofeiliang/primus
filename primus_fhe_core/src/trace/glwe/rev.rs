@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
+use primus_data::{Data, DataMut, RawData};
 use primus_factor::ShoupFactor;
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_integer::FheUint;
 use primus_ntt::DcrtTable;
 use primus_reduce::FieldContext;
 use primus_rns::RNSBase;
@@ -13,7 +14,7 @@ use crate::{
 pub type DcrtGlweRevTraceContext<T> = DcrtGlweTraceContext<T>;
 
 #[derive(Clone)]
-pub struct DcrtGlweRevTraceKey<T: UnsignedInteger, Table>
+pub struct DcrtGlweRevTraceKey<T: FheUint, Table>
 where
     Table: DcrtTable<ValueT = T>,
 {
@@ -22,7 +23,7 @@ where
     table: Arc<Table>,
 }
 
-impl<T: UnsignedInteger, Table> DcrtGlweRevTraceKey<T, Table>
+impl<T: FheUint, Table> DcrtGlweRevTraceKey<T, Table>
 where
     Table: DcrtTable<ValueT = T>,
 {

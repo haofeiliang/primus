@@ -1,11 +1,11 @@
 use primus_distr::DiscreteGaussian;
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 use primus_reduce::Modulus;
 use rand::distr::{Distribution, Uniform};
 
 use super::{Array, ArrayMut};
 
-impl<T: UnsignedInteger> Array<T> {
+impl<T: FheUint> Array<T> {
     /// Generate a random [`Array<T>`].
     #[inline]
     pub fn random<M, R>(n: usize, modulus: M, rng: &mut R) -> Self
@@ -60,7 +60,7 @@ impl<T: UnsignedInteger> Array<T> {
     }
 }
 
-impl<'a, T: UnsignedInteger> ArrayMut<'a, T> {
+impl<'a, T: FheUint> ArrayMut<'a, T> {
     /// Fill a random [`ArrayMut<'a, T>`].
     #[inline]
     pub fn random<R>(self, modulus_minus_one: T, rng: &mut R)
@@ -93,7 +93,7 @@ impl<'a, T: UnsignedInteger> ArrayMut<'a, T> {
     where
         R: rand::Rng + rand::CryptoRng,
     {
-        primus_distr::sample_binary_values_inplace(self.0, rng)
+        primus_distr::sample_binary_values_to(self.0, rng)
     }
 
     /// Fill a random ternary [`ArrayMut<'a, T>`].

@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::FheUint;
 use primus_reduce::ReduceSubSlice;
 
 use super::NttPolynomial;
@@ -6,7 +7,7 @@ use super::NttPolynomial;
 impl<S, T> NttPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `self - rhs` according to `modulus`.
     #[inline]
@@ -33,7 +34,7 @@ where
 impl<S, T> NttPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `rhs = self - rhs` according to `modulus`.
     #[inline]

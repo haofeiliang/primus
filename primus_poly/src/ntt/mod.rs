@@ -1,5 +1,6 @@
 use num_traits::Zero;
-use primus_integer::{ByteCount, Data, DataMut, DataOwned, RawData, Size, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::{ByteCount, FheUint, Size};
 use primus_reduce::{LazyReduceMulAddSlice, ReduceMulAddSlice};
 
 mod basic;
@@ -21,14 +22,14 @@ pub type NttPolynomialMut<'a, T> = NttPolynomial<&'a mut [T]>;
 pub struct NttPolynomial<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_iters!(NttPolynomial, ntt_poly);
 
 impl<S, T> NttPolynomial<S>
 where
     S: RawData<Elem = T>,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`NttPolynomial<T>`].
     #[inline]
@@ -40,7 +41,7 @@ where
 impl<S, T> NttPolynomial<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a [`NttPolynomial<T>`] with all coefficients equal to zero.
     #[inline]
@@ -64,7 +65,7 @@ where
 impl<S, T> NttPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts a mutable slice of the entire vector.
     ///
@@ -125,7 +126,7 @@ where
 impl<S, T> NttPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts a slice containing the entire vector.
     ///
@@ -203,7 +204,7 @@ where
 impl<S, T> Size for NttPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn byte_count(&self) -> usize {

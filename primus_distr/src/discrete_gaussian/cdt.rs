@@ -1,9 +1,9 @@
-use primus_integer::{AsInto, UnsignedInteger};
+use primus_integer::{AsInto, FheUint};
 use rand::distr::Distribution;
 
 /// CDT sampler using log-space computation
 #[derive(Debug, Clone)]
-pub struct CDTSampler<T: UnsignedInteger> {
+pub struct CDTSampler<T: FheUint> {
     std_dev: f64,
     modulus_minus_one: T,
     cdt: Vec<u64>,
@@ -32,7 +32,7 @@ fn log_sum_exp(log_values: &[f64]) -> f64 {
     max_log + sum_exp.ln()
 }
 
-impl<T: UnsignedInteger> CDTSampler<T> {
+impl<T: FheUint> CDTSampler<T> {
     /// Generate a CDT sampler using log-space arithmetic
     pub fn new(std_dev: f64, tail_cut: f64, modulus_minus_one: T) -> Self {
         let max_std_dev = std_dev * tail_cut;
@@ -119,7 +119,7 @@ impl<T: UnsignedInteger> CDTSampler<T> {
     }
 }
 
-impl<T: UnsignedInteger> Distribution<T> for CDTSampler<T> {
+impl<T: FheUint> Distribution<T> for CDTSampler<T> {
     #[inline]
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> T {
         let r: u64 = rng.next_u64();

@@ -1,10 +1,10 @@
 use std::mem::MaybeUninit;
 
+use primus_data::{Data, DataMut, DataOwned, RawData};
 use primus_distr::DiscreteGaussian;
-use primus_integer::{Data, DataMut, DataOwned, RawData, Size, UnsignedInteger};
+use primus_integer::{FheUint, Size};
 use primus_modulo::*;
-use primus_reduce::Modulus;
-use primus_reduce::prelude::*;
+use primus_reduce::{Modulus, prelude::*};
 use rand::distr::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 
@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 pub struct Lwe<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl<S, T> Lwe<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`Lwe<S, T>`] from bytes `data`.
     #[inline]
@@ -34,7 +34,7 @@ where
 impl<S, T> Lwe<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`Lwe<S, T>`] from bytes `data`.
     #[inline]
@@ -48,7 +48,7 @@ where
 impl<S, T> Lwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Converts [`Lwe<S, T>`] into bytes.
     #[inline]
@@ -71,7 +71,7 @@ where
 impl<S, T> Lwe<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`Lwe<S, T>`].
     #[inline]
@@ -94,7 +94,7 @@ where
 
 impl<T> Lwe<Vec<T>>
 where
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Generate a [`Lwe<S, T>`] sample which encrypts `0`.
     #[inline]
@@ -135,7 +135,7 @@ where
 impl<S, T> Lwe<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Returns a mutable reference to the `a` of this [`Lwe<S, T>`].
     #[inline]
@@ -166,7 +166,7 @@ where
 impl<S, T> Lwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Returns a reference to the `a` of this [`Lwe<S, T>`].
     #[inline]
@@ -195,7 +195,7 @@ where
 impl<S, T> Lwe<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs component-wise modular addition of two [`Lwe<S, T>`].
     ///
@@ -286,7 +286,7 @@ where
 impl<S, T> Lwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs component-wise modular addition of two [`Lwe<S, T>`].
     ///
@@ -348,7 +348,7 @@ where
 impl<S, T> Size for Lwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn byte_count(&self) -> usize {

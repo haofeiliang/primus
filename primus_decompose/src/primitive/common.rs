@@ -1,14 +1,14 @@
 use std::iter::FusedIterator;
 
-use primus_integer::{UnsignedInteger, izip};
+use primus_integer::{FheUint, izip};
 use serde::{Deserialize, Serialize};
 
 /// An iterator over scalars.
-pub struct ScalarIter<'a, T: UnsignedInteger> {
+pub struct ScalarIter<'a, T: FheUint> {
     iter: std::iter::Copied<std::slice::Iter<'a, T>>,
 }
 
-impl<'a, T: UnsignedInteger> ScalarIter<'a, T> {
+impl<'a, T: FheUint> ScalarIter<'a, T> {
     /// Creates a new [`ScalarIter<T>`].
     #[inline]
     pub fn new(scalars: &'a [T]) -> Self {
@@ -18,7 +18,7 @@ impl<'a, T: UnsignedInteger> ScalarIter<'a, T> {
     }
 }
 
-impl<'a, T: UnsignedInteger> Iterator for ScalarIter<'a, T> {
+impl<'a, T: FheUint> Iterator for ScalarIter<'a, T> {
     type Item = T;
 
     #[inline]
@@ -27,16 +27,16 @@ impl<'a, T: UnsignedInteger> Iterator for ScalarIter<'a, T> {
     }
 }
 
-impl<'a, T: UnsignedInteger> FusedIterator for ScalarIter<'a, T> {}
+impl<'a, T: FheUint> FusedIterator for ScalarIter<'a, T> {}
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(bound(deserialize = "T: UnsignedInteger"))]
-pub struct ValueMask<T: UnsignedInteger> {
+#[serde(bound(deserialize = "T: FheUint"))]
+pub struct ValueMask<T: FheUint> {
     mask: T,
     shr_bits: u32,
 }
 
-impl<T: UnsignedInteger> ValueMask<T> {
+impl<T: FheUint> ValueMask<T> {
     #[inline]
     pub fn new(basis_minus_one: T, drop_bits: u32) -> Self {
         Self {
@@ -60,14 +60,14 @@ impl<T: UnsignedInteger> ValueMask<T> {
 }
 
 /// An iterator over the signed decomposition operators.
-pub struct SignedDecomposeIter<'a, T: UnsignedInteger> {
+pub struct SignedDecomposeIter<'a, T: FheUint> {
     pub(super) value_masks: std::slice::Iter<'a, ValueMask<T>>,
     pub(super) carry_mask: T,
     pub(super) basis_minus_one: T,
     pub(super) modulus_minus_basis: T,
 }
 
-impl<'a, T: UnsignedInteger> Iterator for SignedDecomposeIter<'a, T> {
+impl<'a, T: FheUint> Iterator for SignedDecomposeIter<'a, T> {
     type Item = OnceSignedDecompose<T>;
 
     #[inline]
@@ -83,17 +83,17 @@ impl<'a, T: UnsignedInteger> Iterator for SignedDecomposeIter<'a, T> {
     }
 }
 
-impl<'a, T: UnsignedInteger> FusedIterator for SignedDecomposeIter<'a, T> {}
+impl<'a, T: FheUint> FusedIterator for SignedDecomposeIter<'a, T> {}
 
 /// The signed decomposition operator which can execute once decomposition.
-pub struct OnceSignedDecompose<T: UnsignedInteger> {
+pub struct OnceSignedDecompose<T: FheUint> {
     value_mask: ValueMask<T>,
     carry_mask: T,
     basis_minus_one: T,
     modulus_minus_basis: T,
 }
 
-impl<T: UnsignedInteger> OnceSignedDecompose<T> {
+impl<T: FheUint> OnceSignedDecompose<T> {
     /// Execute once decomposition and return the decomposed value and carry for next decomposition.
     #[inline]
     pub fn decompose(&self, value: T, carry: bool) -> (T, bool) {

@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::FheUint;
 use primus_ntt::NttTable;
 use primus_poly::ArrayBase;
 use primus_reduce::FieldContext;
@@ -18,7 +19,7 @@ use super::Rgsw;
 pub struct NttRgsw<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(NttRgsw<S>);
 impl_bytes_conversion!(NttRgsw<S>);

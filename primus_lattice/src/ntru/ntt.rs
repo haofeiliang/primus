@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::FheUint;
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial};
 use primus_reduce::FieldContext;
@@ -16,7 +17,7 @@ use super::Ntru;
 pub struct NttNtru<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(NttNtru<S>);
 impl_bytes_conversion!(NttNtru<S>);
@@ -27,7 +28,7 @@ impl_basic_operation_single_modulus!(NttNtru<S>);
 impl<S, T> NttNtru<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Transforms `self` to coefficient form and stores in `result`.
     #[inline]
@@ -65,7 +66,7 @@ where
 impl<S, T> NttNtru<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Transforms `self` to coefficient form.
     #[inline]

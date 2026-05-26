@@ -20,7 +20,8 @@
 
 use std::sync::Arc;
 
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::FheUint;
 use primus_lattice::glev::{DcrtGlevIter, DcrtGlevIterMut};
 use primus_modulus::PowOf2Modulus;
 use primus_ntt::{DcrtTable, ReverseLsbs};
@@ -94,11 +95,7 @@ impl NttAutoHelper {
 
 /// Apply NTT-domain automorphism permutation to a single polynomial.
 #[inline]
-fn ntt_poly_auto_inplace<T: UnsignedInteger>(
-    poly: &[T],
-    result: &mut [T],
-    auto_helper: &NttAutoHelper,
-) {
+fn ntt_poly_auto_inplace<T: FheUint>(poly: &[T], result: &mut [T], auto_helper: &NttAutoHelper) {
     match auto_helper {
         NttAutoHelper::Permutation(perm) => {
             debug_assert_eq!(poly.len(), perm.len());
@@ -117,7 +114,7 @@ fn ntt_poly_auto_inplace<T: UnsignedInteger>(
 ///
 /// The same permutation is applied independently to each modulus component.
 #[inline]
-pub fn dcrt_poly_ntt_auto_inplace<T: UnsignedInteger>(
+pub fn dcrt_poly_ntt_auto_inplace<T: FheUint>(
     dcrt_poly: &[T],
     result: &mut [T],
     auto_helper: &NttAutoHelper,
@@ -150,7 +147,7 @@ fn generate_ntt_auto_key_data<T, M, Table, R>(
     rng: &mut R,
 ) -> Vec<T>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     Table: DcrtTable<ValueT = T>,
     R: rand::Rng + rand::CryptoRng,
     M: FieldContext<T>,
@@ -200,7 +197,7 @@ where
 #[derive(Clone)]
 pub struct DcrtGlweAutoKey<T, Table>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     Table: DcrtTable<ValueT = T>,
 {
     key: Vec<T>,
@@ -212,7 +209,7 @@ where
 
 impl<T, Table> DcrtGlweAutoKey<T, Table>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     Table: DcrtTable<ValueT = T>,
 {
     /// Create a new NTT-domain automorphism key for the mapping x → x^degree.

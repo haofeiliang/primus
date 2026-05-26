@@ -1,7 +1,6 @@
 use num_traits::Zero;
-use primus_integer::{
-    BigUintIter, BigUintIterMut, Data, DataMut, DataOwned, RawData, UnsignedInteger,
-};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::{BigUintIter, BigUintIterMut, FheUint};
 
 mod add;
 mod neg;
@@ -12,14 +11,14 @@ mod sub;
 pub struct BigUintPolynomial<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_iters!(BigUintPolynomial, bit_uint_poly);
 
 impl<S, T> BigUintPolynomial<S>
 where
     S: RawData<Elem = T>,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`BigUintPolynomial<T>`].
     #[inline]
@@ -31,7 +30,7 @@ where
 impl<S, T> BigUintPolynomial<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a [`BigUintPolynomial<S>`] with all coefficients equal to zero.
     #[inline]
@@ -55,7 +54,7 @@ where
 impl<S, T> BigUintPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Copy the coefficients from another slice.
     #[inline]
@@ -87,7 +86,7 @@ where
 impl<S, T> BigUintPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Returns `true` if `self` is equal to `0`.
     #[inline]

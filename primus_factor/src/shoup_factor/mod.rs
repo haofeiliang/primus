@@ -1,5 +1,8 @@
 use primus_integer::{DivWide, UnsignedInteger};
 
+#[cfg(feature = "simd")]
+use primus_integer::SimdUnsignedInteger;
+
 use crate::{FactorMul, FactorSliceOps, LazyFactorMul, LazyFactorSliceOps};
 
 #[cfg(feature = "simd")]
@@ -294,7 +297,7 @@ impl_blanket_factor_slice_ops!(default);
 macro_rules! impl_shoup_factor_slice_ops_simd {
     ($($t:ty),*)=>{
         $(
-            impl_shoup_factor_slice_ops_simd!(@ $t, primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize));
+            impl_shoup_factor_slice_ops_simd!(@ $t, <$t>::LANE_COUNT);
         )*
     };
     (@ $t:ty, $lanes:expr) => {

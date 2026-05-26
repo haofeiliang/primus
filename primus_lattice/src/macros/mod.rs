@@ -3,7 +3,7 @@ macro_rules! impl_common {
         impl<$s> $cipher<$s>
         where
             $s: RawData,
-            <$s as RawData>::Elem: UnsignedInteger,
+            <$s as RawData>::Elem: FheUint,
         {
             #[doc = concat!(r" Creates a new [`",stringify!($cipher),"<",stringify!($s),">`].")]
             #[inline(always)]
@@ -15,7 +15,7 @@ macro_rules! impl_common {
         impl<$s, T> AsRef<[T]> for $cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             #[inline(always)]
             fn as_ref(&self) -> &[T] {
@@ -26,7 +26,7 @@ macro_rules! impl_common {
         impl<$s, T> AsMut<[T]> for $cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             #[inline(always)]
             fn as_mut(&mut self) -> &mut [T] {
@@ -41,7 +41,7 @@ macro_rules! impl_bytes_conversion {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataOwned,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             #[doc = concat!(r" Creates a new [`",stringify!($cipher),"<",stringify!($s),">`] from bytes `data`.")]
             #[inline]
@@ -55,7 +55,7 @@ macro_rules! impl_bytes_conversion {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Copy from bytes `data`.
             #[inline]
@@ -69,7 +69,7 @@ macro_rules! impl_bytes_conversion {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Converts `self` into bytes.
             #[inline]
@@ -101,7 +101,7 @@ macro_rules! impl_zero {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataOwned,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             paste::paste! {
                 #[doc = concat!(r" Creates a new [`",stringify!($cipher),"<",stringify!($s),">`] with all values or coefficients equal to zero.")]
@@ -115,7 +115,7 @@ macro_rules! impl_zero {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Set all values or coefficients equal to zero.
             #[inline]
@@ -130,12 +130,12 @@ macro_rules! impl_iters {
         paste::paste! {
             pub struct [<$cipher Iter>]<'a, T>
             where
-                T: UnsignedInteger,
+                T: FheUint,
             {
                 pub(crate) iter: core::slice::ChunksExact<'a, T>
             }
 
-            impl<'a, T: UnsignedInteger> [<$cipher Iter>]<'a, T> {
+            impl<'a, T: FheUint> [<$cipher Iter>]<'a, T> {
                 #[inline]
                 pub fn new(data:&'a [T], [<$cipher:snake _len>]:usize) -> Self{
                     Self {
@@ -144,7 +144,7 @@ macro_rules! impl_iters {
                 }
             }
 
-            impl<'a, T: UnsignedInteger> Iterator for [<$cipher Iter>]<'a, T> {
+            impl<'a, T: FheUint> Iterator for [<$cipher Iter>]<'a, T> {
                 type Item = $cipher<&'a [T]>;
 
                 #[inline]
@@ -153,18 +153,18 @@ macro_rules! impl_iters {
                 }
             }
 
-            impl<'a, T: UnsignedInteger> core::iter::FusedIterator for [<$cipher Iter>]<'a, T> {}
+            impl<'a, T: FheUint> core::iter::FusedIterator for [<$cipher Iter>]<'a, T> {}
         }
 
         paste::paste! {
             pub struct [<$cipher IterMut>]<'a, T>
             where
-                T: UnsignedInteger,
+                T: FheUint,
             {
                 pub(crate) iter: core::slice::ChunksExactMut<'a, T>
             }
 
-            impl<'a, T: UnsignedInteger> [<$cipher IterMut>]<'a, T> {
+            impl<'a, T: FheUint> [<$cipher IterMut>]<'a, T> {
                 #[inline]
                 pub fn new(data:&'a mut [T], [<$cipher:snake _len>]:usize) -> Self{
                     Self {
@@ -173,7 +173,7 @@ macro_rules! impl_iters {
                 }
             }
 
-            impl<'a, T: UnsignedInteger> Iterator for [<$cipher IterMut>]<'a, T> {
+            impl<'a, T: FheUint> Iterator for [<$cipher IterMut>]<'a, T> {
                 type Item = $cipher<&'a mut [T]>;
 
                 #[inline]
@@ -182,7 +182,7 @@ macro_rules! impl_iters {
                 }
             }
 
-            impl<'a, T: UnsignedInteger> core::iter::FusedIterator for [<$cipher IterMut>]<'a, T> {}
+            impl<'a, T: FheUint> core::iter::FusedIterator for [<$cipher IterMut>]<'a, T> {}
         }
     };
 }
@@ -192,7 +192,7 @@ macro_rules! impl_iter_sub_structure {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             paste::paste! {
                 #[inline]
@@ -208,7 +208,7 @@ macro_rules! impl_iter_sub_structure {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             paste::paste! {
                 #[inline]
@@ -227,7 +227,7 @@ macro_rules! impl_iter_sub_structure {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             paste::paste! {
                 #[inline]
@@ -243,7 +243,7 @@ macro_rules! impl_iter_sub_structure {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             paste::paste! {
                 #[inline]
@@ -265,7 +265,7 @@ macro_rules! impl_basic_operation_single_modulus {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Perform element-wise modular addition `self + rhs`.
             #[inline]
@@ -313,7 +313,7 @@ macro_rules! impl_basic_operation_single_modulus {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Performs in-place element-wise modular addition:`result = self + rhs`,
             #[inline]
@@ -361,7 +361,7 @@ macro_rules! impl_basic_operation_multiple_modulus {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Perform element-wise modular addition `self + rhs`.
             #[inline]
@@ -457,7 +457,7 @@ macro_rules! impl_basic_operation_multiple_modulus {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Performs element-wise modular addition `result = self + rhs`.
             #[inline]
@@ -539,7 +539,7 @@ macro_rules! impl_ntt {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Transforms `self` to ntt form.
             #[inline]
@@ -558,7 +558,7 @@ macro_rules! impl_ntt {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Transforms `self` to ntt form and stores in `result`.
             #[inline]
@@ -585,7 +585,7 @@ macro_rules! impl_intt {
         impl<$s, T> $ntt_cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Transforms `self` to coefficient form.
             #[inline]
@@ -604,7 +604,7 @@ macro_rules! impl_intt {
         impl<$s, T> $ntt_cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Transforms `self` to coefficient form and stores in `result`.
             #[inline]
@@ -631,7 +631,7 @@ macro_rules! impl_crt_ntt {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Transforms `self` to ntt form.
             #[inline]
@@ -651,7 +651,7 @@ macro_rules! impl_crt_ntt {
         impl<$s, T> $cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Transforms `self` to ntt form and stores in `result`.
             #[inline]
@@ -678,7 +678,7 @@ macro_rules! impl_crt_intt {
         impl<$s, T> $ntt_cipher<$s>
         where
             $s: RawData<Elem = T> + DataMut,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Transforms `self` to coefficient form.
             #[inline]
@@ -698,7 +698,7 @@ macro_rules! impl_crt_intt {
         impl<$s, T> $ntt_cipher<$s>
         where
             $s: RawData<Elem = T> + Data,
-            T: UnsignedInteger,
+            T: FheUint,
         {
             /// Transforms `self` to coefficient form and stores in `result`.
             #[inline]

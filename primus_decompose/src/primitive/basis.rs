@@ -1,13 +1,13 @@
 use num_traits::ConstOne;
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 use serde::{Deserialize, Serialize};
 
 use super::{ScalarIter, SignedDecomposeIter, ValueMask};
 
 /// The basis for approximate signed decomposition.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(bound(deserialize = "T: UnsignedInteger"))]
-pub struct ApproxSignedBasis<T: UnsignedInteger> {
+#[serde(bound(deserialize = "T: FheUint"))]
+pub struct ApproxSignedBasis<T: FheUint> {
     modulus: Option<T>,
     modulus_is_power_of_2: bool,
     basis: T,
@@ -25,9 +25,9 @@ pub struct ApproxSignedBasis<T: UnsignedInteger> {
     value_masks: Vec<ValueMask<T>>,
 }
 
-impl<T: UnsignedInteger> Eq for ApproxSignedBasis<T> {}
+impl<T: FheUint> Eq for ApproxSignedBasis<T> {}
 
-impl<T: UnsignedInteger> PartialEq for ApproxSignedBasis<T> {
+impl<T: FheUint> PartialEq for ApproxSignedBasis<T> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.modulus == other.modulus
@@ -36,7 +36,7 @@ impl<T: UnsignedInteger> PartialEq for ApproxSignedBasis<T> {
     }
 }
 
-impl<T: UnsignedInteger> ApproxSignedBasis<T> {
+impl<T: FheUint> ApproxSignedBasis<T> {
     #[inline]
     pub fn new(modulus: Option<T>, log_basis: u32, reverse_length: Option<usize>) -> Self {
         assert!(log_basis > 0);

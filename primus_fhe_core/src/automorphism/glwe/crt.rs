@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::{FheUint, izip};
 use primus_lattice::glev::{DcrtGlevIter, DcrtGlevIterMut};
 use primus_modulus::PowOf2Modulus;
 use primus_ntt::DcrtTable;
@@ -85,7 +86,7 @@ fn generate_auto_key_data<T, M, Table, R>(
     rng: &mut R,
 ) -> Vec<T>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     Table: DcrtTable<ValueT = T>,
     R: rand::Rng + rand::CryptoRng,
     M: FieldContext<T>,
@@ -121,7 +122,7 @@ where
 #[derive(Clone)]
 pub struct CrtGlweAutoKey<T, Table>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     Table: DcrtTable<ValueT = T>,
 {
     key: Vec<T>,
@@ -133,7 +134,7 @@ where
 
 impl<T, Table> CrtGlweAutoKey<T, Table>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     Table: DcrtTable<ValueT = T>,
 {
     pub fn new<M, R>(
@@ -253,7 +254,7 @@ pub fn crt_poly_auto_inplace<T, M>(
     poly_length: usize,
     moduli: &[M],
 ) where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     izip!(
@@ -273,7 +274,7 @@ fn poly_auto_inplace<T, M>(
     auto_helper: &CoeffAutoHelper,
     modulus: M,
 ) where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     match auto_helper {
@@ -294,7 +295,7 @@ fn poly_auto_inplace_for_permutation<T, M>(
     from_ops: &[FromOp],
     modulus: M,
 ) where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     for (d, from_op) in result.iter_mut().zip(from_ops.iter()) {
@@ -310,7 +311,7 @@ fn poly_auto_inplace_for_permutation<T, M>(
 #[inline]
 fn poly_auto_inplace_for_dimension_plus_one<T, M>(poly: &[T], result: &mut [T], modulus: M)
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     for (pi, di) in unsafe {
@@ -326,7 +327,7 @@ where
 #[inline]
 fn poly_auto_inplace_for_one<T>(poly: &[T], result: &mut [T])
 where
-    T: UnsignedInteger,
+    T: FheUint,
 {
     result.copy_from_slice(poly);
 }

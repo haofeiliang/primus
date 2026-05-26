@@ -1,10 +1,13 @@
+use primus_data::{Data, DataMut, RawData};
 use primus_factor::{FactorMul, FactorSliceOps, ShoupFactor};
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
+use primus_integer::{FheUint, izip};
 use primus_modulus::UintModulus;
 use primus_reduce::{ReduceAddAssign, ReduceMulAddSlice, ReduceMulSlice, ReduceSub};
 
 #[cfg(feature = "simd")]
 use primus_factor::SimdShoupFactor;
+#[cfg(feature = "simd")]
+use primus_integer::SimdUnsignedInteger;
 #[cfg(feature = "simd")]
 use std::simd::{Simd, cmp::SimdOrd};
 
@@ -16,7 +19,7 @@ use super::DcrtPolynomial;
 // Butterfly dispatch trait — scalar / SIMD (min_specialization).
 // ===========================================================================
 
-trait ButterflyDispatch: UnsignedInteger {
+trait ButterflyDispatch: FheUint {
     fn butterfly_inner(
         lhs: &mut [Self],
         rhs: &[Self],
@@ -28,7 +31,7 @@ trait ButterflyDispatch: UnsignedInteger {
 
 macro_rules! impl_butterfly_blanket {
     ($($default_kw:ident)?) => {
-        impl<T: UnsignedInteger> ButterflyDispatch for T {
+        impl<T: FheUint> ButterflyDispatch for T {
             $($default_kw)? fn butterfly_inner(
                 lhs: &mut [Self],
                 rhs: &[Self],
@@ -106,22 +109,16 @@ macro_rules! impl_butterfly_simd {
 }
 
 #[cfg(feature = "simd")]
-impl_butterfly_simd!(u8, primus_integer::lanes::VECTOR_BITS / 8);
+impl_butterfly_simd!(u16, u16::LANE_COUNT);
 #[cfg(feature = "simd")]
-impl_butterfly_simd!(u16, primus_integer::lanes::VECTOR_BITS / 16);
+impl_butterfly_simd!(u32, u32::LANE_COUNT);
 #[cfg(feature = "simd")]
-impl_butterfly_simd!(u32, primus_integer::lanes::VECTOR_BITS / 32);
-#[cfg(feature = "simd")]
-impl_butterfly_simd!(u64, primus_integer::lanes::VECTOR_BITS / 64);
-#[cfg(all(feature = "simd", target_pointer_width = "64"))]
-impl_butterfly_simd!(usize, primus_integer::lanes::VECTOR_BITS / 64);
-#[cfg(all(feature = "simd", target_pointer_width = "32"))]
-impl_butterfly_simd!(usize, primus_integer::lanes::VECTOR_BITS / 32);
+impl_butterfly_simd!(u64, u64::LANE_COUNT);
 
 impl<S, T> DcrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `self * scalar` according to `moduli`.
     #[inline]
@@ -258,7 +255,7 @@ where
 impl<S, T> DcrtPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `result = self * rhs` according to `moduli`.
     #[inline]

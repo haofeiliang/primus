@@ -1,6 +1,6 @@
 use std::f64::consts::{FRAC_1_SQRT_2, FRAC_2_SQRT_PI};
 
-use primus_integer::Integer;
+use primus_integer::FheInt;
 use rand::{
     RngExt,
     distr::{Distribution, Uniform},
@@ -15,7 +15,7 @@ enum FallRegion {
 
 /// Discrete Ziggurat
 #[derive(Clone)]
-pub struct SignedDiscreteZiggurat<T: Integer> {
+pub struct SignedDiscreteZiggurat<T: FheInt> {
     std_dev: f64,
     inv_neg_two_std_dev_sq: f64,
     x: Vec<f64>,
@@ -27,7 +27,7 @@ pub struct SignedDiscreteZiggurat<T: Integer> {
     sample_x: Vec<Uniform<T>>,
 }
 
-impl<T: Integer> SignedDiscreteZiggurat<T> {
+impl<T: FheInt> SignedDiscreteZiggurat<T> {
     /// Generate a [`SignedDiscreteZiggurat<T>`]
     pub fn new(std_dev: f64, tail_cut: f64) -> Self {
         let x_m = (tail_cut * std_dev).floor();
@@ -247,11 +247,11 @@ impl<T: Integer> SignedDiscreteZiggurat<T> {
 const MASK: f64 = 4294967296.0f64; // 2^{32}
 
 #[inline(always)]
-fn combine<T: Integer>(sign: bool, x: T) -> T {
+fn combine<T: FheInt>(sign: bool, x: T) -> T {
     if sign { x } else { T::ZERO - x }
 }
 
-impl<T: Integer> Distribution<T> for SignedDiscreteZiggurat<T> {
+impl<T: FheInt> Distribution<T> for SignedDiscreteZiggurat<T> {
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> T {
         loop {
             let i = self.sample_m.sample(rng);

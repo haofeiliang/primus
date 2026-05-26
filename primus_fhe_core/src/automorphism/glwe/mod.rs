@@ -1,13 +1,13 @@
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 use primus_lattice::context::DcrtGlevContext;
 use primus_poly::CrtPolynomial;
 
-pub struct CrtGlweAutoContext<T: UnsignedInteger> {
+pub struct CrtGlweAutoContext<T: FheUint> {
     auto_crt_poly: CrtPolynomial<Vec<T>>,
     glev_context: DcrtGlevContext<T>,
 }
 
-impl<T: UnsignedInteger> CrtGlweAutoContext<T> {
+impl<T: FheUint> CrtGlweAutoContext<T> {
     pub fn new(
         poly_length: usize,
         crt_poly_len: usize,

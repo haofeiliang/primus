@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, RawData, UnsignedInteger, izip};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::{FheUint, izip};
 use primus_reduce::ReduceNegSlice;
 
 use crate::ArrayBase;
@@ -8,7 +9,7 @@ use super::CrtPolynomial;
 impl<S, T> CrtPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs the unary `-` operation.
     #[inline]
@@ -35,7 +36,7 @@ where
 impl<S, T> CrtPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs the unary `-` operation.
     #[inline]

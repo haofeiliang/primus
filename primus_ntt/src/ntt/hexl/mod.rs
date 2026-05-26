@@ -1,8 +1,8 @@
 use std::sync::LazyLock;
 
 use aligned_vec::{AVec, avec};
+use primus_data::{DataMut, RawData};
 use primus_factor::{FactorMul, MultiplyFactor, ShoupFactor};
-use primus_integer::{DataMut, RawData};
 use primus_poly::{NttPolynomial, Polynomial};
 use primus_reduce::FieldContext;
 
@@ -160,7 +160,7 @@ impl NttTable for HexlNttTable {
     where
         M: FieldContext<Self::ValueT>,
     {
-        let q = modulus.value_unchecked();
+        let q = unsafe { modulus.value_unchecked() };
         let n = 1usize << log_n;
         check_arguments(n, q);
 

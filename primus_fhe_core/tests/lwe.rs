@@ -1,5 +1,5 @@
 use primus_fhe_core::{LweParameters, LweSecretKey, LweSecretKeyType};
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 use primus_modulus::{BarrettModulus, NativeModulus, PowOf2Modulus};
 use primus_reduce::RingContext;
 
@@ -13,13 +13,13 @@ fn noise_standard_deviation_from_q(q: f64) -> f64 {
     (q * NOISE_ALPHA).max(0.7)
 }
 
-fn from_usize<T: UnsignedInteger>(value: usize) -> T {
+fn from_usize<T: FheUint>(value: usize) -> T {
     T::try_from(value).unwrap()
 }
 
 fn noise_standard_deviation<T, M>(cipher_modulus: M) -> f64
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: RingContext<T>,
 {
     let q = cipher_modulus
@@ -30,7 +30,7 @@ where
 
 fn assert_lwe_secret_key_enc_dec<T, M>(cipher_modulus: M)
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: RingContext<T>,
 {
     let mut rng = rand::rng();

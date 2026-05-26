@@ -1,5 +1,5 @@
 use primus_factor::{FactorMul, FactorSliceOps, ShoupFactor};
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 
 mod helpers;
 
@@ -15,7 +15,7 @@ use super::PlaintextEmbedding;
 /// This keeps modulus-shape checks and shift/mask computation out of hot
 /// coefficient loops.
 #[derive(Clone, Copy, Debug)]
-pub enum PlaintextCodec<T: UnsignedInteger> {
+pub enum PlaintextCodec<T: FheUint> {
     /// Native modulus `2^T::BITS` with power-of-two plaintext modulus.
     NativePow2 {
         encode_shift: u32,
@@ -45,7 +45,7 @@ pub enum PlaintextCodec<T: UnsignedInteger> {
     },
 }
 
-impl<T: UnsignedInteger> PlaintextCodec<T> {
+impl<T: FheUint> PlaintextCodec<T> {
     #[inline]
     pub fn new(t: T, q: Option<T>) -> Self {
         assert!(t > T::ONE);

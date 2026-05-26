@@ -1,5 +1,6 @@
+use primus_data::{Data, DataMut, DataOwned, RawData};
 use primus_decompose::big_integer::BigUintApproxSignedBasis;
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger, izip};
+use primus_integer::{FheUint, izip};
 use primus_ntt::DcrtTable;
 use primus_poly::{ArrayBase, BigUintPolynomial, CrtPolynomial, DcrtPolynomial};
 use primus_reduce::FieldContext;
@@ -24,7 +25,7 @@ use super::CrtGlev;
 pub struct DcrtGlev<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(DcrtGlev<S>);
 impl_bytes_conversion!(DcrtGlev<S>);
@@ -37,7 +38,7 @@ impl_crt_intt!(DcrtGlev<S>, CrtGlev);
 impl<S, T> DcrtGlev<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     pub fn mul_crt_poly_inplace<M, Table, A, B>(
         &self,

@@ -8,6 +8,9 @@
 use primus_integer::UnsignedInteger;
 use primus_reduce::prelude::*;
 
+#[cfg(feature = "simd")]
+use primus_integer::SimdUnsignedInteger;
+
 use super::BarrettModulus;
 
 // ---------------------------------------------------------------------------
@@ -375,10 +378,10 @@ macro_rules! barrett_scalar {
 macro_rules! barrett_simd {
     ($($t:ty),*) => {
         $(
-            impl_reduce_once_slice_simd_with!(impl ReduceOnceSlice<$t> for BarrettModulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), crate::common::uint::simd, access = value);
-            impl_reduce_neg_slice_simd_with!(impl ReduceNegSlice<$t> for BarrettModulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), crate::common::compact::simd, access = value);
-            impl_reduce_add_slice_simd_with!(impl ReduceAddSlice<$t> for BarrettModulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), crate::common::compact::simd, access = value);
-            impl_reduce_sub_slice_simd_with!(impl ReduceSubSlice<$t> for BarrettModulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), crate::common::compact::simd, access = value);
+            impl_reduce_once_slice_simd_with!(impl ReduceOnceSlice<$t> for BarrettModulus<$t>; <$t>::LANE_COUNT, crate::common::uint::simd, access = value);
+            impl_reduce_neg_slice_simd_with!(impl ReduceNegSlice<$t> for BarrettModulus<$t>; <$t>::LANE_COUNT, crate::common::compact::simd, access = value);
+            impl_reduce_add_slice_simd_with!(impl ReduceAddSlice<$t> for BarrettModulus<$t>; <$t>::LANE_COUNT, crate::common::compact::simd, access = value);
+            impl_reduce_sub_slice_simd_with!(impl ReduceSubSlice<$t> for BarrettModulus<$t>; <$t>::LANE_COUNT, crate::common::compact::simd, access = value);
         )*
     };
 }
@@ -457,50 +460,50 @@ macro_rules! barrett_ext_simd {
         $(
             impl ReduceMulSlice<$t> for BarrettModulus<$t> {
                 #[inline]
-                fn reduce_mul_slice_assign(self, a: &mut [$t], b: &[$t]) { super::simd::reduce_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, b) }
+                fn reduce_mul_slice_assign(self, a: &mut [$t], b: &[$t]) { super::simd::reduce_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self, a, b) }
                 #[inline]
-                fn reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) { super::simd::reduce_mul_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, b, output) }
+                fn reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) { super::simd::reduce_mul_slice_to::<$t, { <$t>::LANE_COUNT }>(self, a, b, output) }
                 #[inline]
-                fn reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) { super::simd::reduce_scalar_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, scalar) }
+                fn reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) { super::simd::reduce_scalar_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self, a, scalar) }
                 #[inline]
-                fn reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) { super::simd::reduce_scalar_mul_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, scalar, output) }
+                fn reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) { super::simd::reduce_scalar_mul_slice_to::<$t, { <$t>::LANE_COUNT }>(self, a, scalar, output) }
             }
             impl LazyReduceMulSlice<$t> for BarrettModulus<$t> {
                 #[inline]
-                fn lazy_reduce_mul_slice_assign(self, a: &mut [$t], b: &[$t]) { super::simd::lazy_reduce_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, b) }
+                fn lazy_reduce_mul_slice_assign(self, a: &mut [$t], b: &[$t]) { super::simd::lazy_reduce_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self, a, b) }
                 #[inline]
-                fn lazy_reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) { super::simd::lazy_reduce_mul_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, b, output) }
+                fn lazy_reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) { super::simd::lazy_reduce_mul_slice_to::<$t, { <$t>::LANE_COUNT }>(self, a, b, output) }
                 #[inline]
-                fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) { super::simd::lazy_reduce_scalar_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, scalar) }
+                fn lazy_reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) { super::simd::lazy_reduce_scalar_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self, a, scalar) }
                 #[inline]
-                fn lazy_reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) { super::simd::lazy_reduce_scalar_mul_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, scalar, output) }
+                fn lazy_reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) { super::simd::lazy_reduce_scalar_mul_slice_to::<$t, { <$t>::LANE_COUNT }>(self, a, scalar, output) }
             }
             impl ReduceMulAddSlice<$t> for BarrettModulus<$t> {
                 #[inline]
-                fn reduce_add_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) { super::simd::reduce_add_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, acc, a, b) }
+                fn reduce_add_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) { super::simd::reduce_add_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self, acc, a, b) }
                 #[inline]
-                fn reduce_sub_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) { super::simd::reduce_sub_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, acc, a, b) }
+                fn reduce_sub_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) { super::simd::reduce_sub_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self, acc, a, b) }
                 #[inline]
-                fn reduce_mul_add_slice_to(self, a: &[$t], b: &[$t], c: &[$t], output: &mut [$t]) { super::simd::reduce_mul_add_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, b, c, output) }
+                fn reduce_mul_add_slice_to(self, a: &[$t], b: &[$t], c: &[$t], output: &mut [$t]) { super::simd::reduce_mul_add_slice_to::<$t, { <$t>::LANE_COUNT }>(self, a, b, c, output) }
                 #[inline]
-                fn reduce_scalar_mul_add_slice_to(self, scalar: $t, b: &[$t], c: &[$t], output: &mut [$t]) { super::simd::reduce_scalar_mul_add_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, scalar, b, c, output) }
+                fn reduce_scalar_mul_add_slice_to(self, scalar: $t, b: &[$t], c: &[$t], output: &mut [$t]) { super::simd::reduce_scalar_mul_add_slice_to::<$t, { <$t>::LANE_COUNT }>(self, scalar, b, c, output) }
                 #[inline]
-                fn reduce_add_scalar_mul_slice_assign(self, acc: &mut [$t], scalar: $t, b: &[$t]) { super::simd::reduce_add_scalar_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, acc, scalar, b) }
+                fn reduce_add_scalar_mul_slice_assign(self, acc: &mut [$t], scalar: $t, b: &[$t]) { super::simd::reduce_add_scalar_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self, acc, scalar, b) }
             }
             impl LazyReduceMulAddSlice<$t> for BarrettModulus<$t> {
                 #[inline]
-                fn lazy_reduce_add_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) { super::simd::lazy_reduce_add_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, acc, a, b) }
+                fn lazy_reduce_add_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) { super::simd::lazy_reduce_add_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self, acc, a, b) }
                 #[inline]
-                fn lazy_reduce_sub_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) { super::simd::lazy_reduce_sub_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, acc, a, b) }
+                fn lazy_reduce_sub_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) { super::simd::lazy_reduce_sub_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self, acc, a, b) }
                 #[inline]
-                fn lazy_reduce_mul_add_slice_to(self, a: &[$t], b: &[$t], c: &[$t], output: &mut [$t]) { super::simd::lazy_reduce_mul_add_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a, b, c, output) }
+                fn lazy_reduce_mul_add_slice_to(self, a: &[$t], b: &[$t], c: &[$t], output: &mut [$t]) { super::simd::lazy_reduce_mul_add_slice_to::<$t, { <$t>::LANE_COUNT }>(self, a, b, c, output) }
                 #[inline]
-                fn lazy_reduce_scalar_mul_add_slice_to(self, scalar: $t, b: &[$t], c: &[$t], output: &mut [$t]) { super::simd::lazy_reduce_scalar_mul_add_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, scalar, b, c, output) }
+                fn lazy_reduce_scalar_mul_add_slice_to(self, scalar: $t, b: &[$t], c: &[$t], output: &mut [$t]) { super::simd::lazy_reduce_scalar_mul_add_slice_to::<$t, { <$t>::LANE_COUNT }>(self, scalar, b, c, output) }
             }
             impl ReduceDotProduct<$t> for BarrettModulus<$t> {
                 type Output = $t;
                 #[inline]
-                fn reduce_dot_product(self, a: impl AsRef<[$t]>, b: impl AsRef<[$t]>) -> $t { super::simd::reduce_dot_product::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self, a.as_ref(), b.as_ref()) }
+                fn reduce_dot_product(self, a: impl AsRef<[$t]>, b: impl AsRef<[$t]>) -> $t { super::simd::reduce_dot_product::<$t, { <$t>::LANE_COUNT }>(self, a.as_ref(), b.as_ref()) }
                 #[inline]
                 fn reduce_dot_product_iter(self, a: impl IntoIterator<Item = $t>, b: impl IntoIterator<Item = $t>) -> $t { scalar_reduce_dot_product_iter(self, a, b) }
             }

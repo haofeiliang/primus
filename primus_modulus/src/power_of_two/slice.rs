@@ -5,6 +5,9 @@ use primus_reduce::{
     ReduceSub, ReduceSubAssign, ReduceSubSlice,
 };
 
+#[cfg(feature = "simd")]
+use primus_integer::SimdUnsignedInteger;
+
 use super::PowOf2Modulus;
 
 macro_rules! pow2_scalar {
@@ -22,10 +25,10 @@ macro_rules! pow2_scalar {
 macro_rules! pow2_simd {
     ($($t:ty),*) => {
         $(
-            impl_reduce_once_slice_simd_with!(impl ReduceOnceSlice<$t> for PowOf2Modulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), super::simd, access = mask);
-            impl_reduce_neg_slice_simd_with!(impl ReduceNegSlice<$t> for PowOf2Modulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), super::simd, access = mask);
-            impl_reduce_add_slice_simd_with!(impl ReduceAddSlice<$t> for PowOf2Modulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), super::simd, access = mask);
-            impl_reduce_sub_slice_simd_with!(impl ReduceSubSlice<$t> for PowOf2Modulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), super::simd, access = mask);
+            impl_reduce_once_slice_simd_with!(impl ReduceOnceSlice<$t> for PowOf2Modulus<$t>; <$t>::LANE_COUNT, super::simd, access = mask);
+            impl_reduce_neg_slice_simd_with!(impl ReduceNegSlice<$t> for PowOf2Modulus<$t>; <$t>::LANE_COUNT, super::simd, access = mask);
+            impl_reduce_add_slice_simd_with!(impl ReduceAddSlice<$t> for PowOf2Modulus<$t>; <$t>::LANE_COUNT, super::simd, access = mask);
+            impl_reduce_sub_slice_simd_with!(impl ReduceSubSlice<$t> for PowOf2Modulus<$t>; <$t>::LANE_COUNT, super::simd, access = mask);
         )*
     };
 }
@@ -162,35 +165,35 @@ macro_rules! pow2_ext_simd {
             impl ReduceMulSlice<$t> for PowOf2Modulus<$t> {
                 #[inline]
                 fn reduce_mul_slice_assign(self, a: &mut [$t], b: &[$t]) {
-                    super::simd::reduce_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self.mask(), a, b)
+                    super::simd::reduce_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self.mask(), a, b)
                 }
                 #[inline]
                 fn reduce_mul_slice_to(self, a: &[$t], b: &[$t], output: &mut [$t]) {
-                    super::simd::reduce_mul_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self.mask(), a, b, output)
+                    super::simd::reduce_mul_slice_to::<$t, { <$t>::LANE_COUNT }>(self.mask(), a, b, output)
                 }
                 #[inline]
                 fn reduce_scalar_mul_slice_assign(self, a: &mut [$t], scalar: $t) {
-                    super::simd::reduce_scalar_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self.mask(), a, scalar)
+                    super::simd::reduce_scalar_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self.mask(), a, scalar)
                 }
                 #[inline]
                 fn reduce_scalar_mul_slice_to(self, a: &[$t], scalar: $t, output: &mut [$t]) {
-                    super::simd::reduce_scalar_mul_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self.mask(), a, scalar, output)
+                    super::simd::reduce_scalar_mul_slice_to::<$t, { <$t>::LANE_COUNT }>(self.mask(), a, scalar, output)
                 }
             }
             impl ReduceMulAddSlice<$t> for PowOf2Modulus<$t> {
                 #[inline]
                 fn reduce_add_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) {
-                    super::simd::reduce_add_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self.mask(), acc, a, b)
+                    super::simd::reduce_add_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self.mask(), acc, a, b)
                 }
                 #[inline]
                 fn reduce_sub_mul_slice_assign(self, acc: &mut [$t], a: &[$t], b: &[$t]) {
-                    super::simd::reduce_sub_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self.mask(), acc, a, b)
+                    super::simd::reduce_sub_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(self.mask(), acc, a, b)
                 }
                 #[inline]
                 fn reduce_add_scalar_mul_slice_assign(
                     self, acc: &mut [$t], scalar: $t, b: &[$t],
                 ) {
-                    super::simd::reduce_add_scalar_mul_slice_assign::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(
+                    super::simd::reduce_add_scalar_mul_slice_assign::<$t, { <$t>::LANE_COUNT }>(
                         self.mask(), acc, scalar, b,
                     )
                 }
@@ -198,7 +201,7 @@ macro_rules! pow2_ext_simd {
                 fn reduce_mul_add_slice_to(
                     self, a: &[$t], b: &[$t], c: &[$t], output: &mut [$t],
                 ) {
-                    super::simd::reduce_mul_add_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(
+                    super::simd::reduce_mul_add_slice_to::<$t, { <$t>::LANE_COUNT }>(
                         self.mask(), a, b, c, output,
                     )
                 }
@@ -206,7 +209,7 @@ macro_rules! pow2_ext_simd {
                 fn reduce_scalar_mul_add_slice_to(
                     self, scalar: $t, b: &[$t], c: &[$t], output: &mut [$t],
                 ) {
-                    super::simd::reduce_scalar_mul_add_slice_to::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(
+                    super::simd::reduce_scalar_mul_add_slice_to::<$t, { <$t>::LANE_COUNT }>(
                         self.mask(), scalar, b, c, output,
                     )
                 }
@@ -215,7 +218,7 @@ macro_rules! pow2_ext_simd {
                 type Output = $t;
                 #[inline]
                 fn reduce_dot_product(self, a: impl AsRef<[$t]>, b: impl AsRef<[$t]>) -> $t {
-                    super::simd::reduce_dot_product::<$t, { primus_integer::lanes::VECTOR_BITS / <$t>::BITS as usize }>(self.mask(), a.as_ref(), b.as_ref())
+                    super::simd::reduce_dot_product::<$t, { <$t>::LANE_COUNT }>(self.mask(), a.as_ref(), b.as_ref())
                 }
                 #[inline]
                 fn reduce_dot_product_iter(

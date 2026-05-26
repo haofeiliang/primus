@@ -2,7 +2,7 @@ use primus_fhe_core::{
     NttRlweCiphertext, NttRlweSecretKey, PlaintextEmbedding, RingSecretKeyType, RlweParameters,
     RlweSecretKey,
 };
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 use primus_modulus::BarrettModulus;
 use primus_ntt::{NttTable, UintNttTable};
 use primus_poly::Polynomial;
@@ -18,20 +18,20 @@ const SECRET_KEY_TYPES: [RingSecretKeyType; 3] = [
     RingSecretKeyType::Gaussian(SECRET_KEY_GAUSSIAN_STANDARD_DEVIATION),
 ];
 
-fn from_usize<T: UnsignedInteger>(value: usize) -> T {
+fn from_usize<T: FheUint>(value: usize) -> T {
     T::try_from(value).unwrap()
 }
 
 fn noise_standard_deviation<T, M>(cipher_modulus: M) -> f64
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
-    let q: f64 = cipher_modulus.value_unchecked().as_into();
+    let q: f64 = unsafe { cipher_modulus.value_unchecked().as_into() };
     (q * NOISE_ALPHA).max(0.7)
 }
 
-fn message_polynomial<T: UnsignedInteger>(plain_modulus: usize) -> Polynomial<Vec<T>> {
+fn message_polynomial<T: FheUint>(plain_modulus: usize) -> Polynomial<Vec<T>> {
     Polynomial::new(
         (0..POLY_LENGTH)
             .map(|index| from_usize(index % plain_modulus))
@@ -46,7 +46,7 @@ fn noiseless_delta_ciphertext<T, M, Table>(
     embedding: PlaintextEmbedding,
 ) -> NttRlweCiphertext<Vec<T>>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
     Table: NttTable<ValueT = T>,
 {
@@ -63,7 +63,7 @@ where
 
 fn assert_rlwe_secret_key_enc_dec<T, M>(cipher_modulus: M)
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: FieldContext<T>,
 {
     let mut rng = rand::rng();

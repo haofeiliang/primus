@@ -1,4 +1,4 @@
-use primus_integer::{AsInto, UnsignedInteger};
+use primus_integer::{AsInto, FheUint};
 use rand::distr::Distribution;
 use rug::{Float, az::Cast};
 
@@ -6,13 +6,13 @@ const PRECISION: u32 = 512;
 
 /// UnixCDTSampler
 #[derive(Debug, Clone)]
-pub struct UnixCDTSampler<T: UnsignedInteger> {
+pub struct UnixCDTSampler<T: FheUint> {
     std_dev: f64,
     modulus_minus_one: T,
     cdt: Vec<[u64; 4]>,
 }
 
-impl<T: UnsignedInteger> UnixCDTSampler<T> {
+impl<T: FheUint> UnixCDTSampler<T> {
     /// Generate UnixCDTSampler
     pub fn new(std_dev: f64, tail_cut: f64, modulus_minus_one: T) -> Self {
         let mut length = (std_dev * tail_cut).floor() as usize + 1;
@@ -94,7 +94,7 @@ impl<T: UnsignedInteger> UnixCDTSampler<T> {
     }
 }
 
-impl<T: UnsignedInteger> Distribution<T> for UnixCDTSampler<T> {
+impl<T: FheUint> Distribution<T> for UnixCDTSampler<T> {
     #[inline]
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> T {
         let mut r = [0u64; 4];

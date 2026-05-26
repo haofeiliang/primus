@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::FheUint;
 use primus_ntt::NttTable;
 use primus_poly::{ArrayBase, NttPolynomial, NttPolynomialIter, NttPolynomialIterMut};
 use primus_reduce::FieldContext;
@@ -16,7 +17,7 @@ use super::Glwe;
 pub struct NttGlwe<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(NttGlwe<S>);
 impl_bytes_conversion!(NttGlwe<S>);
@@ -29,7 +30,7 @@ impl_intt!(NttGlwe<S>, Glwe);
 impl<S, T> NttGlwe<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs a modular multiplication on the `self` [`NttGlwe<S>`] with another `ntt_poly` [`NttPolynomial<A>`].
     #[inline]
@@ -49,7 +50,7 @@ where
 impl<S, T> NttGlwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts slice of `a` and `b` of this [`NttGlwe<S>`].
     #[inline]

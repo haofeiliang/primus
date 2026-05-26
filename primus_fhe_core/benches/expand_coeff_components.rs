@@ -96,7 +96,7 @@ fn bench_expand_coeff_components(c: &mut Criterion) {
             count_residue
                 .iter()
                 .zip(base_q.moduli())
-                .map(|(&n, m)| ShoupFactor::new(m.reduce_inv(n), m.value_unchecked()))
+                .map(|(&n, m)| ShoupFactor::new(m.reduce_inv(n), unsafe { m.value_unchecked() }))
                 .collect::<Vec<_>>()
         };
 

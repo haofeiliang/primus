@@ -1,5 +1,6 @@
+use primus_data::{DataMut, RawData};
 use primus_factor::{FactorMul, LazyFactorMul, ShoupFactor};
-use primus_integer::{DataMut, RawData, UnsignedInteger};
+use primus_integer::FheUint;
 use primus_modulo::{AddModulo, ModuloOnce, ModuloOnceAssign};
 use primus_modulus::UintModulus;
 use primus_poly::{NttPolynomial, Polynomial};
@@ -32,7 +33,7 @@ use super::NttTable;
 /// scrambled order:     0  1  5  3  7  2  6  4
 ///                         ----------  ----  -
 /// ```
-pub struct UintNttTable<T: UnsignedInteger> {
+pub struct UintNttTable<T: FheUint> {
     root: T,
     inv_root: T,
     modulus: T,
@@ -46,7 +47,7 @@ pub struct UintNttTable<T: UnsignedInteger> {
     // pool: Pool<Vec<T>>,
 }
 
-impl<T: UnsignedInteger> UintNttTable<T> {
+impl<T: FheUint> UintNttTable<T> {
     /// Returns the root of this [`ShoupFactor<T>`].
     #[inline]
     pub fn root(&self) -> T {
@@ -108,7 +109,7 @@ impl<T: UnsignedInteger> UintNttTable<T> {
     }
 }
 
-impl<T: UnsignedInteger> NttTable for UintNttTable<T> {
+impl<T: FheUint> NttTable for UintNttTable<T> {
     type ValueT = T;
 
     #[inline]
@@ -118,7 +119,7 @@ impl<T: UnsignedInteger> NttTable for UintNttTable<T> {
     {
         let root = <T as PrimitiveRoot>::try_minimal_primitive_root(log_n + 1, modulus)?;
 
-        let modulus = modulus.value_unchecked();
+        let modulus = unsafe { modulus.value_unchecked() };
 
         let n = 1usize << log_n;
         let to_root_type = |x| -> ShoupFactor<T> { <ShoupFactor<T>>::new(x, modulus) };

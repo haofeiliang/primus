@@ -1,5 +1,8 @@
 use primus_reduce::prelude::*;
 
+#[cfg(feature = "simd")]
+use primus_integer::SimdUnsignedInteger;
+
 use crate::CompactModulus;
 
 macro_rules! compact_scalar {
@@ -17,10 +20,10 @@ macro_rules! compact_scalar {
 macro_rules! compact_simd {
     ($($t:ty),*) => {
         $(
-            impl_reduce_once_slice_simd_with!(impl ReduceOnceSlice<$t> for CompactModulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), crate::common::compact::simd, access = 0);
-            impl_reduce_neg_slice_simd_with!(impl ReduceNegSlice<$t> for CompactModulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), crate::common::compact::simd, access = 0);
-            impl_reduce_add_slice_simd_with!(impl ReduceAddSlice<$t> for CompactModulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), crate::common::compact::simd, access = 0);
-            impl_reduce_sub_slice_simd_with!(impl ReduceSubSlice<$t> for CompactModulus<$t>; primus_integer::lanes::VECTOR_BITS / (<$t>::BITS as usize), crate::common::compact::simd, access = 0);
+            impl_reduce_once_slice_simd_with!(impl ReduceOnceSlice<$t> for CompactModulus<$t>; <$t>::LANE_COUNT, crate::common::compact::simd, access = 0);
+            impl_reduce_neg_slice_simd_with!(impl ReduceNegSlice<$t> for CompactModulus<$t>; <$t>::LANE_COUNT, crate::common::compact::simd, access = 0);
+            impl_reduce_add_slice_simd_with!(impl ReduceAddSlice<$t> for CompactModulus<$t>; <$t>::LANE_COUNT, crate::common::compact::simd, access = 0);
+            impl_reduce_sub_slice_simd_with!(impl ReduceSubSlice<$t> for CompactModulus<$t>; <$t>::LANE_COUNT, crate::common::compact::simd, access = 0);
         )*
     };
 }

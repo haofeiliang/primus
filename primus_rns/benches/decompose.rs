@@ -89,7 +89,7 @@ fn bench_decompose(c: &mut Criterion) {
             .moduli()
             .iter()
             .map(|m| {
-                let m_val = m.value_unchecked();
+                let m_val = unsafe { m.value_unchecked() };
                 let distr = Uniform::new(0, m_val).unwrap();
                 ShoupFactor::new(distr.sample(&mut rng), m_val)
             })

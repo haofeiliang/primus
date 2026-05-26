@@ -30,20 +30,16 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceOnceSlice<#ty> for #name {
             #[inline]
             fn reduce_once_slice_assign(self, values: &mut [#ty]) {
-                ::primus_modulus::common::compact::simd::reduce_once_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::common::compact::simd::reduce_once_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
                     #modulus,
                     values,
                 )
             }
             #[inline]
             fn reduce_once_slice_to(self, input: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::common::compact::simd::reduce_once_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::common::compact::simd::reduce_once_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
                     #modulus,
                     input,
                     output,
@@ -71,20 +67,16 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceNegSlice<#ty> for #name {
             #[inline]
             fn reduce_neg_slice_assign(self, values: &mut [#ty]) {
-                ::primus_modulus::common::compact::simd::reduce_neg_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::common::compact::simd::reduce_neg_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
                     #modulus,
                     values,
                 )
             }
             #[inline]
             fn reduce_neg_slice_to(self, input: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::common::compact::simd::reduce_neg_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::common::compact::simd::reduce_neg_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
                     #modulus,
                     input,
                     output,
@@ -114,10 +106,8 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceAddSlice<#ty> for #name {
             #[inline]
             fn reduce_add_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
-                ::primus_modulus::common::compact::simd::reduce_add_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::common::compact::simd::reduce_add_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
                     #modulus,
                     a,
                     b,
@@ -125,10 +115,8 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_add_slice_to(self, a: &[#ty], b: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::common::compact::simd::reduce_add_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::common::compact::simd::reduce_add_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
                     #modulus,
                     a,
                     b,
@@ -165,10 +153,8 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceSubSlice<#ty> for #name {
             #[inline]
             fn reduce_sub_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
-                ::primus_modulus::common::compact::simd::reduce_sub_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::common::compact::simd::reduce_sub_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
                     #modulus,
                     a,
                     b,
@@ -176,10 +162,8 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_sub_slice_to(self, a: &[#ty], b: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::common::compact::simd::reduce_sub_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::common::compact::simd::reduce_sub_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
                     #modulus,
                     a,
                     b,
@@ -188,10 +172,8 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_sub_slice_rev_assign(self, a: &[#ty], b: &mut [#ty]) {
-                ::primus_modulus::common::compact::simd::reduce_sub_slice_rev_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::common::compact::simd::reduce_sub_slice_rev_assign::<#ty, { <#ty>::LANE_COUNT }>(
                     #modulus,
                     a,
                     b,
@@ -232,28 +214,18 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceMulSlice<#ty> for #name {
             #[inline]
             fn reduce_mul_slice_assign(self, a: &mut [#ty], b: &[#ty]) {
-                ::primus_modulus::barrett_simd_kernel::reduce_mul_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::reduce_mul_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     b,
                 )
             }
             #[inline]
             fn reduce_mul_slice_to(self, a: &[#ty], b: &[#ty], output: &mut [#ty]) {
-                ::primus_modulus::barrett_simd_kernel::reduce_mul_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::reduce_mul_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     b,
                     output,
@@ -261,26 +233,18 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_scalar_mul_slice_assign(self, a: &mut [#ty], scalar: #ty) {
-                ::primus_modulus::barrett_simd_kernel::reduce_scalar_mul_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::reduce_scalar_mul_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     scalar,
                 )
             }
             #[inline]
             fn reduce_scalar_mul_slice_to(self, a: &[#ty], scalar: #ty, output: &mut [#ty]) {
-                ::primus_modulus::barrett_simd_kernel::reduce_scalar_mul_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::reduce_scalar_mul_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     scalar,
                     output,
@@ -355,14 +319,9 @@ pub(crate) fn impl_reduce_slice_ops(
         impl ::primus_modulus::reduce::ReduceMulAddSlice<#ty> for #name {
             #[inline]
             fn reduce_add_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {
-                ::primus_modulus::barrett_simd_kernel::reduce_add_mul_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::reduce_add_mul_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     acc,
                     a,
                     b,
@@ -370,14 +329,9 @@ pub(crate) fn impl_reduce_slice_ops(
             }
             #[inline]
             fn reduce_sub_mul_slice_assign(self, acc: &mut [#ty], a: &[#ty], b: &[#ty]) {
-                ::primus_modulus::barrett_simd_kernel::reduce_sub_mul_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::reduce_sub_mul_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     acc,
                     a,
                     b,
@@ -391,14 +345,9 @@ pub(crate) fn impl_reduce_slice_ops(
                 c: &[#ty],
                 output: &mut [#ty],
             ) {
-                ::primus_modulus::barrett_simd_kernel::reduce_mul_add_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::reduce_mul_add_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     a,
                     b,
                     c,
@@ -413,14 +362,9 @@ pub(crate) fn impl_reduce_slice_ops(
                 c: &[#ty],
                 output: &mut [#ty],
             ) {
-                ::primus_modulus::barrett_simd_kernel::reduce_scalar_mul_add_slice_to::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::reduce_scalar_mul_add_slice_to::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     scalar,
                     b,
                     c,
@@ -434,14 +378,9 @@ pub(crate) fn impl_reduce_slice_ops(
                 scalar: #ty,
                 b: &[#ty],
             ) {
-                ::primus_modulus::barrett_simd_kernel::reduce_add_scalar_mul_slice_assign::<#ty, {
-                    ::primus_integer::lanes::VECTOR_BITS
-                        / (<#ty>::BITS as usize)
-                }>(
-                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(
-                        #modulus,
-                        [#r0, #r1],
-                    ),
+                use ::primus_modulus::integer::SimdUnsignedInteger;
+                ::primus_modulus::barrett_simd_kernel::reduce_add_scalar_mul_slice_assign::<#ty, { <#ty>::LANE_COUNT }>(
+                    ::primus_modulus::BarrettModulus::<#ty>::from_parts(#modulus, [#r0, #r1]),
                     acc,
                     scalar,
                     b,

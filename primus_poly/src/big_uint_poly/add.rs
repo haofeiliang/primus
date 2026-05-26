@@ -1,11 +1,12 @@
-use primus_integer::{BigUint, Data, DataMut, RawData, UnsignedInteger, izip};
+use primus_data::{Data, DataMut, RawData};
+use primus_integer::{BigUint, FheUint, izip};
 
 use super::BigUintPolynomial;
 
 impl<S, T> BigUintPolynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `self + rhs` according to `modulus`.
     #[inline]
@@ -38,7 +39,7 @@ where
 impl<S, T> BigUintPolynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Performs `result = self + rhs` according to `modulus`.
     #[inline]

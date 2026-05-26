@@ -1,5 +1,5 @@
 use primus_distr::DiscreteGaussian;
-use primus_integer::UnsignedInteger;
+use primus_integer::FheUint;
 use primus_reduce::RingContext;
 use rand::distr::Uniform;
 
@@ -9,7 +9,7 @@ use crate::{LweSecretKeyType, PlaintextCodec};
 #[derive(Clone)]
 pub struct LweParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: RingContext<T>,
 {
     /// **LWE** vector dimension, refers to **n** in the paper.
@@ -30,7 +30,7 @@ where
 
 impl<T, M> LweParameters<T, M>
 where
-    T: UnsignedInteger,
+    T: FheUint,
     M: RingContext<T>,
 {
     /// Creates a new [`LweParameters<T, M>`].

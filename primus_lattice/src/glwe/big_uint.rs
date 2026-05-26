@@ -1,4 +1,5 @@
-use primus_integer::{Data, DataMut, DataOwned, RawData, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::FheUint;
 use primus_poly::{BigUintPolynomialIter, BigUintPolynomialIterMut};
 use primus_reduce::FieldContext;
 use primus_rns::RNSBase;
@@ -16,7 +17,7 @@ use super::CrtGlwe;
 pub struct BigUintGlwe<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_common!(BigUintGlwe<S>);
 impl_bytes_conversion!(BigUintGlwe<S>);
@@ -27,7 +28,7 @@ impl_iter_sub_structure!(BigUintGlwe<S>, BigUintPolynomial, big_uint_poly);
 impl<S, T> BigUintGlwe<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     pub fn compose_assign<A, M>(
@@ -60,7 +61,7 @@ where
 impl<S, T> BigUintGlwe<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Decomposes `self`.
     #[inline]

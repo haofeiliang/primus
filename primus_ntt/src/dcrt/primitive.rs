@@ -1,4 +1,5 @@
-use primus_integer::{DataMut, RawData, UnsignedInteger};
+use primus_data::{DataMut, RawData};
+use primus_integer::FheUint;
 use primus_poly::{CrtPolynomial, DcrtPolynomial};
 use primus_reduce::FieldContext;
 
@@ -6,16 +7,16 @@ use crate::{NttError, NttTable, UintNttTable};
 
 use super::DcrtTable;
 
-pub struct UintCrtNttTable<T: UnsignedInteger> {
+pub struct UintCrtNttTable<T: FheUint> {
     ntt_tables: Vec<UintNttTable<T>>,
     poly_length: usize,
     moduli_count: usize,
     crt_poly_length: usize,
 }
 
-impl<T: UnsignedInteger> UintCrtNttTable<T> {}
+impl<T: FheUint> UintCrtNttTable<T> {}
 
-impl<T: UnsignedInteger> DcrtTable for UintCrtNttTable<T> {
+impl<T: FheUint> DcrtTable for UintCrtNttTable<T> {
     type ValueT = T;
 
     type NttTables = UintNttTable<T>;

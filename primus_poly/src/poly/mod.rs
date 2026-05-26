@@ -1,5 +1,6 @@
 use num_traits::{ConstZero, Zero};
-use primus_integer::{ByteCount, Data, DataMut, DataOwned, RawData, Size, UnsignedInteger};
+use primus_data::{Data, DataMut, DataOwned, RawData};
+use primus_integer::{ByteCount, FheUint, Size};
 use primus_reduce::ReduceMulAdd;
 
 mod basic;
@@ -19,14 +20,14 @@ pub type PolynomialMut<'a, T> = Polynomial<&'a mut [T]>;
 pub struct Polynomial<S>(pub S)
 where
     S: RawData,
-    <S as RawData>::Elem: UnsignedInteger;
+    <S as RawData>::Elem: FheUint;
 
 impl_iters!(Polynomial, poly);
 
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T>,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a new [`Polynomial<T>`].
     #[inline]
@@ -38,7 +39,7 @@ where
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T> + DataOwned,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Creates a [`Polynomial<T>`] with all coefficients equal to zero.
     #[inline]
@@ -62,7 +63,7 @@ where
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T> + DataMut,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Extracts a mutable slice of the entire vector.
     ///
@@ -94,7 +95,7 @@ where
 impl<S, T> Polynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     /// Get the coefficient counts of polynomial.
     #[inline]
@@ -143,7 +144,7 @@ where
 impl<S, T> Size for Polynomial<S>
 where
     S: RawData<Elem = T> + Data,
-    T: UnsignedInteger,
+    T: FheUint,
 {
     #[inline]
     fn byte_count(&self) -> usize {
