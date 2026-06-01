@@ -2,8 +2,11 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use primus_modulus::BarrettModulus;
-use primus_ntt::{Concrete64Table, HexlNttTable, NttTable, UintNttTable};
+use primus_ntt::{Concrete64Table, NttTable, UintNttTable};
 use rand::distr::{Distribution, Uniform};
+
+#[cfg(target_arch = "x86_64")]
+use primus_ntt::HexlNttTable;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut rng = rand::rng();
@@ -17,6 +20,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let distr = Uniform::new(0, q).unwrap();
             let log_n = n.trailing_zeros();
 
+            #[cfg(target_arch = "x86_64")]
             let hexl_table = HexlNttTable::new(log_n, modulus).unwrap();
             let uint_table = UintNttTable::new(log_n, modulus).unwrap();
             let concrete_table = Concrete64Table::new(log_n, modulus).unwrap();
@@ -25,6 +29,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let mut poly2: Vec<u64> = poly1.clone();
             let mut poly3: Vec<u64> = poly1.clone();
 
+            #[cfg(target_arch = "x86_64")]
             c.bench_function(&format!("Hexl NTT: q:{q} n:{n}"), |b| {
                 b.iter(|| {
                     hexl_table.transform_slice(black_box(&mut poly1));
@@ -50,6 +55,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             poly2.clone_from_slice(&poly1);
             poly3.clone_from_slice(&poly1);
 
+            #[cfg(target_arch = "x86_64")]
             c.bench_function(&format!("Hexl INTT: q:{q} n:{n}"), |b| {
                 b.iter(|| {
                     hexl_table.inverse_transform_slice(black_box(&mut poly1));
